@@ -1,5 +1,11 @@
+import * as React from 'react';
 import * as ReactDOM from "react-dom";
-import routes from "../shared/routes";
+import App from "../shared/app";
+import { BrowserRouter } from 'react-router-dom'
 import "../shared/favicon.ico";
 
-ReactDOM.render(routes, document.getElementById("app"));
+ReactDOM.render((
+    <BrowserRouter>
+        <App />
+    </BrowserRouter>
+), document.getElementById("app"));

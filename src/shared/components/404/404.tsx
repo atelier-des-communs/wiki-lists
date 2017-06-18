@@ -6,6 +6,7 @@ class NotFoundComponent extends React.Component<any, any> {
 	}
 
 	render() {
+		console.log(this.props.match.url);
 		return (
 			<div className="404">
 				<p>

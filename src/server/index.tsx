@@ -1,11 +1,11 @@
 import * as React from "react";
 import { renderToString } from "react-dom/server";
-import { match, RouterContext } from "react-router";
-import routes from "../shared/routes";
+import { match, StaticRouter } from "react-router";
+import App from "../shared/app";
 import "../shared/favicon.ico";
 
 function renderHTML(componentHTML: any) {
-	if(process.env.NODE_ENV === "production")
+	if (process.env.NODE_ENV === "production")
 		return `<!DOCTYPE html>
 <html>
 
@@ -40,17 +40,17 @@ function renderHTML(componentHTML: any) {
 </html>`;
 }
 
-export default function(req: any, res: any) {
+const context = {}
+
+export default function (req: any, res: any) {
 	console.log(req.url);
-	match({ routes, location: req.url }, (error: any, redirectLocation: any, renderProps: any) => {
-		if(error) {
-			res.status(500).send(error.message);
-		} else if(redirectLocation) {
-			res.redirect(302, redirectLocation.pathname + redirectLocation.search);
-		} else if(renderProps) {
-			res.status(200).send(renderHTML(renderToString(<RouterContext {...renderProps} />)));
-		} else {
-			res.status(404).send("Not found");
-		}
-	});
+	const componentHTML = (
+		<StaticRouter
+			location={req.url}
+			context={context}
+		>
+			<App />
+		</StaticRouter>
+	);
+	res.status(200).send(renderHTML(renderToString(componentHTML)));
 }

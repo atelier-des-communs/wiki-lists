@@ -12,7 +12,6 @@
 		"sourceMap": true
 	},
 	"files": [
-		"./typings/index.d.ts",
 		"./src/server/index.tsx",
 		"./src/client/index.tsx"
 	]

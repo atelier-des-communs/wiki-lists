@@ -7,10 +7,10 @@ var loaders = [{
 	loader: "ts-loader"
 }, {
 	test: /\.css$/,
-	loader: ExtractTextPlugin.extract("style-loader", "css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]")
+	loader: ExtractTextPlugin.extract({ fallback: "style-loader", use: "css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]" })
 }, {
 	test: /\.scss$/,
-	loader: ExtractTextPlugin.extract("style-loader", "css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]!sass-loader")
+	loader: ExtractTextPlugin.extract({ fallback: "style-loader", use: "css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]!sass-loader" })
 }, {
 	test: /\.(jp[e]?g|png|gif|svg)$/i,
 	loader: "file-loader?name=img/[name].[ext]"
@@ -37,7 +37,7 @@ var client = {
 		loaders: loaders
 	},
 	resolve: {
-		extensions: ["", ".js", ".jsx", ".ts", ".tsx"]
+		extensions: [".js", ".jsx", ".ts", ".tsx"]
 	},
 	plugins: [
 		new webpack.optimize.DedupePlugin(),
@@ -78,7 +78,7 @@ var server = {
 		loaders: loaders
 	},
 	resolve: {
-		extensions: ["", ".js", ".jsx", ".ts", ".tsx"]
+		extensions: [".js", ".jsx", ".ts", ".tsx"]
 	},
 	plugins: [
 		new webpack.optimize.DedupePlugin(),
