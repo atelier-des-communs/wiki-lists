@@ -6,7 +6,7 @@ interface Props {
 }
 
 const Footer: React.StatelessComponent<Props> = (props: Props) => {
-	return(
+	return (
 		<footer className={styles.footer}>
 			{props.children}
 		</footer>

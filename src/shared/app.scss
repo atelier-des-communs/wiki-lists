@@ -2,3 +2,22 @@ html, body {
 	margin: 0;
 	padding: 0;
 }
+
+.link {
+	display: block;
+	position: absolute;
+	top: 50vh;
+	left: 1.5em;
+	color: black;
+	background-color: lightgrey;
+	font-size: 1.5em;
+	text-decoration: none;
+	border: 1px solid black;
+}
+
+.footer {
+	color:white;
+	font-size: 2vmin;
+	font-weight: bold;
+	text-align: center;
+}
