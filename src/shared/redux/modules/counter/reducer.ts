@@ -1,12 +1,10 @@
-const NONE = "REACT/COUNTER/NONE";
-const INCREMENT = "REACT/COUNTER/INCREMENT";
-const DECREMENT = "REACT/COUNTER/DECREMENT";
+import { NONE, DECREMENT, INCREMENT } from './constants';
 
 export const initialState = {
     count: 0
 }
 
-import { Action, ActionCreatorsMapObject } from "redux";
+import { Action } from "redux";
 
 export function reducer(state = initialState, action: Action = { type: NONE }) {
     switch (action.type) {
@@ -24,20 +22,3 @@ export function reducer(state = initialState, action: Action = { type: NONE }) {
             return state;
     }
 }
-
-function increment() {
-    return {
-        type: INCREMENT
-    };
-}
-
-function decrement() {
-    return {
-        type: DECREMENT
-    };
-}
-
-export const actions: ActionCreatorsMapObject = {
-    increment,
-    decrement
-};

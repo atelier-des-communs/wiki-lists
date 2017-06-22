@@ -5,17 +5,19 @@ import {
     Link,
     RouteComponentProps
 } from 'react-router-dom';
+import { Provider } from 'react-redux';
 import Header from "./components/header/header";
 import Footer from "./components/footer/footer";
 import Navbar from "./components/navbar/navbar";
 import NotFound from "./components/404/404";
+import { default as store } from './redux';
 const styles: any = require("./app.scss");
 
 interface IStyleDict {
     [element: string]: React.CSSProperties
 }
 
-const App: React.SFC<React.Props<{}>> = ({children}) => (
+const App: React.SFC<React.ClassAttributes<{}>> = ({ children }) => (
     <div>
         <Header>
             Isomorphic React Starter Kit v2.0
@@ -40,4 +42,10 @@ const App: React.SFC<React.Props<{}>> = ({children}) => (
     </div>
 );
 
-export default App;
+export default function() {
+    return (
+        <Provider store={store}>
+            <App />
+        </Provider>
+    );
+};
