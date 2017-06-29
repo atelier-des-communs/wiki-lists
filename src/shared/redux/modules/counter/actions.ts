@@ -1,5 +1,5 @@
 import { ActionCreator, Action, ActionCreatorsMapObject } from 'redux';
-import { DECREMENT, INCREMENT } from './constants';
+import { DECREMENT, INCREMENT } from './types';
 
 const increment: ActionCreator<Action> = () => ({ type: INCREMENT });
 

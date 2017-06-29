@@ -1,4 +1,4 @@
-import { NONE, DECREMENT, INCREMENT } from './constants';
+import { NONE, DECREMENT, INCREMENT } from './types';
 
 export const initialState = {
     count: 0

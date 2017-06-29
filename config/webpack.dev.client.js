@@ -16,18 +16,18 @@ var loaders = [{
 }, {
     test: /\.css$/,
     use: [
-		"css-hot-loader",
+        "css-hot-loader",
         "style-loader",
-		"css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]"
+        "css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]"
     ]
 }, {
     test: /\.scss$/,
     use: [
-		"css-hot-loader",
-		"style-loader",
-		"css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]",
-		"sass-loader"
-	]
+        "css-hot-loader",
+        "style-loader",
+        "css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]",
+        "sass-loader"
+    ]
 }, {
     test: /\.(jp[e]?g|png|gif|svg)$/i,
     loader: "file-loader?name=img/[name].[ext]"
@@ -61,7 +61,10 @@ var client = {
         extensions: [".js", ".jsx", ".ts", ".tsx"]
     },
     plugins: [
-        new webpack.HotModuleReplacementPlugin()
+        new webpack.HotModuleReplacementPlugin(),
+        new webpack.DefinePlugin({
+            'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
+        })
     ]
 };
 

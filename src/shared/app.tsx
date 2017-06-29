@@ -11,11 +11,11 @@ import Footer from "./components/footer/footer";
 import Navbar from "./components/navbar/navbar";
 import NotFound from "./components/404/404";
 import { default as store } from './redux';
-const styles: any = require("./app.scss");
+import Devtool from './components/devtool/devtool';
 
-interface IStyleDict {
-    [element: string]: React.CSSProperties
-}
+type TStyles = { footer: string, link: string };
+const styles: TStyles = require("./app.scss");
+
 
 const App: React.SFC<React.ClassAttributes<{}>> = ({ children }) => (
     <div>
@@ -42,10 +42,22 @@ const App: React.SFC<React.ClassAttributes<{}>> = ({ children }) => (
     </div>
 );
 
+
+console.log(process.env.NODE_ENV);
+
+const app = process.env.NODE_ENV === 'development' ? (
+    <div>
+        <App />
+        <Devtool />
+    </div>
+) : (
+        <App />
+    );
+
 export default function() {
     return (
         <Provider store={store}>
-            <App />
+            {app}
         </Provider>
     );
 };

@@ -3,6 +3,7 @@ import { RouteComponentProps } from "react-router-dom"
 import { connect } from "react-redux";
 import { bindActionCreators } from "redux";
 import { counterActions } from "../../redux";
+import rxConnect from 'rx-connect';
 
 const styles = require("./example.css");
 
@@ -14,8 +15,8 @@ export interface IExampleConnectDispatchProps {
 	increment: () => void;
 }
 
-const Example = connect<IExampleConnectStateProps, IExampleConnectDispatchProps, RouteComponentProps<any>>(
-	state => ({ count: state.counter.count }),
+const Example = connect<IExampleConnectStateProps, IExampleConnectDispatchProps, RouteComponentProps<{}>>(
+	(state, props) => ({ count: state.counter.count }),
 	dispatch => bindActionCreators(counterActions, dispatch)
 )(({ count, increment }) => (
 	<div>

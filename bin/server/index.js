@@ -4,7 +4,7 @@ var path = require("path");
 var serverSideRendering = require("../../dist/server/server.bundle.js");
 
 var server = express();
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 8082;
 
 server.use(compress({ threshold: 0 }));
 server.use(express.static(path.resolve(__dirname, "..", "..", "dist", "client")));
