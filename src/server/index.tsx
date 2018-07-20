@@ -12,6 +12,7 @@ function renderHTML(componentHTML: any) {
 	<head>
 		<meta charset="UTF-8">
 		<title>React Isomorphic Starter Kit</title>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.css" />
 		<link rel="stylesheet" href="/client.bundle.css">
 	</head>
 
@@ -33,8 +34,8 @@ function renderHTML(componentHTML: any) {
 
 	<body>
 		<div id="app">${componentHTML}</div>
-
 		<script src="http://localhost:8081/client.bundle.js"></script>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.css" />
 		<link rel="stylesheet" href="/client.bundle.css">
 	</body>
 

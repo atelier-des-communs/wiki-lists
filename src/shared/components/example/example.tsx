@@ -3,7 +3,6 @@ import { RouteComponentProps } from "react-router-dom"
 import { connect } from "react-redux";
 import { bindActionCreators } from "redux";
 import { counterActions } from "../../redux";
-import rxConnect from 'rx-connect';
 
 const styles = require("./example.css");
 

@@ -1,28 +1,8 @@
 var ExtractTextPlugin = require("extract-text-webpack-plugin");
 var shared = require("./webpack.shared.js");
 
-var loaders = [{
-    test: /\.ts[x]?$/,
-    loaders: [
-        "react-hot-loader",
-        "ts-loader"
-    ]
-}, {
-    test: /\.css$/,
-    loader: ExtractTextPlugin.extract({ fallback: "style-loader", use: "css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]" })
-}, {
-    test: /\.scss$/,
-    loader: ExtractTextPlugin.extract({ fallback: "style-loader", use: "css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]!sass-loader" })
-}, {
-    test: /\.(jp[e]?g|png|gif|svg)$/i,
-    loader: "file-loader?name=img/[name].[ext]"
-}, {
-    test: /\.html$/,
-    loader: "file-loader?name=[name].[ext]"
-}, {
-    test: /\.ico$/,
-    loader: "file-loader?name=[name].[ext]"
-}];
+var loaders = shared.flatten_loaders(shared.common_loaders)
+console.log("Dev Server loaders", loaders);
 
 var server = {
     name: "dev.server",
@@ -42,10 +22,10 @@ var server = {
         libraryTarget: "commonjs2"
     },
     module: {
-        loaders: loaders
+        rules: loaders
     },
     resolve: {
-        extensions: [".js", ".jsx", ".ts", ".tsx"]
+        extensions: [ ".rt", ".js", ".jsx", ".ts", ".tsx"]
     },
     plugins: [
         new ExtractTextPlugin("[name].css")

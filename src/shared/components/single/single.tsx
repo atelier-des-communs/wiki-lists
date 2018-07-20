@@ -10,7 +10,7 @@ const Single: React.SFC<RouteComponentProps<match<void>>> = ({ match, children }
 	<div className="container">
 		{children}
 		<Route path={match.url + "/example"} component={Example} />
-		<Route path={match.url + "/welcome"} component={Welcome} />
+		<Route path={match.url + "/welcome/:name/:age"} component={Welcome} />
 		<Route path={match.url + "/heroes"} component={Heroes} />
 	</div>
 );

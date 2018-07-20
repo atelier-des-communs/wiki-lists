@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from "react-dom";
 import App from "../shared/app";
-import { BrowserRouter, RouteComponentProps } from 'react-router-dom'
+import { BrowserRouter } from 'react-router-dom'
 import "../shared/favicon.ico";
 
 ReactDOM.render((

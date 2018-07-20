@@ -2,42 +2,30 @@ var webpack = require("webpack");
 var ExtractTextPlugin = require("extract-text-webpack-plugin");
 var shared = require("./webpack.shared.js");
 
-// console.log(ExtractTextPlugin.extract({
-//     fallback: 'style-loader',
-//     use: 'css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]'
-// }));
 
-var loaders = [{
-    test: /\.ts[x]?$/,
-    use: [
-        "react-hot-loader",
-        "ts-loader"
-    ]
-}, {
+var client_dev_loaders = JSON.parse(JSON.stringify(shared.common_loaders));
+
+client_dev_loaders["ts"].use.splice(0, 0, "react-hot-loader");
+client_dev_loaders["css"] = {
     test: /\.css$/,
     use: [
         "css-hot-loader",
         "style-loader",
         "css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]"
     ]
-}, {
+};
+client_dev_loaders["scss"] = {
     test: /\.scss$/,
     use: [
         "css-hot-loader",
         "style-loader",
         "css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]",
-        "sass-loader"
-    ]
-}, {
-    test: /\.(jp[e]?g|png|gif|svg)$/i,
-    loader: "file-loader?name=img/[name].[ext]"
-}, {
-    test: /\.html$/,
-    loader: "file-loader?name=[name].[ext]"
-}, {
-    test: /\.ico$/,
-    loader: "file-loader?name=[name].[ext]"
-}];
+        "sass-loader"]
+};
+
+var loaders = shared.flatten_loaders(shared.common_loaders);
+console.log("Dev Server loaders", loaders);
+
 
 var client = {
     name: "dev.client",
@@ -58,7 +46,7 @@ var client = {
         rules: loaders
     },
     resolve: {
-        extensions: [".js", ".jsx", ".ts", ".tsx"]
+        extensions: [".rt", ".js", ".jsx", ".ts", ".tsx"]
     },
     plugins: [
         new webpack.HotModuleReplacementPlugin(),

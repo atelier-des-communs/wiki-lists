@@ -1,6 +1,8 @@
 import * as React from "react";
 const styles: any = require("./header.scss");
 
+
+
 interface Props {
 	//Typescript ne gère pour le moment pas les children (v1.8.10). On doit mettre any pour éviter les erreurs du type:
 	//Property 'children' is missing in type 'IntrinsicAttributes & IntrinsicClassAttributes
