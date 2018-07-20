@@ -21,6 +21,10 @@ var common_loaders = {
         test: /\.ts[x]?$/,
         use: ["ts-loader"],
     },
+    "rt" : {
+        test: /\.rt$/,
+        use :  ["react-templates-loader?modules=commonjs"]
+    },
     "css":  {
         test: /\.css$/,
         loader: ExtractTextPlugin.extract({

@@ -1,0 +1,6 @@
+<rt-import name="Button" from="semantic-ui-react" />
+<rt-import name="Icon" from="semantic-ui-react" />
+<Button primary size='huge'>
+    Get Started
+    <Icon name='right arrow' />
+</Button>

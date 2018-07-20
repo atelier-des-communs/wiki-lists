@@ -13,6 +13,7 @@
 	},
 	"files": [
 		"./src/server/index.tsx",
-		"./src/client/index.tsx"
+		"./src/client/index.tsx",
+		"./src/custom.d.ts"
 	]
 }

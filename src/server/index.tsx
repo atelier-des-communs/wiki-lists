@@ -5,38 +5,23 @@ import App from "../shared/app";
 import "../shared/favicon.ico";
 
 function renderHTML(componentHTML: any) {
-	if (process.env.NODE_ENV === "production")
+    let client_script = (process.env.NODE_ENV === "production") ?
+        "<script src='/client.bundle.js'></script>" :
+        "<script src='http://localhost:8081/client.bundle.js'></script>"
+
 		return `<!DOCTYPE html>
 <html>
 
 	<head>
 		<meta charset="UTF-8">
 		<title>React Isomorphic Starter Kit</title>
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.css" />
 		<link rel="stylesheet" href="/client.bundle.css">
+		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.css" />
 	</head>
 
 	<body>
 		<div id="app">${componentHTML}</div>
-
-		<script src="/client.bundle.js"></script>
-	</body>
-
-</html>`;
-	else
-		return `<!DOCTYPE html>
-<html>
-
-	<head>
-		<meta charset="UTF-8">
-		<title>React Isomorphic Starter Kit</title>
-	</head>
-
-	<body>
-		<div id="app">${componentHTML}</div>
-		<script src="http://localhost:8081/client.bundle.js"></script>
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.css" />
-		<link rel="stylesheet" href="/client.bundle.css">
+		${client_script}
 	</body>
 
 </html>`;
