@@ -1,43 +1,54 @@
 import * as React from "react";
 import { renderToString } from "react-dom/server";
 import { StaticRouter } from "react-router";
-import App from "../shared/app";
+import {createStore } from "redux";
+import {ReduxApp} from "../shared/app";
 import "../shared/favicon.ico";
+import {IState, reducers} from "../shared/redux";
+import {initialState} from "./db/db";
+import {Store} from "react-redux";
 
-function renderHTML(componentHTML: any) {
-    let client_script = (process.env.NODE_ENV === "production") ?
-        "<script src='/client.bundle.js'></script>" :
-        "<script src='http://localhost:8081/client.bundle.js'></script>"
 
-		return `<!DOCTYPE html>
-<html>
 
-	<head>
-		<meta charset="UTF-8">
-		<title>React Isomorphic Starter Kit</title>
-		<link rel="stylesheet" href="/client.bundle.css">
-		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.css" />
-	</head>
+const store = createStore(reducers, initialState);
 
-	<body>
-		<div id="app">${componentHTML}</div>
-		${client_script}
-	</body>
 
-</html>`;
+const CLIENT_SCRIPT_URL = (process.env.NODE_ENV === "production") ?
+	'/client.bundle.js' : 'http://localhost:8081/client.bundle.js';
+
+function renderHtml(req: any, store: Store<IState> ) {
+
+    let app = <StaticRouter
+        location={req.url}
+        context={{}}
+    >
+        <ReduxApp store={store} />
+    </StaticRouter>
+
+	let appHTML = renderToString(app);
+
+	return `<!DOCTYPE html>
+		<html>
+			<head>
+				<meta charset="UTF-8">
+				<title>React Isomorphic Starter Kit</title>
+				<link rel="stylesheet" href="/client.bundle.css">
+				<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.css" />
+			</head>
+		
+			<body>
+				<div id="app">${appHTML}</div>
+				<script>
+					// Marchall store state in place
+					window.__INITIAL_STATE__ = ${JSON.stringify(store.getState())};
+				</script>
+				<script src="${CLIENT_SCRIPT_URL}"></script>
+			</body>
+		</html>`
 }
 
-const context = {};
 
 export default function (req: any, res: any) {
 	console.log(req.url);
-	const componentHTML = (
-		<StaticRouter
-			location={req.url}
-			context={context}
-		>
-				<App />
-		</StaticRouter>
-	);
-	res.status(200).send(renderHTML(renderToString(componentHTML)));
+	res.status(200).send(renderHtml(req, store));
 }

@@ -26,8 +26,23 @@
 	"bugs": {
 		"url": "https://github.com/ayoubdev/reactjs-typescript-isomorphic-starterkit/issues"
 	},
-
-	"author": "Raphael Jolivet <contact@raphael-jolivet.name>",
+	"keywords": [
+		"reactjs",
+		"webpack",
+		"react-router",
+		"boilerplate",
+		"template",
+		"typescript",
+		"transpilation",
+		"isomorphic",
+		"server side rendering",
+		"client side rendering",
+		"starter",
+		"kit",
+		"starterkit",
+		"starter-kit"
+	],
+	"author": "Ayoub ADIB <ayoub.development@gmail.com>",
 	"license": "MIT",
 	"devDependencies": {
 		"babel-plugin-root-import": "^6.1.0",
@@ -51,7 +66,6 @@
 	"dependencies": {
 		"@types/history": "^4.6.0",
 		"@types/node": "^8.0.2",
-		"@types/node-uuid": "0.0.28",
 		"@types/react": "^15.0.31",
 		"@types/react-dom": "^15.5.1",
 		"@types/react-redux": "^4.4.45",
@@ -71,9 +85,8 @@
 		"history": "^4.6.3",
 		"less": "^3.7.1",
 		"less-loader": "^4.1.0",
-		"node-uuid": "^1.4.8",
-		"react": "^16.4.2",
-		"react-dom": "^16.4.2",
+		"react": "^15.1.0",
+		"react-dom": "^15.1.0",
 		"react-redux": "^5.0.5",
 		"react-router": "^4.1.1",
 		"react-router-dom": "^4.1.1",

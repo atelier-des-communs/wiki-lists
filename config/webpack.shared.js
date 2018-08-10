@@ -8,12 +8,12 @@ exports.APP_DIR = path.resolve(__dirname, "..", "src");
 
 var common_loaders = {
     "js" : {
-        test: /\.(js|jsx)$/,
+        test: /\.(jsx)$/,
         exclude: /node_modules/,
         use: {
             "loader" : 'babel-loader',
             "options" :{
-                "presets" : "react"
+                "presets" : ["env", "react"]
             }
         },
     },

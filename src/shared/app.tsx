@@ -1,16 +1,18 @@
 import * as React from "react";
-import { Provider } from 'react-redux';
+import {connect, Provider, Store} from 'react-redux';
+import { IState } from './redux';
+import { ConnectedTableLayout } from "./components/table";
+import {Button} from "semantic-ui-react";
 
-import { default as store } from './redux';
-import HomepageLayout from "./components/homepage";
-import * as testRT from "./components/test.rt";
+interface ReduxAppProps {
+    store: Store<IState>;
+}
 
-console.log(process.env.NODE_ENV);
-
-export default function() {
+/** Inject the store into the app */
+export const ReduxApp : React.SFC<ReduxAppProps>= function(props : ReduxAppProps) {
     return (
-        <Provider store={store}>
-            <HomepageLayout/>
+        <Provider store={props.store}>
+            <ConnectedTableLayout />
         </Provider>
     );
 };
