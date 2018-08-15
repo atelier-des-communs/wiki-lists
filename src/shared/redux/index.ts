@@ -1,57 +1,74 @@
 
-import { Action, combineReducers, Reducer } from "redux";
+import { Action, Reducer, ReducersMapObject} from "redux";
+import {combineReducers} from "redux-seamless-immutable";
 import {StructType} from "../model/types";
-import {v1 as uuid} from "node-uuid";
-import * as df from "babel-core/polyfill";
-
-
+import * as Immutable from "seamless-immutable";
+import {Record} from "../model/instances";
 
 export interface IState {
     items : {[key:string] : any};
     schema : StructType;
 }
 
-export const ADD_ITEM = "ADD_ITEM";
-export const UPDATE_ITEM = "UPDATE_ITEM";
-
-interface ActionWithData<T> extends Action {
-    data: T
+export enum ActionType {
+    ADD_ITEM = "ADD_ITEM",
+    UPDATE_ITEM = "UPDATE_ITEM",
+    DELETE_ITEM = "DELETE_ITEM",
 }
 
-export class AddItemAction implements ActionWithData<{}> {
-    public type = ADD_ITEM;
-    public data: any;
+interface ActionWithRecord extends Action {
+    record : Record;
 }
 
-export class UpdateItemAction implements ActionWithData<{}> {
-    public type = UPDATE_ITEM;
-    public data: any;
+export class AddItemAction implements ActionWithRecord {
+    public type = ActionType.ADD_ITEM;
+    public record: Record;
 }
 
-export function createAction(actionType: string, data: {}) : ActionWithData<{}> {
-    return {type:actionType, data}
+export class UpdateItemAction implements ActionWithRecord {
+    public type = ActionType.UPDATE_ITEM;
+    public record: Record;
 }
 
+export class DeleteItemAction implements Action {
+    public type = ActionType.DELETE_ITEM;
+    public id: string;
+}
 
-function itemsReducer(items:{[key:string] : any}={}, action:Action) {
-    
-    console.log("Reducing : %s", action);
-    
-    let data = (<ActionWithData<any>> action).data;
+export function createAddItemAction(record: Record) : AddItemAction {
+    return {type:ActionType.ADD_ITEM, record}
+}
+export function createUpdateItemAction(record: Record) : UpdateItemAction {
+    return {type:ActionType.UPDATE_ITEM, record}
+}
+export function createDeleteAction(id: string) : DeleteItemAction {
+    return {type:ActionType.DELETE_ITEM, id}
+}
+
+function itemsReducer(items:any={}, action:Action | any) {
+
+    console.log("Items reducer received action", action);
+
+
     switch (action.type) {
-        case ADD_ITEM:
-            // New ? => create id
-            data._id = uuid();
-        case UPDATE_ITEM :
-            return Object.assign()
-            items[data._id] = data;
-            break;
-    }
+        case ActionType.ADD_ITEM:
+        case ActionType.UPDATE_ITEM :
+            let record = (action as ActionWithRecord).record;
+            return items.set(record._id, record);
 
+        case ActionType.DELETE_ITEM:
+            return items.without(action.id);
+    }
+    return items;
+}
+
+function schemaReducer(schema:{} = {}, action:{}) {
+    return schema;
 }
 
 /** Combine reducers */
 export let reducers : Reducer<IState> = combineReducers ({
-    items: itemsReducer
+    items: itemsReducer,
+    schema: schemaReducer
 });
 

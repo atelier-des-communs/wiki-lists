@@ -3,48 +3,57 @@ import {_} from "../i18n/messages";
 import {StructType} from "../model/types";
 import {Modal, Header, Button, Icon, Segment, SegmentGroup, Form} from "semantic-ui-react";
 import {Map} from "../utils";
-import {ValueHandler} from "./handlers";
+import {ValueHandler} from "./type-handlers/editors";
+import {createItem, updateItem} from "../rest/client";
+import {Record} from "../model/instances";
 
-
-type EditDialogProps = {
-    editMode : boolean;
-    value : Object;
+interface EditDialogProps  {
+    create : boolean;
+    value : Record;
     onUpdate : (newValue: Object) => void;
     schema : StructType;
+    close?: () => void;
 };
 
 export class EditDialog extends React.Component<EditDialogProps> {
 
     state : {
-        open: boolean;
-        value:Map};
+        loading: boolean;
+        value:Record};
 
     constructor(props: EditDialogProps) {
         super(props);
 
         // Clone the input object : not modify it until we validate
         this.state =  {
-            value: {...props.value},
-            open:false};
+            loading: false,
+            value: {...props.value}};
     }
 
     open() {
-        this.setState({open:true});
+        let newState = {
+            loading:false,
+            ... (this.props.create) ?
+                {value:{}} : {}};
+        this.setState(newState);
     }
 
-    close() {
-        this.setState({open:false});
-    }
+    async validate() {
 
-    validate() {
-        this.close();
-        this.props.onUpdate(this.state.value);
+        // "Loading" icon
+        this.setState({loading:true});
+
+        // Async POST of new values
+        let payload =  this.props.create ?
+            await createItem(this.state.value) :
+            await updateItem(this.state.value);
+
+        // Update local state
+        this.props.onUpdate(payload);
+        this.props.close();
     }
 
     render()  {
-
-        var dialog = null;
-        if (this.state.open) {
 
             // Loop on schema attributes
             let fields = this.props.schema.attributes.map(attr => {
@@ -58,7 +67,7 @@ export class EditDialog extends React.Component<EditDialogProps> {
                 return <Form.Field>
                     <label>{attr.name}</label>
                     <ValueHandler
-                        editMode={this.props.editMode}
+                        editMode={true}
                         value={this.state.value[attr.name]}
                         type={attr.type}
                         onValueChange={callback}
@@ -66,7 +75,7 @@ export class EditDialog extends React.Component<EditDialogProps> {
                 </Form.Field>
             });
 
-            dialog = <Modal open={this.state.open}>
+            return <Modal open={true}>
                 <Header icon='edit' content={_.edit_item}/>
                 <Modal.Content>
                     <Form>
@@ -74,22 +83,15 @@ export class EditDialog extends React.Component<EditDialogProps> {
                     </Form>
                 </Modal.Content>
                 <Modal.Actions>
-                    <Button color='red' onClick={() => this.close()}>
-                        <Icon name='remove'/> No
+                    <Button color='red' onClick={this.props.close}>
+                        <Icon name='remove'/> {_.cancel}
                     </Button>
-                    <Button color='green' onClick={() => this.validate()}>
-                        <Icon name='checkmark'/> Yes
+                    <Button loading={this.state.loading} color='green' onClick={() => this.validate()}>
+                        <Icon name='checkmark'/> {_.save}
                     </Button>
                 </Modal.Actions>
             </Modal>;
-        }
 
-
-        // Placeholder, shown anyway
-        return <div>
-                <Icon name="edit" onClick={() => this.open()} />
-                {dialog}
-            </div>;
     }
 
 

@@ -1,90 +1,165 @@
 
 import * as React from 'react';
-
-
 import {
     Button,
     Container,
-    Divider,
-    Grid,
-    Header,
-    Image,
-    List,
-    Menu,
-    Segment,
-    Sidebar,
-    Visibility,
-    Responsive,
     Popup,
     Icon,
-    Table
+    Input, Table
 } from 'semantic-ui-react'
-import { EditDialog } from "./dialog";
+import { EditDialog } from "./edit-dialog";
 import {Attribute, StructType} from "../model/types";
-import {ValueHandler } from "./handlers";
-import {Map} from "rxjs/util/Map";
-import {mapMap} from "../utils";
+import {ValueHandler } from "./type-handlers/editors";
+import {Map, mapMap, sortBy} from "../utils";
 import {_} from "../i18n/messages";
-import {renderToString} from "react-dom/server";
-import {SafePopup} from "./utils/no-ssr";
+import {SafeClickWrapper, SafePopup} from "./utils/ssr-safe";
 import {connect, Dispatch} from "react-redux";
-import {ADD_ITEM, AddItemAction, createAction, IState, UPDATE_ITEM, UpdateItemAction} from "../redux";
+import {createAddItemAction, IState, createDeleteAction, createUpdateItemAction, UpdateItemAction} from "../redux";
+import * as QueryString from "querystring";
+import {RouteComponentProps, withRouter} from "react-router"
+import {Record} from "../model/instances";
+import {deleteItem} from "../rest/client";
+import {SchemaDialog} from "./schema-dialog";
 
-
+/** Props injected by react-redux (the state) */
 interface TableLayoutProps {
     schema : StructType;
-    items: {[key: string]: any};
-}
+    records: Record[]}
 
+/** Event handler props injected by react redux */
 interface TableDispatchProps {
-    onUpdate: (newValue : {}) => void;
-    onCreate: (newValue : {}) => void;
+    onUpdate: (newValue : Record) => void,
+    onCreate: (newValue : Record) => void,
+    onDelete: (id : string) => void}
+
+type TableProps = TableLayoutProps & TableDispatchProps & RouteComponentProps<{}>;
+
+interface ISort {
+    key: string;
+    asc:boolean;
 }
 
-const TableLayout: React.SFC<TableLayoutProps & TableDispatchProps> = (props) => {
+function parseParams(queryString:string) {
+    return QueryString.parse(queryString.replace(/^\?/, ''));
+}
+
+/** Extract sort directive from query params */
+function extractSort(queryString: string) : ISort {
+    let sort = parseParams(queryString).sort;
+    console.log("query string: '%s', sort:'%s'", queryString, sort);
+    if (sort) {
+        let [sortKey, direction] = sort.split(".");
+        return {
+            key:sortKey,
+            asc:direction == "asc"
+        }
+    } else {
+        return null;
+    }
+}
+
+/** Switch sort order upon click, do it via search parameters / location */
+function onHeaderClick(props: RouteComponentProps<{}>, attr:string) {
+
+    // Parse query string for current sort
+    let sort = extractSort(props.location.search);
+
+    console.log("current sort", sort);
+
+    // Same key ? => toggle sort order
+    let newAsc = (sort && sort.key == attr) ? ! sort.asc  : true;
+
+    // Update current query with new sort
+    let query = parseParams(props.location.search);
+    query["sort"] = attr + "." + (newAsc ? "asc" : "desc")
+
+    // Push it to history
+    props.history.push("?" + QueryString.stringify(query));
+}
+
+
+const TableLayout: React.SFC<TableProps> = (props) => {
 
     let attrs = props.schema.attributes;
 
-    let headers = attrs.map(attr =>
-        <Table.HeaderCell  key={attr.name} >
-            {attr.name}
-            </Table.HeaderCell>);
-
-    // Add the menu selector
+    // First header cell : the menu toolbox
     let columnsHeader = <Table.HeaderCell collapsing key="menu" >
-        <SafePopup trigger={<Button icon="columns" size="mini" basic compact />} >
-                <Popup.Header>Columns</Popup.Header>
-                <Popup.Content>Foobar</Popup.Content>
-            </SafePopup>
+        <SafeClickWrapper trigger={<Button icon="columns" size="mini" basic compact />} >
+            <SchemaDialog
+                onUpdate={() => {}}
+                schema={props.schema}
+            />
+        </SafeClickWrapper>
     </Table.HeaderCell>;
 
-    const rows  = mapMap(props.items, (key, item) =>
-        <Table.Row key={key}>
+    let sort = extractSort(props.location.search);
+
+    // List of fields as table header
+    let headers = attrs.map(attr =>
+        <Table.HeaderCell
+            key={attr.name}
+            style={{cursor:"pointer"}}
+            onClick={ () => onHeaderClick(props, attr.name)}
+        >
+            { attr.name }
+
+            { sort && sort.key == attr.name && <Icon
+                name={sort.asc ? "sort up" : "sort down"}
+                style={{float:"right"}} />}
+
+        </Table.HeaderCell>);
+
+    const rows  = props.records.map(record =>
+        <Table.Row key={record["_id"] as string}>
             <Table.Cell collapsing key="actions" >
-                <EditDialog
-                    value={item}
-                    schema={props.schema}
-                    editMode={true}
-                    onUpdate={props.onUpdate}  />
+                <Button.Group basic>
+                    <SafeClickWrapper trigger={ <Button icon="edit" size="mini" basic compact /> }>
+                        <EditDialog
+                            value={record}
+                            schema={props.schema}
+                            create={false}
+                            onUpdate={props.onUpdate}  />
+                    </SafeClickWrapper>
+                    <Button icon="delete" size="mini" basic compact onClick={() => {
+                        if (confirm(_.confirm_delete)) {
+                            deleteItem(record._id).then(() => props.onDelete(record._id));
+                        }
+
+                    }} />
+                </Button.Group>
             </Table.Cell>
             {attrs.map(attr =>
                 <Table.Cell key={attr.name} >
                     <ValueHandler
                         editMode={false}
                         type={attr.type}
-                        value={ item[attr.name] }
+                        value={ record[attr.name] }
                         onValueChange={null}/>
                 </Table.Cell>)}
         </Table.Row>
     );
 
+    // Add item dilaog and button
+    let AddItemButton =
+        <SafeClickWrapper  trigger={
+            <Button primary style={{float:"left"}} >
+                <Icon name="plus" /> {_.add_item}
+            </Button>
+        }>
+            <EditDialog
+                value={{}}
+                schema={props.schema}
+                create={true}
+                onUpdate={props.onCreate}  />
+        </SafeClickWrapper>;
+
+
     return <Container>
 
-        <Button primary >
-            <Icon name="plus" />
-            {_.add_item}
-        </Button>
-
+        <div>
+        { AddItemButton }
+            <Input icon="search" style={{float:"right"}}/>
+        </div>
         <Table celled>
             <Table.Header>
                 <Table.Row>
@@ -99,17 +174,39 @@ const TableLayout: React.SFC<TableLayoutProps & TableDispatchProps> = (props) =>
     </Container>
 };
 
-// Connect table to redux store
-const matchDispatchToProps = (dispatch: Dispatch<{}> ) => ({
-    onUpdate : (newValue: {}) => dispatch(createAction(UPDATE_ITEM, newValue)),
-    onCreate : (newValue: {}) => dispatch(createAction(ADD_ITEM, newValue))
-});
 
-/** Connect table to redux store */
-export let ConnectedTableLayout = connect<TableLayoutProps, TableDispatchProps, {}>(
-    (state : IState) => ({
-        schema : state.schema,
-        items: state.items}),
+// Map state to props, sort items
+const mapStateToProps =(state : IState, routerProps: RouteComponentProps<{}>) : TableLayoutProps => {
+
+    // Flatten map of records
+    let records = mapMap(state.items,(key, item) => item) as Map[];
+
+    // Apply sort directive
+    let sort = extractSort(routerProps.location.search);
+    if (sort) {
+        sortBy(records,sort.key, !sort.asc);
+    } else {
+        // Default sort : creation time
+        sortBy(records,"_creationTime", true);
+    }
+
+    return {
+        schema: state.schema,
+        records: records}
+};
+
+// Send actions to redux store upon events
+const matchDispatchToProps = (dispatch: Dispatch<{}> ) => ({
+    onUpdate : (newValue: Record) => dispatch(createUpdateItemAction(newValue)),
+    onCreate : (newValue: Record) => dispatch(createAddItemAction(newValue)),
+    onDelete : (id:string) => dispatch(createDeleteAction(id))});
+
+// connect to redux
+let reduxTable = connect<TableLayoutProps, TableDispatchProps, RouteComponentProps<{}>>(
+    mapStateToProps,
     matchDispatchToProps
 )(TableLayout);
+
+// Inject route props
+export let TableComponent = withRouter<{}>(reduxTable);
 

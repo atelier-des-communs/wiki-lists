@@ -1,27 +1,90 @@
 import {StructType, BooleanType, Type, NumberType, Attribute, TextType} from "../../shared/model/types";
 import {IState} from "../../shared/redux";
+import {Map} from "../../shared/utils";
 
-export let schema = new StructType();
-schema.addAttribute(new Attribute("boolean", new BooleanType()));
-schema.addAttribute(new Attribute("text", new TextType()));
-schema.addAttribute(new Attribute("number", new NumberType()));
+import {MongoClient, Db, ObjectId} from "mongodb";
+import {Record} from "../../shared/model/instances";
 
-export let data = {
-    "1" : {
-        "_id" : 1,
-        "boolean": true,
-        "text": "foo",
-        "number": 123
-    },
-    "2" : {
-        "_id" : 2,
-        "boolean": false,
-        "text": "bar",
-        "number": 456
+const DB_HOST = "localhost";
+const DB_NAME = "codata";
+const DB_PORT = 27017;
+
+const DATABASES_COL ="schemas";
+const DATABASE_COL_TEMPLATE ="db.{name}";
+
+
+/* Singleton instance */
+class  Connection {
+    static client : MongoClient = null;
+    static async getDb() {
+        if (!this.client) {
+            this.client = await MongoClient.connect(`mongodb://${DB_HOST}:${DB_PORT}/`);
+        }
+        return this.client.db(DB_NAME);
     }
-};
 
-export const initialState : IState = {
-    items:data,
-    schema
-};
+    static async getDbCol(dbName : string) {
+        let db = await Connection.getDb();
+        return db.collection(dbName);
+    }
+}
+
+interface DbSchema {
+    name : string;
+    schema: StructType;
+}
+
+
+function firstSchema() {
+    let res = new StructType();
+    res.attributes.push({name:"boolean", type:new BooleanType()});
+    res.attributes.push({name:"text", type:new TextType()});
+    res.attributes.push({name:"number", type:new NumberType()});
+    return res;
+}
+
+export async function getSchema(dbName: string) : Promise<StructType> {
+    let db = await Connection.getDb();
+    let col = db.collection<DbSchema>(DATABASES_COL);
+    let schema = await col.findOne({name: dbName});
+    if (schema == null) {
+        await col.insertOne({name: dbName, schema: firstSchema});
+        return firstSchema();
+    } else {
+        return schema.schema;
+    }
+}
+
+export async function getAllRecords(dbName: string) : Promise<Record[]> {
+    let col = await Connection.getDbCol(dbName);
+    let cursor = await col.find();
+    return cursor.toArray();
+}
+
+export async function updateRecord(dbName: string, record : Record) : Promise<Record> {
+    let col = await Connection.getDbCol(dbName);
+    // let id = ObjectId.createFromHexString(record._id.replace("-", ""));
+    col.replaceOne({_id: record._id}, record);
+    return record;
+}
+
+
+export async function deleteRecord(dbName: string, id : string) : Promise<boolean> {
+    let col = await Connection.getDbCol(dbName);
+    let res = await col.deleteOne({"_id" : new ObjectId(id)});
+    return true;
+}
+
+
+export async function createRecord(dbName: string, record : Record) : Promise<Record> {
+    let col = await Connection.getDbCol(dbName);
+    if (record._id) {
+        throw new Error("New records shouldnot have _id yet");
+    }
+
+    record._creationTime = new Date();
+
+    let res = await col.insertOne(record);
+    record._id = res.insertedId.toHexString();
+    return record;
+}

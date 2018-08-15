@@ -3,7 +3,8 @@ var ExtractTextPlugin = require("extract-text-webpack-plugin");
 var shared = require("./webpack.shared.js");
 
 
-var client_dev_loaders = JSON.parse(JSON.stringify(shared.common_loaders));
+// Clone
+var client_dev_loaders = shared.common_loaders();
 
 client_dev_loaders["ts"].use.splice(0, 0, "react-hot-loader");
 client_dev_loaders["css"] = {
@@ -23,7 +24,7 @@ client_dev_loaders["scss"] = {
         "sass-loader"]
 };
 
-var loaders = shared.flatten_loaders(shared.common_loaders);
+var loaders = shared.flatten_loaders(client_dev_loaders);
 console.log("Dev Server loaders", loaders);
 
 
@@ -43,7 +44,7 @@ var client = {
         publicPath: "http://localhost:8081/"
     },
     module: {
-        rules: loaders
+        rules: shared.flatten_loaders(client_dev_loaders)(client_loaders)
     },
     resolve: {
         extensions: [".rt", ".js", ".jsx", ".ts", ".tsx"]

@@ -27,6 +27,7 @@ var common_loaders = {
     },
     "css":  {
         test: /\.css$/,
+        exclude: /node_modules/,
         loader: ExtractTextPlugin.extract({
             fallback: "style-loader",
             use: "css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]" })
@@ -56,7 +57,11 @@ function flatten_loaders(obj) {
 }
 
 exports.flatten_loaders = flatten_loaders;
-exports.common_loaders = common_loaders;
+
+/** Creates a copy of common loaders, safe to be updated */
+exports.common_loaders = function() {
+    return Object.assign({}, common_loaders);
+};
 
 
 

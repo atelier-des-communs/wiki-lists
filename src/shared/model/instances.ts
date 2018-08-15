@@ -1,6 +1,16 @@
 import {Type, BooleanType, StructType, TextType, NumberType} from "./types";
 import {Map} from "../utils";
 
+
+export interface Record {
+
+    _id?: string;
+    _creationTime?: Date;
+
+    // Other fields, defined by the schema of the table
+    [x:string]: any;
+}
+
 interface Value<T> {
     type: Type<T>;
     value: T;

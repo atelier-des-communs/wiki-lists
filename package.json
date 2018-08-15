@@ -7,13 +7,13 @@
 		"clean": "node ./bin/clean.js",
 		"postinstall": "npm run deploy",
 		"server": "node ./bin/server",
-		"build": "npm run clean && node ./bin/bundler/prod.js",
+		"build": "npm run clean && node ./bin/bundler/prod.js --json",
 		"deploy": "npm run build && npm run server",
 		"watch": "better-npm-run watch"
 	},
 	"betterScripts": {
 		"watch": {
-			"command": "npm run clean && node --inspect ./bin/bundler/dev.js  && concurrent \"node --inspect ./bin/server/hotReload.js \" \"nodemon ./bin/server --inspect --watch dist -e js,jsx,ts,tsx\" --kill-others",
+			"command": "npm run clean && node ./bin/bundler/dev.js  && concurrent \"node ./bin/server/hotReload.js \" \"nodemon --inspect ./bin/server --watch dist -e js,jsx,ts,tsx\" --kill-others",
 			"env": {
 				"NODE_ENV": "development"
 			}
@@ -26,10 +26,10 @@
 	"bugs": {
 		"url": "https://github.com/ayoubdev/reactjs-typescript-isomorphic-starterkit/issues"
 	},
-
 	"author": "Raphael Jolivet <contact@raphael-jolivet.name>",
 	"license": "MIT",
 	"devDependencies": {
+		"@types/mongodb": "^3.1.3",
 		"babel-plugin-root-import": "^6.1.0",
 		"concurrently": "^3.5.0",
 		"css-hot-loader": "^1.2.0",
@@ -38,20 +38,33 @@
 		"extract-text-webpack-plugin": "^2.1.2",
 		"file-loader": "^0.11.2",
 		"fs": "0.0.2",
+		"install": "^0.12.1",
+		"mini-css-extract-plugin": "^0.4.1",
 		"node-sass": "^4.5.3",
 		"nodemon": "^1.9.2",
+		"npm": "^6.3.0",
 		"react-hot-loader": "^1.3.0",
 		"sass-loader": "^6.0.6",
 		"style-loader": "^0.18.2",
 		"ts-loader": "^2.2.0",
 		"typescript": "^2.4.0",
 		"webpack": "^3.12.0",
-		"webpack-dev-server": "^2.5.0"
+		"webpack-dev-server": "^2.5.0",
+		"webpack-stats-plugin": "^0.2.1",
+		"webpack-visualizer-plugin": "^0.1.11"
 	},
 	"dependencies": {
+		"@types/array-sort": "^1.0.0",
+		"@types/axios": "^0.14.0",
+		"@types/body-parser": "^1.17.0",
+		"@types/compression": "0.0.36",
+		"@types/es6-promise": "^3.3.0",
+		"@types/express": "^4.16.0",
 		"@types/history": "^4.6.0",
 		"@types/node": "^8.0.2",
 		"@types/node-uuid": "0.0.28",
+		"@types/object-assign": "^4.0.30",
+		"@types/query-string": "^6.1.0",
 		"@types/react": "^15.0.31",
 		"@types/react-dom": "^15.5.1",
 		"@types/react-redux": "^4.4.45",
@@ -61,7 +74,11 @@
 		"@types/redux-devtools-dock-monitor": "^1.1.31",
 		"@types/redux-devtools-log-monitor": "^1.0.31",
 		"@types/redux-saga": "^0.10.5",
+		"@types/request-promise-native": "^1.0.15",
 		"@types/reselect": "^2.2.0",
+		"@types/seamless-immutable": "^7.1.2",
+		"array-sort": "^1.0.0",
+		"axios": "^0.18.0",
 		"babel-core": "^6.26.3",
 		"babel-loader": "^7.1.5",
 		"babel-preset-env": "^1.7.0",
@@ -71,7 +88,12 @@
 		"history": "^4.6.3",
 		"less": "^3.7.1",
 		"less-loader": "^4.1.0",
+		"mongodb": "^3.1.1",
 		"node-uuid": "^1.4.8",
+		"object-assign": "^4.1.1",
+		"promise-es6": "^0.1.0",
+		"query-string": "^6.1.0",
+		"querystring": "^0.2.0",
 		"react": "^16.4.2",
 		"react-dom": "^16.4.2",
 		"react-redux": "^5.0.5",
@@ -79,14 +101,17 @@
 		"react-router-dom": "^4.1.1",
 		"react-templates": "^0.6.3",
 		"react-templates-loader": "^0.6.5",
+		"react-wysiwyg-typescript": "^1.0.2",
 		"redux-devtools": "^3.4.0",
 		"redux-devtools-dock-monitor": "^1.1.2",
 		"redux-devtools-log-monitor": "^1.3.0",
 		"redux-saga": "^0.15.4",
 		"redux-saga-devtools": "^0.1.1",
+		"redux-seamless-immutable": "^0.4.0",
 		"reselect": "^3.0.1",
 		"rx-connect": "^0.6.1",
 		"rxjs": "^5.4.1",
+		"seamless-immutable": "^7.1.3",
 		"semantic-ui-less": "^2.3.3",
 		"semantic-ui-react": "^0.82.0"
 	}

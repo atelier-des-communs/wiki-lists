@@ -1,7 +1,7 @@
 var ExtractTextPlugin = require("extract-text-webpack-plugin");
 var shared = require("./webpack.shared.js");
 
-var loaders = shared.flatten_loaders(shared.common_loaders)
+var loaders = shared.common_loaders();
 console.log("Dev Server loaders", loaders);
 
 var server = {
@@ -22,7 +22,7 @@ var server = {
         libraryTarget: "commonjs2"
     },
     module: {
-        rules: loaders
+        rules: shared.flatten_loaders(loaders)
     },
     resolve: {
         extensions: [ ".rt", ".js", ".jsx", ".ts", ".tsx"]

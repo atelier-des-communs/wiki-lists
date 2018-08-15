@@ -9,11 +9,11 @@
 		"preserveConstEnums": true,
 		"experimentalDecorators": true,
 		"removeComments": true,
-		"sourceMap": true
+		"sourceMap": true,
+		"lib": ["es5", "ES2015.Promise", "dom", "scripthost"]
 	},
 	"files": [
-		"./src/server/index.tsx",
-		"./src/client/index.tsx",
-		"./src/custom.d.ts"
-	]
+		"./src/extra.d.ts",
+		"./src/server/index.ts",
+		"./src/client/index.tsx"]
 }
