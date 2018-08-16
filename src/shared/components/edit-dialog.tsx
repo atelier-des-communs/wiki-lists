@@ -17,17 +17,17 @@ interface EditDialogProps  {
 
 export class EditDialog extends React.Component<EditDialogProps> {
 
-    state : {
-        loading: boolean;
-        value:Record};
+    state : {loading: boolean};
+    record : any;
 
     constructor(props: EditDialogProps) {
         super(props);
 
         // Clone the input object : not modify it until we validate
-        this.state =  {
-            loading: false,
-            value: {...props.value}};
+        this.state =  {loading: false};
+
+        // copy of the record
+        this.record = {...props.value};
     }
 
     open() {
@@ -45,8 +45,8 @@ export class EditDialog extends React.Component<EditDialogProps> {
 
         // Async POST of new values
         let payload =  this.props.create ?
-            await createItem(this.state.value) :
-            await updateItem(this.state.value);
+            await createItem(this.record) :
+            await updateItem(this.record);
 
         // Update local state
         this.props.onUpdate(payload);
@@ -58,17 +58,18 @@ export class EditDialog extends React.Component<EditDialogProps> {
             // Loop on schema attributes
             let fields = this.props.schema.attributes.map(attr => {
 
-                // Update state for this field upon change
+                // Update record for this field upon change
+                // Don't update state : we don't want a redraw here
                 let callback = (newValue: any) => {
-                    this.state.value[attr.name] = newValue;
-                    this.setState(this.state);
+                    this.record[attr.name] = newValue;
+                    console.log("Record edit updated", this.record);
                 }
 
-                return <Form.Field>
+                return <Form.Field key={attr.name}>
                     <label>{attr.name}</label>
                     <ValueHandler
                         editMode={true}
-                        value={this.state.value[attr.name]}
+                        value={this.record[attr.name]}
                         type={attr.type}
                         onValueChange={callback}
                     />

@@ -14,9 +14,7 @@ import {returnPromise} from "./utils";
 
 
 
-const CLIENT_SCRIPT_URL =
-    (process.env.NODE_ENV === "production") ?
-	'/client.bundle.js' : 'http://localhost:8081/client.bundle.js';
+const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '' : 'http://localhost:8081';
 
 function renderHtml(url: string, store: Store<IState> ) {
 
@@ -35,6 +33,7 @@ function renderHtml(url: string, store: Store<IState> ) {
 				<meta charset="UTF-8">
 				<title>React Isomorphic Starter Kit</title>
 				<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.css" />
+				<link rel="stylesheet" href="${BUNDLE_ROOT}/client.bundle.css" />
 			</head>
 		
 			<body>
@@ -43,7 +42,7 @@ function renderHtml(url: string, store: Store<IState> ) {
 					// Marchall store state in place
 					window.__INITIAL_STATE__ = ${JSON.stringify(store.getState())};
 				</script>
-				<script src="${CLIENT_SCRIPT_URL}"></script>
+				<script src="${BUNDLE_ROOT}/client.bundle.js"></script>
 			</body>
 		</html>`
 }

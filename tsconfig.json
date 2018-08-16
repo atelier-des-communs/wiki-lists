@@ -12,6 +12,9 @@
 		"sourceMap": true,
 		"lib": ["es5", "ES2015.Promise", "dom", "scripthost"]
 	},
+	"typings" : [
+		"./src/rte.d.ts"
+	],
 	"files": [
 		"./src/extra.d.ts",
 		"./src/server/index.ts",

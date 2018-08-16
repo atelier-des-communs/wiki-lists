@@ -63,8 +63,13 @@ export async function getAllRecords(dbName: string) : Promise<Record[]> {
 
 export async function updateRecord(dbName: string, record : Record) : Promise<Record> {
     let col = await Connection.getDbCol(dbName);
-    // let id = ObjectId.createFromHexString(record._id.replace("-", ""));
-    col.replaceOne({_id: record._id}, record);
+
+    let copy = { ...record} as any;
+    copy._id = new ObjectId(record._id);
+    let res = await col.replaceOne({_id: copy._id}, copy);
+    if (res.matchedCount != 1) {
+        throw Error(`No item matched for id : ${record._id}`);
+    }
     return record;
 }
 
@@ -72,6 +77,9 @@ export async function updateRecord(dbName: string, record : Record) : Promise<Re
 export async function deleteRecord(dbName: string, id : string) : Promise<boolean> {
     let col = await Connection.getDbCol(dbName);
     let res = await col.deleteOne({"_id" : new ObjectId(id)});
+    if (res.deletedCount != 1) {
+        throw Error(`No record deleted with id: ${id}`);
+    }
     return true;
 }
 

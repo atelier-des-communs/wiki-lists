@@ -5,13 +5,20 @@ import * as path from "path";
 import {setUp as setUpRest} from "./rest";
 import {setUp as setUpHtml} from "./html";
 
-var server = express();
-server.use(compression({ threshold: 0 }));
-server.use(bodyParser.json());
-server.use(express.static(path.resolve(__dirname, "..", "..", "..", "dist", "client")));
 
 
-setUpHtml(server);
-setUpRest(server);
 
-export default server;
+export default function server(dist_path:string) {
+
+    var server = express();
+    server.use(compression({ threshold: 0 }));
+    server.use(bodyParser.json());
+
+    console.log("dist_path", dist_path);
+    server.use(express.static(dist_path));
+
+    setUpHtml(server);
+    setUpRest(server);
+
+    return server;
+}

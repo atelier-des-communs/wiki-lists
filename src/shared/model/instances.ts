@@ -1,5 +1,6 @@
 import {Type, BooleanType, StructType, TextType, NumberType} from "./types";
 import {Map} from "../utils";
+import {ObjectId} from "mongodb";
 
 
 export interface Record {

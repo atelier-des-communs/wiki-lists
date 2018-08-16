@@ -133,8 +133,7 @@ const TableLayout: React.SFC<TableProps> = (props) => {
                     <ValueHandler
                         editMode={false}
                         type={attr.type}
-                        value={ record[attr.name] }
-                        onValueChange={null}/>
+                        value={ record[attr.name] } />
                 </Table.Cell>)}
         </Table.Row>
     );
@@ -157,8 +156,11 @@ const TableLayout: React.SFC<TableProps> = (props) => {
     return <Container>
 
         <div>
-        { AddItemButton }
+
+            { AddItemButton }
+
             <Input icon="search" style={{float:"right"}}/>
+
         </div>
         <Table celled>
             <Table.Header>

@@ -1,14 +1,30 @@
-var ExtractTextPlugin = require("extract-text-webpack-plugin");
+var MiniCssExtractPlugin = require('mini-css-extract-plugin');
 var shared = require("./webpack.shared.js");
 
 var loaders = shared.common_loaders();
 console.log("Dev Server loaders", loaders);
 
+
+loaders["css"] = {
+    test: /\.css$/,
+    exclude: /node_modules/,
+    loader: 'css-loader/locals?module&localIdentName=[name]__[local]___[hash:base64:5]'
+};
+
+loaders["css_external"] = {
+    test: /\.css$/,
+    include: /node_modules/,
+    loader: 'css-loader/locals'
+};
+
+
+
 var server = {
     name: "dev.server",
     target: "node",
+    mode:"development",
     externals: [
-        /^[a-z\-0-9]+$/, {
+        {
             "react-dom/server": true
         }
     ],
@@ -28,7 +44,7 @@ var server = {
         extensions: [ ".rt", ".js", ".jsx", ".ts", ".tsx"]
     },
     plugins: [
-        new ExtractTextPlugin("[name].css")
+        new MiniCssExtractPlugin("[name].css")
     ]
 };
 

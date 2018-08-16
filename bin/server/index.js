@@ -1,9 +1,19 @@
+
+// Used to fake document && window for some react components that are not SSR ready
+require('jsdom-global')()
+
 var express = require("express");
 var compress = require("compression");
 var path = require("path");
-var server = require("../../dist/server/server.bundle.js").default;
+var initServer = require("../../dist/server/server.bundle.js").default;
 
 const port = process.env.PORT || 8082;
+
+
+let dist_path = path.resolve(__dirname, "..", "..", "dist", "client");
+
+var server = initServer(dist_path);
+
 server.listen(port, function() {
 	var host = this.address().address;
 	console.log("Server launched at http://%s:%s", host, port);

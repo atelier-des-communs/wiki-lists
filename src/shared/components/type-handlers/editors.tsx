@@ -1,82 +1,180 @@
 import * as React from "react";
 import {Types, BooleanType, NumberType, TextType, Type, EnumType} from "../../model/types";
-import {Checkbox, Input, Dropdown, Label, FormSelect} from "semantic-ui-react";
-import Draft, { htmlToDraft, draftToHtml} from 'react-wysiwyg-typescript';
+import {Checkbox, Input, Dropdown, Label, FormSelect, Button} from "semantic-ui-react";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 
 interface ValueHandlerProps<T, TypeT extends Type<T>> {
     editMode: boolean;
     type: TypeT
     value:T;
-    onValueChange : (value:T) => void;
+    onValueChange? : (value:T) => void;
 }
 
 
-/** Handy type for stateless components showing a value */
-type ValueHandlerType<T, TypeT extends Type<T>> = React.SFC<ValueHandlerProps<T, TypeT>>;
+/** Generic wrapper hanlding transformation of internal state */
+abstract class ControlledValueHandler<T, TypeT extends Type<T>> extends React.Component<ValueHandlerProps<T, TypeT>> {
+    state : {
+        innerValue:any,
+        [key:string]: any};
 
-let booleanHandler : ValueHandlerType<boolean, BooleanType> = (props) =>
-    <Checkbox
-        disabled={!props.editMode}
-        checked={props.value}
-        onChange={
-            (e, data) => props.onValueChange(data.checked)}>
-    </Checkbox>
+    constructor(props: ValueHandlerProps<T, TypeT>) {
+        super(props);
+        this.state = {innerValue:this.toInnerValue(this.props.value)};
+    }
 
-let textHandler : ValueHandlerType<string, TextType> = (props) => {
-    if (props.editMode) {
-        if (props.type.rich) {
-            return <Draft
-                editorState={htmlToDraft(props.value)}
-                onEditorStateChange={editorState => this.onValueChange(draftToHtml(editorState))} />
+    // By default value and inner value are the same
+    extractValue(innerValue:any) : T {
+        return innerValue as T;
+    }
+
+    toInnerValue(value:any) {
+        // By default copy inner value
+        return value;
+    }
+
+    onChange(newInnerValue:any) {
+        this.setState({innerValue:newInnerValue});
+        this.props.onValueChange(this.extractValue(newInnerValue));
+    }
+
+    render() {
+        if (this.props.editMode) {
+            return this.renderEdit();
         } else {
-            return <Input
-                value={props.value}
-                onChange={(e, data) => props.onValueChange(data.value)}/>
+            return this.renderView();
         }
-    } else {
-        return <div>{props.value}</div>
+    }
+
+    componentWillReceiveProps(nextProps : any) {
+        if ("value" in nextProps && this.toInnerValue(this.props.value) != this.toInnerValue(nextProps)) {
+            this.setState({innerValue:this.toInnerValue(nextProps.value)})
+        }
+    }
+
+    abstract renderEdit() : JSX.Element | null | false;
+    abstract renderView(): JSX.Element | null | false;
+}
+
+
+class BooleanHandler extends ControlledValueHandler<boolean, BooleanType>{
+
+    private renderCheckBox(edit:boolean) {
+        return <Checkbox
+            disabled={!edit}
+            checked={this.state.innerValue}
+            onChange={ (e, data) => this.onChange(data.checked)}>
+        </Checkbox>
+    }
+
+    renderEdit() {
+        return this.renderCheckBox(true);
+    }
+    renderView() {
+        return this.renderCheckBox(false);
     }
 }
 
-let numberHandler : ValueHandlerType<number, NumberType> = (props) =>
-    props.editMode ?
-        <Input
-            value={props.value}
+
+
+class SimpleTextHandler extends ControlledValueHandler<string, TextType> {
+    renderView() {
+        return <span>{this.state.innerValue}</span>
+    }
+    renderEdit() {
+        return <Input
+            value={this.state.innerValue}
+            onChange={(e, data) => this.onChange(data.value)} />;
+    }
+}
+
+class RichTextHandler extends ControlledValueHandler<string, TextType> {
+    constructor(props: ValueHandlerProps<string, TextType>) {
+        super(props);
+        this.state.expanded = false;
+    }
+
+    toggleExpand =  () => {
+        this.setState({expanded: !this.state.expanded});
+    }
+
+    renderEdit() {
+        return <ReactQuill value={this.state.innerValue}
+                    onChange={(value) => this.onChange(value)} />
+    }
+
+    renderView() {
+
+            let style = {overflow:"hidden"} as any;
+            if (!this.state.expanded) {
+                style.maxHeight = "2em";
+            }
+
+            return <div style={style}>
+                <Button
+                    icon={this.state.expanded ? "chevron up" : "chevron down"}
+                    size="mini"
+                    basic round compact
+                    style={{float:"right"}}
+                    onClick={this.toggleExpand}/>
+                <div dangerouslySetInnerHTML={{__html: this.state.innerValue }} />
+            </div>
+    }
+}
+
+
+class NumberHandler extends ControlledValueHandler<number, NumberType> {
+    renderView() {
+        return <span>{this.state.innerValue}</span>
+    }
+    extractValue(value:any) {
+        return value ? parseInt(value) : 0;
+    }
+    toInnerValue(value:any) {
+        return value ? parseInt(value) : 0;
+    }
+    renderEdit() {
+        return <Input
+            value={this.state.innerValue}
             type="number"
-            onChange={(e, data) =>
-                props.onValueChange(parseInt(data.value))} /> :
-        <span>{props.value}</span>
+            onChange={(e, data) => this.onChange(data.value)} />;
+    }
+}
 
-let enumHandler : ValueHandlerType<string, EnumType> = (props) => {
-    if (props.editMode) {
-        let valuesWithEmpty = [ {value:null}, ...props.type.values];
+class EnumHandler extends ControlledValueHandler<string, EnumType> {
+    renderView() {
+        return this.state.innerValue ? <Label>{this.state.innerValue}</Label> : null;
+    }
+    renderEdit() {
+        let valuesWithEmpty = [ {value:null}, ...this.props.type.values];
         let options = valuesWithEmpty.map(enumVal => ({
-                text:enumVal.value,
-                value:enumVal.value}));
-
+            text:enumVal.value,
+            value:enumVal.value}));
 
         return <FormSelect
-            value={props.value}
+            value={this.state.innerValue}
             options={options}
-            onChange={(e, data) =>
-                props.onValueChange(data.value as string)} />
-    } else {
-        return props.value ? <Label>{props.value}</Label> : null;
+            onChange={(e, data) => this.onChange(data.value)} />
     }
 }
 
+
 /** Generic value handler, making the switch */
-export const ValueHandler : ValueHandlerType<any, any> = (props) => {
+export const ValueHandler = (props: ValueHandlerProps<any, any>) => {
     switch(props.type.tag) {
         case Types.BOOLEAN :
-            return booleanHandler(props);
+            return <BooleanHandler {...props} />;
         case Types.TEXT :
-            return textHandler(props);
+            if (props.type.rich) {
+                return <RichTextHandler {...props} />;
+            } else {
+                return <SimpleTextHandler {...props} />;
+            }
         case Types.NUMBER :
-            return numberHandler(props);
+            return <NumberHandler {...props} />;
         case Types.ENUM:
-            return enumHandler(props);
+            return <EnumHandler {...props} />;
         default:
             throw new Error( `Type not supported : ${props.type.tag}`);
     }

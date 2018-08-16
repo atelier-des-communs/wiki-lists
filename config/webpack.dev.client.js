@@ -1,40 +1,28 @@
 var webpack = require("webpack");
-var ExtractTextPlugin = require("extract-text-webpack-plugin");
 var shared = require("./webpack.shared.js");
-
+var MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 // Clone
-var client_dev_loaders = shared.common_loaders();
+var loaders = shared.common_loaders();
 
-client_dev_loaders["ts"].use.splice(0, 0, "react-hot-loader");
-client_dev_loaders["css"] = {
+// loaders["ts"].use.splice(0, 0, "react-hot-loader");
+
+// Client loader for CSS
+loaders["css_external"] = {
     test: /\.css$/,
-    use: [
-        "css-hot-loader",
-        "style-loader",
-        "css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]"
-    ]
+    include: /node_modules/,
+    use: [MiniCssExtractPlugin.loader, 'css-loader'],
 };
-client_dev_loaders["scss"] = {
-    test: /\.scss$/,
-    use: [
-        "css-hot-loader",
-        "style-loader",
-        "css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]",
-        "sass-loader"]
-};
-
-var loaders = shared.flatten_loaders(client_dev_loaders);
-console.log("Dev Server loaders", loaders);
 
 
 var client = {
     name: "dev.client",
     target: "web",
+    mode:"development",
     entry: {
         "client.bundle": [
-            "webpack/hot/only-dev-server",
-            "webpack-dev-server/client?http://localhost:8081",
+            // "webpack/hot/only-dev-server",
+            // "webpack-dev-server/client?http://localhost:8081",
             shared.APP_DIR + "/client"
         ]
     },
@@ -44,16 +32,17 @@ var client = {
         publicPath: "http://localhost:8081/"
     },
     module: {
-        rules: shared.flatten_loaders(client_dev_loaders)(client_loaders)
+        rules: shared.flatten_loaders(loaders)
     },
     resolve: {
         extensions: [".rt", ".js", ".jsx", ".ts", ".tsx"]
     },
     plugins: [
-        new webpack.HotModuleReplacementPlugin(),
+        // new webpack.HotModuleReplacementPlugin(),
         new webpack.DefinePlugin({
             'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
-        })
+        }),
+        new MiniCssExtractPlugin("name.css")
     ]
 };
 

@@ -1,5 +1,5 @@
 var path = require("path");
-var ExtractTextPlugin = require("extract-text-webpack-plugin");
+var MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 exports.CLIENT_BUILD_DIR = path.resolve(__dirname, "..", "dist", "client");
 exports.SERVER_BUILD_DIR = path.resolve(__dirname, "..", "dist", "server");
@@ -28,16 +28,9 @@ var common_loaders = {
     "css":  {
         test: /\.css$/,
         exclude: /node_modules/,
-        loader: ExtractTextPlugin.extract({
-            fallback: "style-loader",
-            use: "css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]" })
-    },
-    "scss" : {
-        test: /\.scss$/,
-        loader: ExtractTextPlugin.extract({
-            fallback: "style-loader",
-            use: "css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]!sass-loader" })
-    },
+        use: [
+            MiniCssExtractPlugin.loader,
+            "css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]"]},
     "img" : {
         test: /\.(jp[e]?g|png|gif|svg)$/i,
         loader: "file-loader?name=img/[name].[ext]"

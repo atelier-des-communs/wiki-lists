@@ -55,7 +55,7 @@ export class SafeClickWrapper extends React.Component<SafeWrapperProps> {
     render() {
         let trigger = React.cloneElement(
             this.props.trigger,
-            {onClick: () => this.open()});
+            {onClick: () => {this.open()}});
 
         let children = this.state.open ?
             React.Children.map(this.props.children,
@@ -79,3 +79,5 @@ export const SafePopup : React.SFC<PopupProps> = (props) =>
             {props.children}
         </Popup>
     </SsrSafe>
+
+
