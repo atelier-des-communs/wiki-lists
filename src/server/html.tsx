@@ -11,6 +11,8 @@ import {Store} from "react-redux";
 import {arrayToMap, toImmutable} from "../shared/utils";
 import {Request, Express} from "express";
 import {returnPromise} from "./utils";
+import {Workbook} from "exceljs";
+import {searchAndFilter} from "../shared/views/filters";
 
 
 
@@ -71,7 +73,37 @@ export async function index(req: Request): Promise<string> {
 
 }
 
+async function getAllWithFilters(req:any) : Promise<any> {
+    let schema = await getSchema(MY_DB_NAME);
+    let records = await getAllRecords(MY_DB_NAME);
+    return searchAndFilter(records, req.query, schema);
+}
+
+async function toExcel(req:any, res:any): Promise<any> {
+    let schema = await getSchema(MY_DB_NAME);
+    let records = await getAllWithFilters(req);
+
+    var workbook = new Workbook();
+    let worksheet = workbook.addWorksheet("main");
+    worksheet.columns = schema.attributes.map(attr => ({header:attr.name, key:attr.name}));
+    for (let record  of records) {
+        worksheet.addRow(record);
+    }
+    res.setHeader("Content-Disposition", 'attachment; filename="export.xls"');
+    res.setHeader("Content-Type", 'application/vnd.ms-excel');
+    return workbook.xlsx.write(res);
+}
+
 export function setUp(server : Express) {
+
+    server.get("/json", function(req, res) {
+        returnPromise(res, getAllWithFilters(req));
+    });
+
+    server.get("/xls", function(req, res) {
+        toExcel(req, res).then();
+    });
+
     server.get("*", function(req, res) {
         let html = index(req);
         returnPromise(res, html);

@@ -1,7 +1,7 @@
 import * as React from "react";
 import {_} from "../i18n/messages";
 import {StructType} from "../model/types";
-import {Modal, Header, Button, Icon, Segment, SegmentGroup, Form} from "semantic-ui-react";
+import {Modal, Header, Button, Icon, Segment, SegmentGroup, Form, List} from "semantic-ui-react";
 import {Map} from "../utils";
 import {ValueHandler} from "./type-handlers/editors";
 import {createItem, updateItem} from "../rest/client";
@@ -74,10 +74,13 @@ export class EditDialog extends React.Component<EditDialogProps> {
                         onValueChange={callback}
                     />
                 </Form.Field>
+
             });
 
-            return <Modal open={true}>
-                <Header icon='edit' content={_.edit_item}/>
+            return <Modal
+                open={true}
+                onClose={()=> this.props.close() } >
+                <Header icon='edit' content={this.props.create? _.add_item : _.edit_item}/>
                 <Modal.Content>
                     <Form>
                         {fields}

@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Types, BooleanType, NumberType, TextType, Type, EnumType} from "../../model/types";
-import {Checkbox, Input, Dropdown, Label, FormSelect, Button} from "semantic-ui-react";
+import {Checkbox, Input, Dropdown, Label, FormSelect, Button, Icon, TextArea} from "semantic-ui-react";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
@@ -60,19 +60,14 @@ abstract class ControlledValueHandler<T, TypeT extends Type<T>> extends React.Co
 
 class BooleanHandler extends ControlledValueHandler<boolean, BooleanType>{
 
-    private renderCheckBox(edit:boolean) {
+    renderEdit() {
         return <Checkbox
-            disabled={!edit}
             checked={this.state.innerValue}
             onChange={ (e, data) => this.onChange(data.checked)}>
         </Checkbox>
     }
-
-    renderEdit() {
-        return this.renderCheckBox(true);
-    }
     renderView() {
-        return this.renderCheckBox(false);
+        return <Icon name={this.state.innerValue ? "check" : "times"} />
     }
 }
 
@@ -83,7 +78,7 @@ class SimpleTextHandler extends ControlledValueHandler<string, TextType> {
         return <span>{this.state.innerValue}</span>
     }
     renderEdit() {
-        return <Input
+        return <TextArea
             value={this.state.innerValue}
             onChange={(e, data) => this.onChange(data.value)} />;
     }
@@ -100,26 +95,26 @@ class RichTextHandler extends ControlledValueHandler<string, TextType> {
     }
 
     renderEdit() {
-        return <ReactQuill value={this.state.innerValue}
-                    onChange={(value) => this.onChange(value)} />
+        return <ReactQuill value={this.state.innerValue || ""}
+                    onChange={(content, delta, source, editor) => this.onChange(editor.getHTML())} />
     }
 
     renderView() {
 
-            let style = {overflow:"hidden"} as any;
+           /* let style = {overflowY:"hidden"} as any;
             if (!this.state.expanded) {
                 style.maxHeight = "2em";
-            }
+            } */
 
-            return <div style={style}>
-                <Button
+
+                /* <Button
                     icon={this.state.expanded ? "chevron up" : "chevron down"}
                     size="mini"
-                    basic round compact
+                    basic circular compact
                     style={{float:"right"}}
-                    onClick={this.toggleExpand}/>
-                <div dangerouslySetInnerHTML={{__html: this.state.innerValue }} />
-            </div>
+                    onClick={this.toggleExpand}/> */
+        return    <div dangerouslySetInnerHTML={{__html: this.state.innerValue }} />
+
     }
 }
 

@@ -28,9 +28,7 @@ var common_loaders = {
     "css":  {
         test: /\.css$/,
         exclude: /node_modules/,
-        use: [
-            MiniCssExtractPlugin.loader,
-            "css-loader?modules&localIdentName=[path]-[name]_[local]-[hash:base64:5]"]},
+        use: [MiniCssExtractPlugin.loader, "css-loader"]},
     "img" : {
         test: /\.(jp[e]?g|png|gif|svg)$/i,
         loader: "file-loader?name=img/[name].[ext]"

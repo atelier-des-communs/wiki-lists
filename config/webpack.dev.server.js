@@ -8,7 +8,7 @@ console.log("Dev Server loaders", loaders);
 loaders["css"] = {
     test: /\.css$/,
     exclude: /node_modules/,
-    loader: 'css-loader/locals?module&localIdentName=[name]__[local]___[hash:base64:5]'
+    loader: 'css-loader'
 };
 
 loaders["css_external"] = {

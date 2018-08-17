@@ -65,10 +65,11 @@ export class SafeClickWrapper extends React.Component<SafeWrapperProps> {
 
 
         // Placeholder, shown anyway
-        return <div>
-            {trigger}
-            {children}
-        </div>;
+        if (this.state.open) {
+            return  <span>{trigger} {children}</span>;
+        } else {
+            return trigger;
+        }
     }
 }
 

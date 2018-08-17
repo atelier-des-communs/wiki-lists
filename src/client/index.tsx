@@ -6,6 +6,7 @@ import "../shared/favicon.ico";
 import {createStore} from "redux";
 import {IState, reducers} from "../shared/redux";
 import {toImmutable} from "../shared/utils";
+import "./index.css";
 
 
 /** Initial state of the store has been serialized for us by server side rendering */

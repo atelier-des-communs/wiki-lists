@@ -7,8 +7,7 @@ import {setUp as setUpHtml} from "./html";
 
 
 
-
-export default function server(dist_path:string) {
+export default function initServer(dist_path:string) {
 
     var server = express();
     server.use(compression({ threshold: 0 }));

@@ -10,7 +10,7 @@ var client_loaders = shared.common_loaders();
 server_loaders["css"] = {
     test: /\.css$/,
     exclude: /node_modules/,
-    loader: 'css-loader/locals?module&localIdentName=[name]__[local]___[hash:base64:5]'
+    loader: 'css-loader'
 };
 
 // Server build needs a loader to handle external .css files

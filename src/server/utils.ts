@@ -9,6 +9,6 @@ export function returnPromise(res: Express.Response, promise: Promise<{}>) {
     catch(
         reason => {
             console.log("Error occured", reason);
-            res.status(500).send(reason);
+            res.status(500).send(reason.message);
         });
 }
