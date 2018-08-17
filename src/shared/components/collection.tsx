@@ -88,7 +88,7 @@ const CollectionComponent: React.SFC<CollectionProps> = (props) => {
     let dbName = getDbName(props);
     let xls_link = DOWNLOAD_XLS_URL.replace(":db_name", dbName) +
         props.location.search;
-    let json_link = DOWNLOAD_JSON_URL.replace(":db_name", dbName +
+    let json_link = DOWNLOAD_JSON_URL.replace(":db_name", dbName) +
         props.location.search;
 
     let DownloadButton= <SafePopup trigger={<Button icon="download" basic />} >
