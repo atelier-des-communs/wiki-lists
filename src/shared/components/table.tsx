@@ -43,7 +43,7 @@ const TableComponent: React.SFC<TableProps> = (props) => {
     let columnsHeader = <Table.HeaderCell collapsing key="menu" >
         <SafeClickWrapper trigger={<Button icon="columns" size="mini" basic compact />} >
             <SchemaDialog
-                onUpdate={(newSchema) => {props.onUpdateSchema(newSchema)}}
+                onUpdate={props.onUpdateSchema}
                 schema={props.schema}
             />
         </SafeClickWrapper>
@@ -79,9 +79,8 @@ const TableComponent: React.SFC<TableProps> = (props) => {
                     </SafeClickWrapper>
                     <Button icon="delete" size="mini" basic compact onClick={() => {
                         if (confirm(_.confirm_delete)) {
-                            deleteItem(record._id).then(() => props.onDelete(record._id));
+                            props.onDelete(record._id);
                         }
-
                     }} />
                 </Button.Group>
             </Table.Cell>

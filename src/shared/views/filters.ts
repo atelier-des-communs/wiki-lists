@@ -1,10 +1,20 @@
 import {arrayToMap, empty, eqSet, isIn, Map, mapMap} from "../utils";
 import {Attribute, attributesMap, EnumType, StructType, Types} from "../model/types";
 import {Record} from "../model/instances";
-import normalize from "normalize-text";
+// import normalize from "normalize-text";
 import {applySort, extractSort} from "./sort";
 
 const FILTER_PATTERN = `{attr}.f`;
+
+
+// FIXME normalize seemsto break server
+function normalize(value:string) {
+    if (!value) {
+        return "";
+    } else {
+        return value.toLowerCase();
+    }
+}
 
 interface IFilter {
     attr:Attribute;

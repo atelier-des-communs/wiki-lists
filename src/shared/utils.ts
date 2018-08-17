@@ -117,3 +117,11 @@ export function copyArr(arr:string[]) {
 export function empty(a: any) {
     return typeof(a) == "undefined" || a == null || a == "";
 }
+
+// Fixme : dirty. Use globl context to inject dbName instead
+const DB_URL_PATTERN = /.*db\/([a-zA-Z0-9\-_]*).*/;
+export function getDbName(props: RouteComponentProps<{}>) : string {
+    let path = props.location.pathname;
+    let match = DB_URL_PATTERN.exec(path);
+    return match[1];
+}

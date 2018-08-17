@@ -3,37 +3,46 @@ import * as React from "react";
 import { renderToString } from "react-dom/server";
 import { StaticRouter } from "react-router";
 import {createStore } from "redux";
-import {ReduxApp} from "../shared/app";
+import {IMarshalledContext, MainApp} from "../shared/app";
 import "../shared/favicon.ico";
 import {IState, reducers} from "../shared/redux";
-import {getAllRecords, getSchema} from "./db/db";
+import {getAllRecordsDb, getSchema} from "./db/db";
 import {Store} from "react-redux";
-import {arrayToMap, toImmutable} from "../shared/utils";
-import {Request, Express} from "express";
+import {arrayToMap, Map, toImmutable} from "../shared/utils";
+import {Express} from "express";
 import {returnPromise} from "./utils";
 import {Workbook} from "exceljs";
 import {searchAndFilter} from "../shared/views/filters";
+import {Request, Response} from "express-serve-static-core"
+import {_} from "../shared/i18n/messages";
+import {DOWNLOAD_JSON_URL, DOWNLOAD_XLS_URL} from "../shared/rest/api";
 
 
 
 const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '' : 'http://localhost:8081';
 
-function renderHtml(url: string, store: Store<IState> ) {
+function renderHtml(dbName:string, url: string, store: Store<IState> ) {
 
     let app = <StaticRouter
         location={url}
         context={{}}>
 
-        <ReduxApp store={store} />
+        <MainApp store={store} />
     </StaticRouter>
 
 	let appHTML = renderToString(app);
+
+    let context : IMarshalledContext = {
+        state : store.getState(),
+        dbName : dbName,
+        env: process.env.NODE_ENV
+    };
 
 	return `<!DOCTYPE html>
 		<html>
 			<head>
 				<meta charset="UTF-8">
-				<title>React Isomorphic Starter Kit</title>
+				<title>${_.daadle_title}</title>
 				<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.css" />
 				<link rel="stylesheet" href="${BUNDLE_ROOT}/client.bundle.css" />
 			</head>
@@ -42,19 +51,18 @@ function renderHtml(url: string, store: Store<IState> ) {
 				<div id="app">${appHTML}</div>
 				<script>
 					// Marchall store state in place
-					window.__INITIAL_STATE__ = ${JSON.stringify(store.getState())};
+					window.__MARSHALLED_CONTEXT__ = ${JSON.stringify(context)};
 				</script>
 				<script src="${BUNDLE_ROOT}/client.bundle.js"></script>
 			</body>
 		</html>`
 }
 
-export let MY_DB_NAME = "mydb";
 
-export async function index(req: Request): Promise<string> {
+export async function index(db_name:string, req: Request): Promise<string> {
 
-    let schema = await getSchema(MY_DB_NAME);
-    let records = await getAllRecords(MY_DB_NAME);
+    let schema = await getSchema(db_name);
+    let records = await getAllRecordsDb(db_name);
 
     console.log("been there", schema);
 
@@ -69,19 +77,19 @@ export async function index(req: Request): Promise<string> {
         reducers,
         toImmutable(state));
 
-    return renderHtml(req.url, store);
+    return renderHtml(db_name, req.url, store);
 
 }
 
-async function getAllWithFilters(req:any) : Promise<any> {
-    let schema = await getSchema(MY_DB_NAME);
-    let records = await getAllRecords(MY_DB_NAME);
-    return searchAndFilter(records, req.query, schema);
+async function getAllWithFilters(db_name:string, query:Map<string>) : Promise<any> {
+    let schema = await getSchema(db_name);
+    let records = await getAllRecordsDb(db_name);
+    return searchAndFilter(records, query, schema);
 }
 
-async function toExcel(req:any, res:any): Promise<any> {
-    let schema = await getSchema(MY_DB_NAME);
-    let records = await getAllWithFilters(req);
+async function toExcel(db_name:string, req:any, res:any): Promise<any> {
+    let schema = await getSchema(db_name);
+    let records = await getAllWithFilters(db_name, req.query);
 
     var workbook = new Workbook();
     let worksheet = workbook.addWorksheet("main");
@@ -96,16 +104,18 @@ async function toExcel(req:any, res:any): Promise<any> {
 
 export function setUp(server : Express) {
 
-    server.get("/json", function(req, res) {
-        returnPromise(res, getAllWithFilters(req));
+    server.get(DOWNLOAD_JSON_URL, function(req:Request, res:Response) {
+        returnPromise(res, getAllWithFilters(
+            req.params.db_name,
+            req.query));
     });
 
-    server.get("/xls", function(req, res) {
-        toExcel(req, res).then();
+    server.get(DOWNLOAD_XLS_URL, function(req:Request, res:Request) {
+        toExcel(req.params.db_name, req, res).then();
     });
 
-    server.get("*", function(req, res) {
-        let html = index(req);
+    server.get("/db/:db_name", function(req:Request, res:Response) {
+        let html = index(req.params.db_name, req);
         returnPromise(res, html);
     });
 }

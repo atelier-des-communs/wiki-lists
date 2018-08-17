@@ -12,7 +12,7 @@ export interface ReduxProps {
 
 /** Event handler props injected by react redux */
 export interface CollectionEventProps {
-    onUpdateSchema : (schema:StructType) => void,
-    onUpdate: (newValue : Record) => void,
-    onCreate: (newValue : Record) => void,
-    onDelete: (id : string) => void}
+    onUpdateSchema : (schema:StructType) => Promise<void>,
+    onUpdate: (newValue : Record) => Promise<void>,
+    onCreate: (newValue : Record) => Promise<void>,
+    onDelete: (id : string) => Promise<void>}

@@ -1,4 +1,7 @@
 export class IMessages {
+
+    daadle_title = "Daadle : Instant structured data authoring, for human beings";
+
     add_item = "Add item";
     edit_item = "Edit item";
     columns = "Columns";

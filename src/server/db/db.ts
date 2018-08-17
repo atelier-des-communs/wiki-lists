@@ -74,7 +74,7 @@ function validateSchema(schema:StructType) {
     }
 }
 
-export async function updateSchema(dbName: string, schema:StructType) : Promise<StructType> {
+export async function updateSchemaDb(dbName: string, schema:StructType) : Promise<StructType> {
     let db = await Connection.getDb();
     let col = db.collection<DbSchema>(DATABASES_COL);
 
@@ -91,13 +91,13 @@ export async function updateSchema(dbName: string, schema:StructType) : Promise<
     return schema;
 }
 
-export async function getAllRecords(dbName: string) : Promise<Record[]> {
+export async function getAllRecordsDb(dbName: string) : Promise<Record[]> {
     let col = await Connection.getDbCol(dbName);
     let cursor = await col.find();
     return cursor.toArray();
 }
 
-export async function updateRecord(dbName: string, record : Record) : Promise<Record> {
+export async function updateRecordDb(dbName: string, record : Record) : Promise<Record> {
     let col = await Connection.getDbCol(dbName);
 
     let copy = { ...record} as any;
@@ -110,7 +110,7 @@ export async function updateRecord(dbName: string, record : Record) : Promise<Re
 }
 
 
-export async function deleteRecord(dbName: string, id : string) : Promise<boolean> {
+export async function deleteRecordDb(dbName: string, id : string) : Promise<boolean> {
     let col = await Connection.getDbCol(dbName);
     let res = await col.deleteOne({"_id" : new ObjectId(id)});
     if (res.deletedCount != 1) {
@@ -120,7 +120,7 @@ export async function deleteRecord(dbName: string, id : string) : Promise<boolea
 }
 
 
-export async function createRecord(dbName: string, record : Record) : Promise<Record> {
+export async function createRecordDb(dbName: string, record : Record) : Promise<Record> {
     let col = await Connection.getDbCol(dbName);
     if (record._id) {
         throw new Error("New records shouldnot have _id yet");

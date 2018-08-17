@@ -7,7 +7,7 @@ export interface Record {
 
     _id?: string;
     _creationTime?: Date;
-    _pos?: int;
+    _pos?: number;
 
     // Other fields, defined by the schema of the table
     [x:string]: any;

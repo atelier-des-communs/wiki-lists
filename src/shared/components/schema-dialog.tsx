@@ -3,10 +3,9 @@ import {_} from "../i18n/messages";
 import {Attribute, EnumType, newType, StructType, TextType, Type, Types} from "../model/types";
 import {Modal, Header, Button, Icon, Segment, SegmentGroup, Form, Label} from "semantic-ui-react";
 import {deepClone} from "../utils";
-import {updateSchema} from "../rest/client";
 
 interface SchemaDialogProps  {
-    onUpdate : (newValue: StructType) => void;
+    onUpdate : (newValue: StructType) => Promise<void>;
     schema : StructType;
     close?: () => void;
 }
@@ -77,13 +76,8 @@ export class SchemaDialog extends React.Component<SchemaDialogProps> {
 
         // Async POST of schema
         try {
-            let schema = await updateSchema(this.state.schema);
-            // Update redux
-            this.props.onUpdate(schema);
+            await this.props.onUpdate(this.state.schema);
             this.props.close();
-        } catch (e) {
-            console.log(e);
-            alert(e.response.data);
         } finally {
             this.setState({loading:false});
         }

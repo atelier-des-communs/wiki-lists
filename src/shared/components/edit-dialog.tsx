@@ -10,7 +10,7 @@ import {Record} from "../model/instances";
 interface EditDialogProps  {
     create : boolean;
     value : Record;
-    onUpdate : (newValue: Object) => void;
+    onUpdate : (newValue: Object) => Promise<void>;
     schema : StructType;
     close?: () => void;
 };
@@ -43,13 +43,13 @@ export class EditDialog extends React.Component<EditDialogProps> {
         // "Loading" icon
         this.setState({loading:true});
 
-        // Async POST of new values
-        let payload =  this.props.create ?
-            await createItem(this.record) :
-            await updateItem(this.record);
-
         // Update local state
-        this.props.onUpdate(payload);
+        try {
+            await this.props.onUpdate(this.record);
+        } finally {
+            this.setState({loading:false});
+        }
+
         this.props.close();
     }
 
