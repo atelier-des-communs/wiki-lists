@@ -71,7 +71,9 @@ class BooleanHandler extends ControlledValueHandler<boolean, BooleanType>{
         </Checkbox>
     }
     renderView() {
-        return <Icon name={this.state.innerValue ? "checkmark box" : "x"} color={this.state.innerValue ? "green" : "red"}/>
+        return <Icon
+            name={this.state.innerValue ? "check" : "x"}
+            color={this.state.innerValue ? "green" : "red"}/>
     }
 }
 
