@@ -17,7 +17,9 @@ import {Record} from "../model/instances";
 import {applySort, extractSort} from "./sort";
 import {RouteComponentProps} from "react-router"
 
-const queryParamName = (attrName: string) => `${attrName}.f`;
+const queryParamName = (attrName: string) => {
+    return `${attrName}.f`;
+}
 
 
 // FIXME normalize seemsto break server
@@ -177,7 +179,7 @@ export class EnumFilter implements IFilter<string> {
 }
 
 function serializeEnumFilter(attrName:string, filter:EnumFilter) {
-    let paramName = queryParamName(name);
+    let paramName = queryParamName(attrName);
 
     // Same as no filter
     if (!filter || filter.isAll()) {

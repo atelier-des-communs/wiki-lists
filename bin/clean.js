@@ -1,6 +1,6 @@
 const del = require('del');
 
-var items = ['dist/**', 'src/**/*.js.map', 'src/**/*.jsx.map'];
+var items = ['dist/**', 'src/**/*.js', 'src/**/*.js.map', 'src/**/*.jsx.map'];
 
 items.forEach(function(toDelete, index, array) {
 	del([toDelete]).then(
