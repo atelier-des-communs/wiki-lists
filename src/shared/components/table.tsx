@@ -6,12 +6,14 @@ import {deleteItem} from "../rest/client";
 import {CollectionEventProps, ReduxProps} from "./common";
 import * as React from "react";
 import {Button, Icon, Table} from 'semantic-ui-react'
-import {SafeClickWrapper} from "./utils/ssr-safe";
+import {SafeClickWrapper, SafePopup} from "./utils/ssr-safe";
 import {SchemaDialog} from "./schema-dialog";
 import {EditDialog} from "./edit-dialog";
 import {ValueHandler} from "./type-handlers/editors";
 import {extractGroupBy} from "../views/group";
 import {Attribute} from "../model/types";
+import {extractFilters} from "../views/filters";
+import {singleFilter} from "./type-handlers/filters";
 
 type TableProps = ReduxProps & CollectionEventProps & RouteComponentProps<{}>;
 
@@ -86,51 +88,83 @@ const TableComponent: React.SFC<TableProps> = (props) => {
         </SafeClickWrapper>
     </Table.HeaderCell>;
 
-    let sort = extractSort(parseParams(props.location.search));
+    let queryParams = parseParams(props.location.search);
+    let sort = extractSort(queryParams);
+    let filters = extractFilters(props.schema, queryParams);
 
-    // List of fields as table header
-    let headers = attrs.filter(filterColumns).map(attr =>
-        <Table.HeaderCell
+    /* Column headers, for each attribute */
+    let headers = attrs.filter(filterColumns).map(attr => {
+
+        let sorted = sort && sort.key == attr.name;
+        let filter = filters[attr.name];
+
+        // May be null if filter not supported for this type
+        let filterComp = singleFilter(props, attr, filter);
+
+        return <Table.HeaderCell
             key={attr.name}
             style={{cursor:"pointer"}}
-            onClick={ () => onHeaderClick(props, attr.name)}
-        >
+            onClick={() => onHeaderClick(props, attr.name)} >
             { attr.name }
 
-            { sort && sort.key == attr.name && <Icon
-                name={sort.asc ? "sort up" : "sort down"}
-                style={{float:"right"}} />}
+            <Icon
+                name={(sorted) ? (sort.asc ? "sort up" : "sort down") : "sort" }
+                className={sorted ? null: "shy"}
+                style={{float:"right"}} />
 
-        </Table.HeaderCell>);
+            { filterComp &&
+            <SafePopup position="bottom right" trigger={
+                <Button
+                    size="tiny"  className="shy" compact style={{float: "right"}}
+                    icon="filter"
+                    color={filter ? "blue" : null}
+                    onClick={(e:any) => e.stopPropagation()}/> }>
+                {filterComp}
+            </SafePopup>}
+        </Table.HeaderCell>
+    });
 
+    /* Table rows */
     const rows  = props.records.map(record =>
+
         <Table.Row key={record["_id"] as string}>
+
             <Table.Cell collapsing key="actions" >
                 <Button.Group basic>
-                    <SafeClickWrapper trigger={ <Button icon="edit" size="mini" basic compact /> }>
+
+                    <SafeClickWrapper trigger={
+                        <Button
+                            className="shy"
+                            icon="edit"
+                            size="mini" basic compact /> }>
+
                         <EditDialog
                             value={record}
                             schema={props.schema}
                             create={false}
                             onUpdate={props.onUpdate}  />
+
                     </SafeClickWrapper>
-                    <Button icon="delete" size="mini" basic compact onClick={() => {
+                    <Button icon="delete" className="shy" size="mini" basic compact onClick={() => {
                         if (confirm(_.confirm_delete)) {
                             props.onDelete(record._id);
                         }
                     }} />
                 </Button.Group>
             </Table.Cell>
+
             {attrs.filter(filterColumns).map(attr =>
                 <Table.Cell key={attr.name}>
-                <ValueHandler
-                    editMode={false}
-                    type={attr.type}
-                    value={record[attr.name]} />
+                    <ValueHandler
+                        editMode={false}
+                        type={attr.type}
+                        value={record[attr.name]} />
                 </Table.Cell>
             )}
-        </Table.Row>)
 
+        </Table.Row>);
+
+    /** Whole table */
     return <Table celled style={{marginTop:"1em", marginRight:"1em"}} >
         <Table.Header>
             <Table.Row>

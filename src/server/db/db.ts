@@ -28,7 +28,7 @@ const DATABASE_COL_TEMPLATE ="db.{name}";
 
 /* Singleton instance */
 class  Connection {
-    static client : MongoClient = null;
+    static client : MongoClient;
     static async getDb() {
         if (!this.client) {
             this.client = await MongoClient.connect(`mongodb://${DB_HOST}:${DB_PORT}/`);
@@ -50,8 +50,9 @@ interface DbSchema {
 export async function getSchema(dbName: string) : Promise<StructType> {
     let db = await Connection.getDb();
     let col = db.collection<DbSchema>(DATABASES_COL);
-    let schema = await col.findOne({name: dbName});
-    return schema.schema;
+    let database = await col.findOne({name: dbName});
+    if (!database) throw new Error(`Missing db: ${dbName}`);
+    return database.schema;
 }
 
 

@@ -50,7 +50,7 @@ export class EditDialog extends React.Component<EditDialogProps> {
             this.setState({loading:false});
         }
 
-        this.props.close();
+        this.props.close && this.props.close();
     }
 
     render()  {
@@ -79,7 +79,7 @@ export class EditDialog extends React.Component<EditDialogProps> {
 
             return <Modal
                 open={true}
-                onClose={()=> this.props.close() } >
+                onClose={()=> this.props.close && this.props.close() } >
                 <Header icon='edit' content={this.props.create? _.add_item : _.edit_item}/>
                 <Modal.Content>
                     <Form>

@@ -2,6 +2,7 @@ import * as React from "react";
 import {Types, BooleanType, NumberType, TextType, Type, EnumType} from "../../model/types";
 import {Checkbox, Input, Dropdown, Label, FormSelect, Button, Icon, TextArea} from "semantic-ui-react";
 import ReactQuill from 'react-quill';
+import {DropdownItemProps} from "semantic-ui-react/dist/commonjs/modules/Dropdown/DropdownItem"
 import 'react-quill/dist/quill.snow.css';
 
 
@@ -9,6 +10,8 @@ interface ValueHandlerProps<T, TypeT extends Type<T>> {
     editMode: boolean;
     type: TypeT
     value:T;
+
+    // FIXME : this is a smell we may need to have two separate types for viewers and editors
     onValueChange? : (value:T) => void;
     [index:string] : any;
 }
@@ -37,7 +40,7 @@ abstract class ControlledValueHandler<T, TypeT extends Type<T>> extends React.Co
 
     onChange(newInnerValue:any) {
         this.setState({innerValue:newInnerValue});
-        this.props.onValueChange(this.extractValue(newInnerValue));
+        this.props.onValueChange && this.props.onValueChange(this.extractValue(newInnerValue));
     }
 
     render() {
@@ -68,7 +71,7 @@ class BooleanHandler extends ControlledValueHandler<boolean, BooleanType>{
         </Checkbox>
     }
     renderView() {
-        return <Icon name={this.state.innerValue ? "check" : "times"} />
+        return <Icon name={this.state.innerValue ? "checkmark box" : "x"} color={this.state.innerValue ? "green" : "red"}/>
     }
 }
 
@@ -146,7 +149,7 @@ class EnumHandler extends ControlledValueHandler<string, EnumType> {
         let valuesWithEmpty = [ {value:null}, ...this.props.type.values];
         let options = valuesWithEmpty.map(enumVal => ({
             text:enumVal.value,
-            value:enumVal.value}));
+            value:enumVal.value} as DropdownItemProps));
 
         return <FormSelect
             value={this.state.innerValue}

@@ -1,13 +1,14 @@
 [SECU] XSS in HTml rich content
-[BUG] Error report : Dialog (or better, in place)
+X [BUG] Error report : Dialog (or better, in place)
 [FEAT] text: simple, multi, rich
-[UX]edit on click line
+[UX] add light sort icons on columns
+[UX] edit on click line
 [INFRA] global context
 [INFRA] prefix to db name in mongo
 [INFRA] test framework
-[UX]: filter icon in search box
+X [UX]: filter icon in search box
 [UX] filters on headers
-[UX] group-by label
+[UX] group-by button : add label
 [FEAT] window for new db
 [UX] Daddle header
 [FEAT] View item

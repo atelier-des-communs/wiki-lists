@@ -18,8 +18,8 @@ export function  mapToArray<T>(map: {[key:string] : T}) : Array<T> {
 
 /** Handy map definition */
 export interface Map<T = {}> {
-    [index: string]: T;
-    [index: number]: T;
+    [index: string]: T | null;
+    [index: number]: T | null;
 }
 
 
@@ -130,6 +130,14 @@ export function getDbName(props: RouteComponentProps<{}>) : string {
     return match[1];
 }
 
+// Builds a function calling a event handler and stoping propagation
+export function stopPropag(eventFunc : () => void) {
+    return (e:any, other:any) => {
+        e.stopPropagation();
+        eventFunc();
+    }
+}
+
 
 export function itToArray<T>(it: IterableIterator<T>) : T[] {
     let res: T[] = [];
@@ -137,4 +145,18 @@ export function itToArray<T>(it: IterableIterator<T>) : T[] {
         res.push(item);
     }
     return res;
+}
+
+export function strToInt(value:string) {
+    if (empty(value)) {
+        return null;
+    }
+    return parseInt(value);
+}
+
+export function intToStr(value:number) {
+    if (typeof(value) == "undefined" || value == null ||  isNaN(value)) {
+        return null;
+    }
+    return value + "";
 }

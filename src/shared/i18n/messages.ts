@@ -46,7 +46,11 @@ export class IMessages {
     clear_filter = "Clear filter";
     clear_filters = "Clear filters";
 
-    form_error = "You have errors in your form"
+    form_error = "You have errors in your form";
+    toggle_filters = "Toggle filters sidebar";
+
+    min = "Min"
+    max = "Max"
 }
 
 class enMessages extends IMessages {

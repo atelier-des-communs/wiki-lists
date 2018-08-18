@@ -8,11 +8,22 @@ import {
     serializeFilter,
     EnumFilter,
     TextFilter,
-    serializeSearch, parseSearch
+    serializeSearch, extractSearch, IFilter, NumberFilter
 } from "../../views/filters";
 import {RouteComponentProps, withRouter} from "react-router";
 import {Attribute, StructType, Types} from "../../model/types";
-import {copyArr, goTo, isIn, parseParams, remove, updatedParams, updatedQuery} from "../../utils";
+import {
+    copyArr,
+    empty,
+    goTo,
+    isIn,
+    parseParams,
+    remove,
+    stopPropag,
+    strToInt,
+    updatedParams,
+    updatedQuery
+} from "../../utils";
 import {_} from "../../i18n/messages";
 import  * as debounce from "debounce";
 
@@ -20,25 +31,29 @@ interface IFiltersComponentProps {
     schema:StructType;
 }
 
-interface IFilterComponentProps<T extends Filter> extends RouteComponentProps<{}> {
+
+
+// Main siwtch on attribute type
+interface SingleFilterProps<T> extends RouteComponentProps<{}> {
+    attr: Attribute;
     filter: T;
-    attribute: Attribute;
 }
 
-abstract class AbstractFilterComponent<T extends Filter> extends React.Component<IFilterComponentProps<T>> {
+abstract class AbstractSingleFilter<T extends Filter> extends React.Component<SingleFilterProps<T>> {
 
-    // Update the filter by pushing new location
+    // Update the filter by pushing query params in URL
     setFilter = (newFilter: T) => {
-        let queryParams = serializeFilter(this.props.attribute.name, newFilter);
+        let queryParams = serializeFilter(this.props.attr, newFilter);
+        console.log("filter clicked !", queryParams);
         goTo(this.props, queryParams);
     }
 }
 
-class BooleanFilterComponent extends AbstractFilterComponent<BooleanFilter> {
+class BooleanFilterComponent extends AbstractSingleFilter<BooleanFilter> {
 
     render() {
         let filter = this.props.filter;
-       return <div>
+       return <>
             <Checkbox
                 label={_.yes}
                 checked={filter.showTrue}
@@ -46,7 +61,7 @@ class BooleanFilterComponent extends AbstractFilterComponent<BooleanFilter> {
                     let newFilter = Object.create(filter);
                     newFilter.showTrue = ! filter.showTrue;
                     this.setFilter(newFilter);
-                }} /><br/>
+                }} />
             <Checkbox
                 label={_.no}
                 checked={filter.showFalse}
@@ -56,14 +71,13 @@ class BooleanFilterComponent extends AbstractFilterComponent<BooleanFilter> {
                     this.setFilter(newFilter);
                 }} />
             <br/>
-        </div>
+        </>
     }
 }
 
 
 
-class TextFilterComponent extends AbstractFilterComponent<TextFilter> {
-
+class TextFilterComponent extends AbstractSingleFilter<TextFilter> {
 
     // Debounced update
     update = debounce((value: string) => {
@@ -75,13 +89,50 @@ class TextFilterComponent extends AbstractFilterComponent<TextFilter> {
     render() {
         return <Input
             icon="filter"
+            size="mini"
             defaultValue={this.props.filter.search}
             onChange={(e, value) => this.update(value.value)}/>
     }
 }
 
+class NumberFilterComponent extends AbstractSingleFilter<NumberFilter> {
 
-class EnumFilterComponent extends AbstractFilterComponent<EnumFilter> {
+    // Debounced update
+    updateMin = debounce((min: number) => {
+        let newFilter = Object.create(this.props.filter);
+        newFilter.min = min;
+        this.setFilter(newFilter);
+    }, 1000);
+
+    updateMax = debounce((max: number) => {
+        let newFilter = Object.create(this.props.filter);
+        newFilter.max = max;
+        this.setFilter(newFilter);
+    }, 1000);
+
+
+
+    render() {
+        return <>
+        <Input
+            inline size="mini"
+            type="number"
+            label={_.min}
+            defaultValue={this.props.filter.min}
+            onChange={(e, value) => this.updateMin(strToInt(value.value))}/>
+
+        <Input
+            inline size="mini"
+            type="number"
+            label={_.max}
+            defaultValue={this.props.filter.max}
+            onChange={(e, value) => this.updateMax(strToInt(value.value))}/>
+        </>
+    }
+}
+
+
+class EnumFilterComponent extends AbstractSingleFilter<EnumFilter> {
 
     toggleValue(value: string) {
         let filter = this.props.filter;
@@ -104,119 +155,114 @@ class EnumFilterComponent extends AbstractFilterComponent<EnumFilter> {
 
     render() {
         let filter = this.props.filter;
-        let checkboxes = filter.allValues().map(val => (<div key={val}>
+        let checkboxes = filter.allValues().map(val => (<>
             <Checkbox
+                key={val}
                 label={val}
                 checked={isIn(filter.showValues, val)}
-                onClick={() => this.toggleValue(val)}/>
-        </div>));
+                onClick={() => this.toggleValue(val)}/><br/></>));
 
-        return <div>
-            <div>
-                <Checkbox
-                    label={_.empty}
-                    checked={filter.showEmpty}
-                    onClick={() => this.toggleEmpty()}/>
-            </div>
+        return <>
+            <Checkbox
+                label={_.empty}
+                checked={filter.showEmpty}
+                onClick={() => this.toggleEmpty()}/>
+            <br/>
             {checkboxes}
-        </div>
+        </>
     }
 }
 
-
-// Main siwtch on attribute type
-function toFilterComponent(props:RouteComponentProps<{}>,attr: Attribute, filter: Filter, location: Location, history:History) : any {
+/* Switch on attribute type : may return null in case filter is not supported */
+export function singleFilter(props : RouteComponentProps<{}>, attr:Attribute, filter:Filter | null) {
 
     let clearFilter = () => {
-        let queryParams = serializeFilter(attr.name, null);
+        let queryParams = serializeFilter(attr, null);
         goTo(props, queryParams);
-    }
+    };
 
-    let res = null;
+    let filterComp = null;
+
     switch(attr.type.tag) {
+
         case Types.BOOLEAN :
-            res = <BooleanFilterComponent
-                attribute={attr}
-                filter={filter as BooleanFilter || new BooleanFilter(attr)}
+            filterComp = <BooleanFilterComponent
                 {...props}
-            />;
+                attr={attr}
+                filter={filter as BooleanFilter || new BooleanFilter(attr)} />;
                 break;
+
         case Types.ENUM :
-            res = <EnumFilterComponent
-                attribute={attr}
-                filter={filter as EnumFilter || new EnumFilter(attr)}
-                {...props}/>;
+            filterComp = <EnumFilterComponent
+                {...props}
+                attr={attr}
+                filter={filter as EnumFilter || new EnumFilter(attr)} />;
             break;
+
         case Types.TEXT :
-            res = <TextFilterComponent
-                attribute={attr}
-                filter={filter as TextFilter || new TextFilter(attr)}
-                {...props} />;
+            filterComp = <TextFilterComponent
+                {...props}
+                attr={attr}
+                filter={filter as TextFilter || new TextFilter(attr)} />;
             break;
+
+
+        case Types.NUMBER :
+            filterComp = <NumberFilterComponent
+                {...props}
+                attr={attr}
+                filter={filter as NumberFilter || new NumberFilter(attr)} />;
+            break;
+
         default:
             // Filter not supported for this type
             return null;
     }
 
-    return <Segment key={attr.name} >
-        <div>
-            <Header as="span" >
-                {attr.name}
-            </Header> {
-                filter ?
-                    <Button
-                        circular size="mini"
-                        compact icon="delete"
-                        floated="right"
-                        title={_.clear_filter}
-                        onClick={() => clearFilter()}
-                    /> : null
-            }
-        </div>
-        {res}
-    </Segment>;
+    return <>
+        {filter &&
+         <Button
+            circular size="mini" compact  floated="right"
+            icon="delete"
+            title={_.clear_filter}
+            onClick={stopPropag(clearFilter)} />
+        }
+        {filterComp}
+    </>
 }
 
-type FiltersProps = IFiltersComponentProps & RouteComponentProps<{}>;
-
-const Filters : React.SFC<FiltersProps> = (props:FiltersProps) => {
+/* Filter sidebar */
+export const FiltersSidebar : React.SFC<IFiltersComponentProps & RouteComponentProps<{}>> = (props) => {
 
     let queryParams = parseParams(props.location.search);
     let filters = extractFilters(props.schema, queryParams);
-
-  /* FIXME  :not working
-    let clearFilters = () => {
-        for (let attr in filters) {
-            queryParams = updatedParams(queryParams, serializeFilter(attr, null))
-        }
-        goTo(props, queryParams);
-    } */
-
-    let children = props.schema.attributes.map((attr) =>
-        toFilterComponent(
-            props,
-            attr,
-            filters[attr.name],
-            props.location,
-            props.history)).
-            filter(child => (child != null));
-
 
     return <>
         <div style={{textAlign:"center"}}>
             <Header as={"span"} >
                 {_.filters}
             </Header>
-
         </div>
 
         <div style={{margin:"1em"}}>
-            {children}
-        </div>
-    </>
-}
-export const ConnectedFilters = withRouter<IFiltersComponentProps>(Filters);
+            {props.schema.attributes.map((attr) => {
 
+                let filterComp = singleFilter(props, attr, filters[attr.name]);
+
+                return filterComp && <>
+                    <Header attached="top">
+                        {attr.name}
+                    </Header>
+                    <Segment attached="bottom" key={attr.name} >
+                        { filterComp }
+                    </Segment>
+                </>
+            })}
+        </div>
+    </>;
+};
+
+/* Search component, for all fields */
 class SearchComponent extends React.Component<IFiltersComponentProps & RouteComponentProps<{}>> {
 
     updateSearch = debounce((search: string) => {
@@ -224,10 +270,13 @@ class SearchComponent extends React.Component<IFiltersComponentProps & RouteComp
     }, 1000);
 
     render() {
-        let search = parseSearch(parseParams(this.props.location.search));
+        let search = extractSearch(parseParams(this.props.location.search));
         return <Input icon="filter"
                       defaultValue={search}
-                      onChange={(e, val) => this.updateSearch(val.value)} />
+                      onChange={(e, val) => {
+                          e.stopPropagation(),
+                          this.updateSearch(val.value)
+                      }} />
     }
 }
 export const ConnectedSearchComponent = withRouter<IFiltersComponentProps>(SearchComponent);

@@ -12,7 +12,7 @@ import {arrayToMap, Map, toImmutable} from "../shared/utils";
 import {Express} from "express";
 import {returnPromise} from "./utils";
 import {Workbook} from "exceljs";
-import {searchAndFilter} from "../shared/views/filters";
+import {applySearchAndFilters} from "../shared/views/filters";
 import {Request, Response} from "express-serve-static-core"
 import {_} from "../shared/i18n/messages";
 import {DOWNLOAD_JSON_URL, DOWNLOAD_XLS_URL} from "../shared/rest/api";
@@ -68,7 +68,7 @@ export async function index(db_name:string, req: Request): Promise<string> {
 
     // Transform to seeamless-immutable, except for first level (because of combineReducers)
     let state : IState= {
-        items: arrayToMap(records, record => record._id),
+        items: arrayToMap(records, record => record._id ? record._id : ""),
         schema: schema};
 
     console.log("Initial state", state);
@@ -84,7 +84,7 @@ export async function index(db_name:string, req: Request): Promise<string> {
 async function getAllWithFilters(db_name:string, query:Map<string>) : Promise<any> {
     let schema = await getSchema(db_name);
     let records = await getAllRecordsDb(db_name);
-    return searchAndFilter(records, query, schema);
+    return applySearchAndFilters(records, query, schema);
 }
 
 async function toExcel(db_name:string, req:any, res:any): Promise<any> {

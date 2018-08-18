@@ -9,3 +9,10 @@ body {
 .ui.modal > .header{
     background-color: lightgoldenrodyellow !important;
 }
+
+.shy {
+    opacity:0.6!important;
+}
+.shy:hover {
+    opacity:1 !important;
+}
