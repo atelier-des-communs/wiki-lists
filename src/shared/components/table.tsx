@@ -105,22 +105,33 @@ const TableComponent: React.SFC<TableProps> = (props) => {
             key={attr.name}
             style={{cursor:"pointer"}}
             onClick={() => onHeaderClick(props, attr.name)} >
-            { attr.name }
 
-            <Icon
-                name={(sorted) ? (sort.asc ? "sort up" : "sort down") : "sort" }
-                className={sorted ? null: "shy"}
-                style={{float:"right"}} />
 
-            { filterComp &&
-            <SafePopup position="bottom right" trigger={
-                <Button
-                    size="tiny"  className="shy" compact style={{float: "right"}}
-                    icon="filter"
-                    color={filter ? "blue" : null}
-                    onClick={(e:any) => e.stopPropagation()}/> }>
-                {filterComp}
-            </SafePopup>}
+            <div style={{display:"table-row", width:"100%"}}>
+                <div style={{display: "table-cell", width:"100%" }}>
+                    { attr.name }
+                </div>
+
+
+                    { filterComp &&
+                    <div style={{display: "table-cell"}}>
+                        <SafePopup position="bottom right" trigger={
+                           <Button
+                               size="mini"  className="shy" compact
+                               icon="filter"
+                               color={filter ? "blue" : null}
+                               onClick={(e:any) => e.stopPropagation()}/> }>
+                            {filterComp}
+                        </SafePopup>
+                    </div>}
+
+                    <div style={{display: "table-cell"}}>
+                    <Icon
+                        name={(sorted) ? (sort.asc ? "sort up" : "sort down") : "sort" }
+                        className={sorted ? null: "shy"} />
+                    </div>
+
+            </div>
         </Table.HeaderCell>
     });
 
