@@ -14,7 +14,8 @@ import {empty, Map} from "../../shared/utils";
 import {MongoClient, Db, ObjectId} from "mongodb";
 import {Record} from "../../shared/model/instances";
 import {_} from "../../shared/i18n/messages";
-import {ValidationError} from "./exceptions";
+import {validateSchemaAttributes} from "../../shared/validators/schema-validators";
+import {raiseExceptionIfErrors} from "../../shared/validators/validators";
 
 const DB_HOST = "localhost";
 const DB_NAME = "codata";
@@ -23,7 +24,7 @@ const DB_PORT = 27017;
 const DATABASES_COL ="schemas";
 const DATABASE_COL_TEMPLATE ="db.{name}";
 
-const ATTRIBUTE_NAMES_PATTERN = /^[a-zA-Z0-9_\-]+$/;
+
 
 /* Singleton instance */
 class  Connection {
@@ -53,32 +54,14 @@ export async function getSchema(dbName: string) : Promise<StructType> {
     return schema.schema;
 }
 
-function validateSchema(schema:StructType) {
-    for (let attr of schema.attributes) {
-        if (empty(attr.name)) {
-            throw new ValidationError(_.attribute_name_mandatory);
-        }
-        if (! ATTRIBUTE_NAMES_PATTERN.test(attr.name)) {
-            throw new ValidationError(_.attribute_name_format);
-        }
-        if (!attr.type || !attr.type.tag) {
-            throw new ValidationError(_.missing_type(attr.name));
-        }
-        switch(attr.type.tag) {
-            case Types.ENUM :
-                let type = attr.type as EnumType;
-                if (!type.values || type.values.length == 0) {
-                    throw new ValidationError(_.missing_enum_values(attr.name));
-                }
-        }
-    }
-}
+
 
 export async function updateSchemaDb(dbName: string, schema:StructType) : Promise<StructType> {
     let db = await Connection.getDb();
     let col = db.collection<DbSchema>(DATABASES_COL);
 
-    validateSchema(schema);
+    // Validate errors
+    raiseExceptionIfErrors(validateSchemaAttributes(schema.attributes))
 
     for (let attr of schema.attributes) {
         attr.saved = true;
@@ -124,6 +107,11 @@ export async function createRecordDb(dbName: string, record : Record) : Promise<
     let col = await Connection.getDbCol(dbName);
     if (record._id) {
         throw new Error("New records shouldnot have _id yet");
+    }
+
+    if (typeof(record._pos) == "undefined" || record._pos == null) {
+        // Use current timestamp for position : avoid searching for largest _pos in db
+        record._pos = Date.now();
     }
 
     record._creationTime = new Date();

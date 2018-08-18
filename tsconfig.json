@@ -10,6 +10,7 @@
 		"experimentalDecorators": true,
 		"removeComments": true,
 		"sourceMap": true,
+		"downlevelIteration":true,
 		"lib": ["es5", "ES2015.Promise", "dom", "scripthost"]
 	},
 	"typings" : [

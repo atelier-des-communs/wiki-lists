@@ -10,6 +10,7 @@ interface ValueHandlerProps<T, TypeT extends Type<T>> {
     type: TypeT
     value:T;
     onValueChange? : (value:T) => void;
+    [index:string] : any;
 }
 
 
@@ -78,7 +79,7 @@ class SimpleTextHandler extends ControlledValueHandler<string, TextType> {
         return <span>{this.state.innerValue}</span>
     }
     renderEdit() {
-        return <TextArea
+        return <Input
             value={this.state.innerValue}
             onChange={(e, data) => this.onChange(data.value)} />;
     }

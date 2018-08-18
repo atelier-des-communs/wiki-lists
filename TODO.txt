@@ -1,0 +1,33 @@
+[SECU] XSS in HTml rich content
+[BUG] Error report : Dialog (or better, in place)
+[FEAT] text: simple, multi, rich
+[UX]edit on click line
+[INFRA] global context
+[INFRA] prefix to db name in mongo
+[INFRA] test framework
+[UX]: filter icon in search box
+[UX] filters on headers
+[UX] group-by label
+[FEAT] window for new db
+[UX] Daddle header
+[FEAT] View item
+[FEAT] Rights management
+[FEAT] pos and drag / drop
+[UX] "Create another"
+[FEAT] Import
+[FEAT] Order columns
+[FEAT] Web sockets
+[FEAT] Field types :
+   - Link
+   - Attach
+   - Image
+   - Tel
+   - Phone
+   - Date
+   - Date / Time
+   - Location
+[FEAT] Views : Card, List, Map, Calendar ?
+[FEAT] RSS
+[FEAT] Alerts
+[FEAT] History
+

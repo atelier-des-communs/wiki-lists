@@ -1,8 +1,9 @@
 import * as React from "react";
 import {_} from "../i18n/messages";
 import {Attribute, EnumType, newType, StructType, TextType, Type, Types} from "../model/types";
-import {Modal, Header, Button, Icon, Segment, SegmentGroup, Form, Label} from "semantic-ui-react";
+import {Modal, Header, Button, Icon, Segment, SegmentGroup, Form, Label, Message} from "semantic-ui-react";
 import {deepClone} from "../utils";
+import {ValidationError, ValidationException} from "../validators/validators";
 
 interface SchemaDialogProps  {
     onUpdate : (newValue: StructType) => Promise<void>;
@@ -31,13 +32,16 @@ const TextFieldExtra : TypeFieldExtra<TextType> = (props)=> {
 const EnumFieldExtra : TypeFieldExtra<EnumType> = (props)=> {
     return <Form.Input
         label={_.enum_values}
-        defaultValue={props.type.values.map(val => val.value).join(",")}
+        defaultValue={props.type.values.map(val => val.value).join(", ")}
         placeholder={_.comma_separated}
         onChange={(e, val) => {
             let type = deepClone(props.type);
-            type.values = val.value.split(",").map(val => ({
-                value:val
-            }));
+            type.values = val.value ?
+                val.value
+                    .split(",")
+                    .map(val => (
+                        {value:val.trim()}))
+                : [];
             props.onUpdate(type);
         }} />
 }
@@ -57,7 +61,8 @@ const FieldExtraSwitch : TypeFieldExtra<any> = (props)=> {
 export class SchemaDialog extends React.Component<SchemaDialogProps> {
 
     state : {
-        loading: boolean;
+        loading: boolean,
+        errors:ValidationError[],
         schema:StructType};
 
     constructor(props: SchemaDialogProps) {
@@ -66,6 +71,7 @@ export class SchemaDialog extends React.Component<SchemaDialogProps> {
         // Clone the input object : not modify it until we validate
         this.state =  {
             loading: false,
+            errors:[],
             schema: deepClone(this.props.schema)};
     }
 
@@ -78,10 +84,46 @@ export class SchemaDialog extends React.Component<SchemaDialogProps> {
         try {
             await this.props.onUpdate(this.state.schema);
             this.props.close();
+        } catch (e) {
+            if (e.validationErrors) {
+                this.setState({errors: e.validationErrors});
+            } else {
+                // Rethrow
+                throw e;
+            }
         } finally {
             this.setState({loading:false});
         }
     }
+
+    /** Return label with potential validation errors.
+     * Mark the error that have been used */
+    labelWithError(key: string, label:string) {
+        let errors = this.state.errors
+            .filter(error => error.field == key)
+            .map(error => {
+                error.shown = true;
+                return error.message
+            });
+        let error = errors.join(",\n");
+
+        if (error) {
+            return <>
+                <b>{label}</b>
+                <br/>
+                <span style={{color:"red"}}>{error}</span>
+            </>
+        } else {
+            return label;
+        }
+    }
+
+    /** List of remaining error messages */
+    remainingErrors() {
+        let errors = this.state.errors.filter(error => !error.shown)
+        return errors.join(",\n");
+    }
+
 
 
     changeName(index:number, name:string) {
@@ -136,29 +178,28 @@ export class SchemaDialog extends React.Component<SchemaDialogProps> {
                     onClick={() => this.remove(index) } />
 
                 {attr.saved ?
-                    <div>
-                        <Header >{attr.name}</Header>
+                    <Header >
+                        {attr.name}
                         <Label>
                             <Icon name={typeDescr(attr.type.tag).icon as any} />
                             {typeDescr(attr.type.tag).text}
-                            </Label>
-                    </div> :
+                        </Label>
+                    </Header>
+                    :
                     <Form.Group>
-                            <Form.Input
-                                label={_.attribute_name}
-                                defaultValue={attr.name}
-                                pattern="[A-Za-z0-9_]*"
-                                onChange={(e, value) => this.changeName(index, value.value)} />
-                            <Form.Select
-                                label={_.attribute_type}
-                                disabled={attr.saved}
-                                defaultValue={attr.type && attr.type.tag}
-                                options={typeOptions}
-                                onChange={(e, val) => this.newType(index, val.value as string)}
-                            />
-                    </Form.Group>
-                }
-
+                        <Form.Input
+                            label={this.labelWithError(`${index}.name`, _.attribute_name)}
+                            defaultValue={attr.name}
+                            pattern="[A-Za-z0-9_]*"
+                            onChange={(e, value) => this.changeName(index, value.value)} />
+                        <Form.Select
+                            label={this.labelWithError(`${index}.type`, _.attribute_type)}
+                            disabled={attr.saved}
+                            defaultValue={attr.type && attr.type.tag}
+                            options={typeOptions}
+                            onChange={(e, val) => this.newType(index, val.value as string)}
+                        />
+                    </Form.Group>}
                 <FieldExtraSwitch
                     type={attr.type}
                     onUpdate={(type) => this.updateType(index, type)} />
@@ -170,19 +211,30 @@ export class SchemaDialog extends React.Component<SchemaDialogProps> {
             open={true}
             onClose={()=> this.props.close() }>
             <Header icon='edit' content={_.edit_attributes}/>
-            <Modal.Content>
+            <Modal.Content scrolling >
                 <Form>
                     <SegmentGroup>
                         {attributes}
                     </SegmentGroup>
+                    <Button
+                        content={_.add_attribute}
+                        primary
+                        icon="add"
+                        style={{marginTop:"1em", marginBottom:"1em"}}
+                        onClick={() => this.addAttribute()} />
                 </Form>
-                <Button
-                    content={_.add_attribute}
-                    primary
-                    icon="add"
-                    onClick={() => this.addAttribute()} />
+
             </Modal.Content>
             <Modal.Actions>
+
+
+                {this.state.errors.length > 0 ?
+                    <Message
+                        error
+                        header={_.form_error}
+                        content={this.remainingErrors()} /> : null }
+
+
                 <Button color='red' onClick={this.props.close}>
                     <Icon name='remove'/> {_.cancel}
                 </Button>

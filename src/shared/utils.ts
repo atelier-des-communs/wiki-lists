@@ -71,23 +71,27 @@ export function parseParams(queryString:string) : Map<string> {
 }
 
 
-export function updatedQuery(query: string, newQuery:any) {
-    let queryParams = parseParams(query);
-    let newParams = {...queryParams};
+export function updatedParams(queryParams: Map<string>, newQuery:any) : Map<string> {
+    let res = {...queryParams};
     for (let param in newQuery) {
         let value = newQuery[param];
         if (value == null) {
             // Null value ? => remove key from query
-            delete newParams[param];
+            delete res[param];
         } else {
-            newParams[param] = value;
+            res[param] = value;
         }
     }
-    return "?" + QueryString.stringify(newParams);
+    return res;
+}
+
+export function updatedQuery(query: string, newParams:Map<string>) : string {
+    let queryParams = parseParams(query);
+    return "?" + QueryString.stringify(updatedParams(queryParams, newParams));
 }
 
 // Update history to go to same location, with different query params
-export function goTo(props:RouteComponentProps<{}>, queryParams: Map) {
+export function goTo(props:RouteComponentProps<{}>, queryParams: Map<string>) {
     props.history.push(updatedQuery(props.location.search, queryParams));
 }
 
@@ -124,4 +128,13 @@ export function getDbName(props: RouteComponentProps<{}>) : string {
     let path = props.location.pathname;
     let match = DB_URL_PATTERN.exec(path);
     return match[1];
+}
+
+
+export function itToArray<T>(it: IterableIterator<T>) : T[] {
+    let res: T[] = [];
+    for (let item of it) {
+        res.push(item);
+    }
+    return res;
 }

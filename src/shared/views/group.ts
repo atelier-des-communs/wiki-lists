@@ -31,6 +31,6 @@ export function extractGroupBy(queryParams:Map) : string {
 }
 
 /** Return query param to be set */
-export function updatedGroupBy(groupBy:string) : Map {
+export function updatedGroupBy(groupBy:string) : Map<string> {
     return {g:groupBy};
 }

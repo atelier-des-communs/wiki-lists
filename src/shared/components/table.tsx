@@ -30,6 +30,43 @@ function onHeaderClick(props: RouteComponentProps<{}>, attr:string) {
         {sort: attr + "." + (newAsc ? "asc" : "desc")}))
 }
 
+interface EditableCellProps {
+    attr : Attribute;
+    value : any;
+}
+
+/*
+class EditableCell extends React.Component<EditableCellProps> {
+
+    state: {edit:boolean};
+
+    constructor(props:EditableCellProps) {
+        super(props);
+        this.state = {edit:false};
+    }
+
+    editMode = () => {
+        this.setState({edit:true});
+    }
+
+    viewMode = () => {
+        this.setState({edit:false});
+    }
+
+    render() {
+        return <Table.Cell
+            onClick = {() => this.editMode()}
+        onBlur = {() => alert("I am blured")} >
+            <ValueHandler
+                editMode={this.state.edit}
+                type={this.props.attr.type}
+                value={this.props.value} />
+        </Table.Cell>
+    }
+
+}
+*/
+
 const TableComponent: React.SFC<TableProps> = (props) => {
 
     let attrs = props.schema.attributes;
@@ -85,13 +122,14 @@ const TableComponent: React.SFC<TableProps> = (props) => {
                 </Button.Group>
             </Table.Cell>
             {attrs.filter(filterColumns).map(attr =>
-                <Table.Cell key={attr.name} >
-                    <ValueHandler
-                        editMode={false}
-                        type={attr.type}
-                        value={ record[attr.name] } />
-                </Table.Cell>)}
-        </Table.Row>);
+                <Table.Cell key={attr.name}>
+                <ValueHandler
+                    editMode={false}
+                    type={attr.type}
+                    value={record[attr.name]} />
+                </Table.Cell>
+            )}
+        </Table.Row>)
 
     return <Table celled style={{marginTop:"1em", marginRight:"1em"}} >
         <Table.Header>

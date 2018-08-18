@@ -35,14 +35,6 @@ import {DOWNLOAD_JSON_URL, DOWNLOAD_XLS_URL} from "../rest/api";
 
 type CollectionProps = ReduxProps & CollectionEventProps & RouteComponentProps<{}>;
 
-function sectionHeader(groupKey:string, groupVal:string, open : boolean) {
-    return <Header size={"large"} style={{marginTop:"10px"}}>
-        <Button
-            circular
-            icon={open ? "chevron down" : "chevron right"} />
-        {groupKey} : {groupVal}
-    </Header>
-}
 
 function content(groupAttr: string, props:CollectionProps) {
 
@@ -51,12 +43,15 @@ function content(groupAttr: string, props:CollectionProps) {
         let sections = groups.map(group =>
             <div>
                 <Collapsible trigger={open =>
+                    <div style={{marginTop:"1em"}} >
+                    <Button circular compact size="small" icon={open ? "chevron down" : "chevron right"} />
                     <Header
+                        as="span"
                         size="medium"
                         style={{marginTop:"1em", cursor:"pointer"}}>
-                        <Icon size="small" name={open ? "chevron down" : "chevron right"} />
+
                         {groupAttr} : {group.key}
-                    </Header>} >
+                    </Header></div>} >
 
                     <ConnectedTableComponent
                         onUpdate={props.onUpdate}
@@ -68,9 +63,10 @@ function content(groupAttr: string, props:CollectionProps) {
                     />
                 </Collapsible>
             </div>);
-        return <div>
+
+        return <>
             {sections}
-        </div>
+        </>
     } else {
         return <ConnectedTableComponent
             onUpdate={props.onUpdate}
@@ -86,17 +82,19 @@ function content(groupAttr: string, props:CollectionProps) {
 const CollectionComponent: React.SFC<CollectionProps> = (props) => {
 
     let dbName = getDbName(props);
-    let xls_link = DOWNLOAD_XLS_URL.replace(":db_name", dbName) +
-        props.location.search;
-    let json_link = DOWNLOAD_JSON_URL.replace(":db_name", dbName) +
-        props.location.search;
+    let xls_link =
+        DOWNLOAD_XLS_URL.replace(":db_name", dbName)
+        + props.location.search;
+    let json_link =
+        DOWNLOAD_JSON_URL.replace(":db_name", dbName)
+        + props.location.search;
 
     let DownloadButton= <SafePopup trigger={<Button icon="download" basic />} >
-        <div>
+        <>
             <a href={xls_link}><b>Excel</b></a>
             <br/>
             <a href={json_link}><b>JSON</b></a>
-        </div>
+        </>
         </SafePopup>;
 
     // Add item dilaog and button
@@ -119,7 +117,9 @@ const CollectionComponent: React.SFC<CollectionProps> = (props) => {
     groupOptions = [{value:null, text:_.empty_group_by}].concat(groupOptions);
 
     let groupBySelect = <Dropdown
-            selection inline
+             inline
+            button className="icon"
+            labeled
             placeholder={_.group_by}
             options={groupOptions}
             value={groupAttr}
@@ -135,7 +135,7 @@ const CollectionComponent: React.SFC<CollectionProps> = (props) => {
         />
     </SafeClickWrapper>;
 
-    return <div>
+    return <>
         <div style={{padding:'20px'}}>
             <div style={{float:"right"}} >
                 <ConnectedSearchComponent schema={props.schema} />
@@ -155,7 +155,7 @@ const CollectionComponent: React.SFC<CollectionProps> = (props) => {
                 { content(groupAttr, props) }
             </div>
         </div>
-    </div>
+    </>
 }
 
 
@@ -181,19 +181,19 @@ const matchDispatchToProps = (dispatch: Dispatch<{}>, props: RouteComponentProps
     // FIXME : bad, get it from global context
     let dbName = getDbName(props);
 
-    let onCreate = (record: Record) => {
+    let onCreate = (record: Record) : Promise<void> => {
         return createItem(dbName, record).then(function(responseValue) {
             dispatch(createAddItemAction(responseValue));
         })
     };
 
-    let onUpdate = (record: Record) => {
+    let onUpdate = (record: Record) : Promise<void> => {
         return updateItem(dbName, record).then(function(responseValue) {
             dispatch(createUpdateItemAction(responseValue));
         })
     };
 
-    let onDelete = (id: string) => {
+    let onDelete = (id: string) : Promise<void> => {
         return deleteItem(dbName, id).then(function() {
             dispatch(createDeleteAction(id));
         })

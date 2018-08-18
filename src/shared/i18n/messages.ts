@@ -2,6 +2,8 @@ export class IMessages {
 
     daadle_title = "Daadle : Instant structured data authoring, for human beings";
 
+    filters = "Filters";
+
     add_item = "Add item";
     edit_item = "Edit item";
     columns = "Columns";
@@ -36,8 +38,15 @@ export class IMessages {
     // Schema validation
     attribute_name_mandatory = "Attribute name is mandatory";
     attribute_name_format = "Attribute names should be made of : a-Z, 0-9, _";
-    missing_type= (attrName:string) => `Type is missing for attribute '${attrName}'`;
-    missing_enum_values= (attrName:string) => `Enum values are missing for '${attrName}'`;
+    missing_type = "Type is missing";
+    missing_enum_values = "Enum values are missing";
+
+
+    validation_errors = "Validation errors";
+    clear_filter = "Clear filter";
+    clear_filters = "Clear filters";
+
+    form_error = "You have errors in your form"
 }
 
 class enMessages extends IMessages {

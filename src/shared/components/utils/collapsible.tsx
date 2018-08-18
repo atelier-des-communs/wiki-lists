@@ -26,9 +26,9 @@ export class Collapsible extends React.Component<CollapsibleProps> {
             this.props.trigger(this.state.open),
             {onClick: () => {this.toggle()}});
 
-        return <div>
-            { trigger }
-            {this.state.open ? this.props.children : null}
-            </div>
+        return <>
+                { trigger }
+                {this.state.open ? this.props.children : null}
+            </>
     }
 }
