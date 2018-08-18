@@ -47,3 +47,5 @@ src/**/*.jsx.map
 # Typescript
 tsd.json
 typings
+
+package-lock.json
