@@ -4,6 +4,7 @@ import {Checkbox, Input, Dropdown, Label, FormSelect, Button, Icon, TextArea} fr
 import ReactQuill from 'react-quill';
 import {DropdownItemProps} from "semantic-ui-react/dist/commonjs/modules/Dropdown/DropdownItem"
 import 'react-quill/dist/quill.snow.css';
+import {strToInt} from "../../utils";
 
 
 interface ValueHandlerProps<T, TypeT extends Type<T>> {
@@ -130,10 +131,10 @@ class NumberHandler extends ControlledValueHandler<number, NumberType> {
         return <span>{this.state.innerValue}</span>
     }
     extractValue(value:any) {
-        return value ? parseInt(value) : 0;
+        return strToInt(value);
     }
     toInnerValue(value:any) {
-        return value ? parseInt(value) : 0;
+        return strToInt(value);
     }
     renderEdit() {
         return <Input

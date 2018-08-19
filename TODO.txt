@@ -31,4 +31,6 @@ X [UX]: filter icon in search box
 [FEAT] RSS
 [FEAT] Alerts
 [FEAT] History
+[FEATURE] Next / previous when editing
+[UX] Add attribute => "dropup" of possiblities
 

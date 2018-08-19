@@ -51,6 +51,8 @@ export class IMessages {
 
     min = "Min"
     max = "Max"
+
+    attribute_details = "details"
 }
 
 class enMessages extends IMessages {
