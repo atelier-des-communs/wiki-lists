@@ -8,8 +8,8 @@ import {
     Input, Table, Header, Dropdown
 } from 'semantic-ui-react'
 import { EditDialog } from "./edit-dialog";
-import {StructType, Types} from "../model/types";
-import {getDbName, goTo, Map, mapMap, parseParams} from "../utils";
+import {Attribute, StructType, Types} from "../model/types";
+import {deepClone, getDbName, goTo, Map, mapMap, parseParams} from "../utils";
 import {_} from "../i18n/messages";
 import {SafeClickWrapper, SafePopup} from "./utils/ssr-safe";
 import {connect, Dispatch} from "react-redux";
@@ -33,6 +33,7 @@ import {SchemaDialog} from "./schema-dialog";
 import {createItem, deleteItem, updateItem, updateSchema} from "../rest/client";
 import {DOWNLOAD_JSON_URL, DOWNLOAD_XLS_URL} from "../rest/api";
 import {DropdownItemProps} from "semantic-ui-react/dist/commonjs/modules/Dropdown/DropdownItem"
+import {SortPopup} from "./sort-popup";
 
 type CollectionProps = ReduxProps & CollectionEventProps & RouteComponentProps<{}>;
 
@@ -141,9 +142,10 @@ class CollectionComponent extends  React.Component<CollectionProps> {
 
         groupOptions = [{value:null, text:_.empty_group_by} as DropdownItemProps].concat(groupOptions);
 
-        let groupBySelect = <Dropdown
+        let groupByDropdown = <Dropdown
                  inline
                 button className="icon"
+                 icon="plus square outline"
                 labeled
                 placeholder={_.group_by}
                 options={groupOptions}
@@ -151,13 +153,14 @@ class CollectionComponent extends  React.Component<CollectionProps> {
                 onChange={(e, update) =>
                     goTo(props, updatedGroupBy(update.value as string))} />
 
+        let sortByDropdown = <SortPopup {...props} />
 
         let UpdateSchemaButton = <SafeClickWrapper trigger={
             <Button icon="configure"
                     color="teal"
                     content={_.edit_attributes} />} >
                 <SchemaDialog
-                    onUpdate={props.onUpdateSchema}
+                    onUpdateSchema={props.onUpdateSchema}
                     schema={props.schema}
             />
         </SafeClickWrapper>;
@@ -182,19 +185,24 @@ class CollectionComponent extends  React.Component<CollectionProps> {
 
                 <div style={{display:"table-cell", width:"100%"}}>
 
+                    <div style={{float:"right"}} >
+                        <ConnectedSearchComponent schema={props.schema} />
+                        { DownloadButton }
+                    </div>
 
-                    { toggleSideBarButton }
+                    <div>
+                        { toggleSideBarButton }
 
-                        <div style={{float:"right"}} >
-                            <ConnectedSearchComponent schema={props.schema} />
-                            { DownloadButton }
-                        </div>
+                        { AddItemButton }
+                        { UpdateSchemaButton }
+                    </div>
 
+                    <div>
+                        { sortByDropdown }
+                        { groupByDropdown}
+                        { clearFiltersButton }
+                    </div>
 
-                    { AddItemButton }
-                    { UpdateSchemaButton }
-                    { groupBySelect}
-                    { clearFiltersButton }
                     { records(groupAttr, props) }
                 </div>
             </div>
@@ -253,8 +261,7 @@ const matchDispatchToProps = (dispatch: Dispatch<{}>, props?: RouteComponentProp
         onCreate,
         onUpdate,
         onDelete,
-        onUpdateSchema
-    }
+        onUpdateSchema}
 
 }
 

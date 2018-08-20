@@ -5,12 +5,15 @@ import ReactQuill from 'react-quill';
 import {DropdownItemProps} from "semantic-ui-react/dist/commonjs/modules/Dropdown/DropdownItem"
 import 'react-quill/dist/quill.snow.css';
 import {strToInt} from "../../utils";
+import {AttributeDisplay} from "../../views/display";
 
 
 interface ValueHandlerProps<T, TypeT extends Type<T>> {
+
     editMode: boolean;
     type: TypeT
     value:T;
+    size ?: AttributeDisplay;
 
     // FIXME : this is a smell we may need to have two separate types for viewers and editors
     onValueChange? : (value:T) => void;

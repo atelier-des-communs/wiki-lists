@@ -73,12 +73,13 @@ export class SafeClickWrapper extends React.Component<SafeWrapperProps> {
     }
 }
 
-
-export const SafePopup : React.SFC<PopupProps> = (props) =>
-    <SsrSafe onSSR={props.trigger}  >
-        <Popup {...props} trigger={props.trigger} on="click" onClick={(e:any) => {e.stopPropagation()}}>
+export const SafePopup : React.SFC<PopupProps> = (props) => {
+    return <SsrSafe onSSR={props.trigger}>
+        <Popup {...props} trigger={props.trigger} on="click" onClick={(e: any) => {
+            e.stopPropagation()
+        }}>
             {props.children}
         </Popup>
     </SsrSafe>
-
+}
 

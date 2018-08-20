@@ -1,5 +1,4 @@
 import {Map, sortBy} from "../utils";
-import {Record} from "../model/instances";
 
 export interface ISort {
     key: string;
@@ -16,15 +15,12 @@ export function extractSort(queryParams:Map<string>) : ISort {
             asc:direction == "asc"
         }
     } else {
-        return null;
+        // Default sort
+        // Default sort : creation time
+        return {key: "_creationTime", asc:false}
     }
 }
 
-export function applySort(records : Record[], sort:ISort) {
-    if (sort) {
-        sortBy(records,sort.key, !sort.asc);
-    } else {
-        // Default sort : creation time
-        sortBy(records,"_creationTime", true);
-    }
+export function serializeSort(sort:ISort) : Map<string> {
+    return {sort: sort.key + "." + (sort.asc ? "asc" : "desc")}
 }

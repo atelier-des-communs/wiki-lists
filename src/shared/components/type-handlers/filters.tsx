@@ -44,7 +44,7 @@ abstract class AbstractSingleFilter<T extends Filter> extends React.Component<Si
     // Update the filter by pushing query params in URL
     setFilter = (newFilter: T) => {
         let queryParams = serializeFilter(this.props.attr, newFilter);
-        console.log("filter clicked !", queryParams);
+        console.log("filter clicked !", this.props.attr, queryParams);
         goTo(this.props, queryParams);
     }
 }

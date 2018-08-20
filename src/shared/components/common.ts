@@ -1,7 +1,7 @@
 /*
 * Some common
 */
-import {StructType} from "../model/types";
+import {Attribute, StructType} from "../model/types";
 import {Record} from "../model/instances";
 
 /** Props injected by react-redux (the state) */
@@ -12,7 +12,7 @@ export interface ReduxProps {
 
 /** Event handler props injected by react redux */
 export interface CollectionEventProps {
-    onUpdateSchema : (schema:StructType) => Promise<void>,
+    onUpdateSchema : (schema : StructType) => Promise<void>,
     onUpdate: (newValue : Record) => Promise<void>,
     onCreate: (newValue : Record) => Promise<void>,
     onDelete: (id : string) => Promise<void>}

@@ -6,7 +6,7 @@ import {
     isIn,
     Map,
     mapMap,
-    parseParams,
+    parseParams, sortBy,
     strToInt,
     updatedParams,
     updatedQuery
@@ -14,10 +14,10 @@ import {
 import {Attribute, attributesMap, EnumType, StructType, Types} from "../model/types";
 import {Record} from "../model/instances";
 // import normalize from "normalize-text";
-import {applySort, extractSort} from "./sort";
+import {extractSort} from "./sort";
 import {RouteComponentProps} from "react-router"
 
-const queryParamName = (attrName: string) => {
+function queryParamName(attrName: string) {
     return `${attrName}.f`;
 }
 
@@ -126,13 +126,14 @@ export class TextFilter implements IFilter<string> {
 
 export function serializeTextFilter(attrName: string, filter:TextFilter) {
 
-    let paramName = queryParamName(name);
+    let paramName = queryParamName(attrName);
 
     // Same as no filter
     if (!filter || filter.isAll()) {
         return {[paramName] :null};
+    } else {
+        return {[paramName]: filter.search};
     }
-    return {[paramName]: filter.search};
 }
 
 export class EnumFilter implements IFilter<string> {
@@ -339,7 +340,7 @@ export function applyFilters(records: Record[], filters : Map<IFilter<any>>) : R
 export function applySearchAndFilters(records: Record[], params:Map<string>, schema:StructType) {
     // Apply sort directive
     let sort = extractSort(params);
-    applySort(records, sort);
+    sortBy(records, sort.key, !sort.asc);
 
     // Search & filter
     let search = extractSearch(params);

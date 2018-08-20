@@ -84,8 +84,13 @@ export async function getAllRecordsDb(dbName: string) : Promise<Record[]> {
 export async function updateRecordDb(dbName: string, record : Record) : Promise<Record> {
     let col = await Connection.getDbCol(dbName);
 
+    // Transform string ID to BSON ObjectID
     let copy = { ...record} as any;
     copy._id = new ObjectId(record._id);
+
+    // Update time
+    copy._updateTime = new Date();
+
     let res = await col.replaceOne({_id: copy._id}, copy);
     if (res.matchedCount != 1) {
         throw Error(`No item matched for id : ${record._id}`);

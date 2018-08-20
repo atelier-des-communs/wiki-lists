@@ -5,8 +5,16 @@ import {Modal, Header, Button, Icon, Segment, SegmentGroup, Form, Label, Message
 import {deepClone, Map} from "../utils";
 import {ValidationError, ValidationException} from "../validators/validators";
 
+const TYPE_OPTIONS = [
+    {value: Types.BOOLEAN, text:_.type_boolean, icon: "check square outline"},
+    {value: Types.NUMBER, text:_.type_number, icon:"number"},
+    {value: Types.ENUM, text:_.type_enum, icon:"list"},
+    {value: Types.TEXT, text:_.type_text, icon:"font"},
+]
+
+
 interface SchemaDialogProps  {
-    onUpdate : (newValue: StructType) => Promise<void>;
+    onUpdateSchema : (schema: StructType) => Promise<void>;
     schema : StructType;
     close?: () => void;
 }
@@ -57,13 +65,17 @@ function attributeDetailsSwitch  (props: TypeFieldProps<any>) {
 }
 
 
+// Add some properties to the Attribute type
+class UIAttribute extends Attribute {
+    expanded ?:boolean;
+}
+
 export class SchemaDialog extends React.Component<SchemaDialogProps> {
 
     state : {
         loading: boolean,
         errors:ValidationError[],
-        schema:StructType,
-        expandedAttrs : Map<boolean>};
+        attributes : UIAttribute[]};
 
     constructor(props: SchemaDialogProps) {
         super(props);
@@ -72,8 +84,11 @@ export class SchemaDialog extends React.Component<SchemaDialogProps> {
         this.state =  {
             loading: false,
             errors:[],
-            expandedAttrs : {},
-            schema: deepClone(this.props.schema)};
+            attributes: deepClone(this.props.schema.attributes)};
+    }
+
+    forceRedraw() {
+        this.setState({attributes:this.state.attributes});
     }
 
     async validate() {
@@ -83,7 +98,18 @@ export class SchemaDialog extends React.Component<SchemaDialogProps> {
 
         // Async POST of schema
         try {
-            await this.props.onUpdate(this.state.schema);
+
+            // filter out UI properties of UI
+            let attributes = this.state.attributes.map(attr => {
+               let res = deepClone(attr);
+               delete res.expanded;
+               return res;
+            });
+
+            let schema = deepClone(this.props.schema);
+            schema.attributes = attributes
+
+            await this.props.onUpdateSchema(schema);
             this.props.close();
         } catch (e) {
             if (e.validationErrors) {
@@ -99,7 +125,7 @@ export class SchemaDialog extends React.Component<SchemaDialogProps> {
 
     /** Return label with potential validation errors.
      * Mark the error that have been used */
-    labelWithError(key: string, label:string) {
+    labelWithError(key: string, label:string="") {
         let errors = this.state.errors
             .filter(error => error.field == key)
             .map(error => {
@@ -128,57 +154,42 @@ export class SchemaDialog extends React.Component<SchemaDialogProps> {
     }
 
     changeName(index:number, name:string) {
-        this.state.schema.attributes[index].name = name;
-        // FIXME : do it the immutable way
-        this.setState({schema:this.state.schema});
+        this.state.attributes[index].name = name;
+        this.forceRedraw()
     }
 
     addAttribute(typeTag: string) {
         let type = newType(typeTag);
-        let attr = new Attribute();
+        let attr = new UIAttribute();
         attr.type = type;
-        this.state.schema.attributes.push(attr);
-        this.setState({schema:this.state.schema});
-        this.setExpanded(this.state.schema.attributes.length - 1, true);
+        attr.expanded = true;
+        this.state.attributes.unshift(attr);
+        this.forceRedraw();
     }
 
     updateType(index:number, type:Type<any>) {
-        let attr = this.state.schema.attributes[index];
+        let attr = this.state.attributes[index];
         attr.type = type;
-        this.setState({schema:this.state.schema});
+        this.forceRedraw()
     }
 
     remove(index:number) {
-        this.state.schema.attributes.splice(index, 1);
-        this.setState({schema:this.state.schema});
+        this.state.attributes.splice(index, 1);
+        this.forceRedraw()
     }
 
-
-    isExpanded(attrIndex:number) {
-        return this.state.expandedAttrs[attrIndex];
-    }
-
-    setExpanded(attrIndex:number, value:boolean) {
-        this.state.expandedAttrs[attrIndex] = value;
-        this.setState({expandedAttrs:this.state.expandedAttrs});
-    }
 
     toggleAttr(attrIndex:number) {
-        this.state.expandedAttrs[attrIndex] = !this.isExpanded(attrIndex);
-        this.setState({expandedAttrs:this.state.expandedAttrs});
+        this.state.attributes[attrIndex].expanded = !this.state.attributes[attrIndex].expanded;
+        this.forceRedraw();
     }
 
 
     swapAttributes(index1:number, index2:number) {
-        let tmp = this.state.schema.attributes[index1];
-        this.state.schema.attributes[index1] = this.state.schema.attributes[index2];
-        this.state.schema.attributes[index2] = tmp;
-
-        let tmpExpanded = this.state.expandedAttrs[index1];
-        this.state.expandedAttrs[index1] = this.state.expandedAttrs[index2];
-        this.state.expandedAttrs[index2] = tmpExpanded;
-
-        this.setState({schema:this.state.schema});
+        let tmp = this.state.attributes[index1];
+        this.state.attributes[index1] = this.state.attributes[index2];
+        this.state.attributes[index2] = tmp;
+        this.forceRedraw();
     }
 
 
@@ -188,40 +199,30 @@ export class SchemaDialog extends React.Component<SchemaDialogProps> {
     }
 
     moveDown(index:number) {
-        if (index >= (this.state.schema.attributes.length -1)) return;
+        if (index >= (this.state.attributes.length -1)) return;
         this.swapAttributes(index, index + 1);
     }
 
     render()  {
 
-        let typeOptions = [
-            {value: Types.BOOLEAN, text:_.type_boolean, icon: "check square outline"},
-            {value: Types.NUMBER, text:_.type_number, icon:"number"},
-            {value: Types.ENUM, text:_.type_enum, icon:"list"},
-            {value: Types.TEXT, text:_.type_text, icon:"font"},
-        ]
-
         // Get type text from options for a given tag
         function typeDescr(tag:string) {
-            return typeOptions.filter(option => option.value == tag)[0]
+            return TYPE_OPTIONS.filter(option => option.value == tag)[0]
         }
 
         // Loop on schema attributes
-        let attributes = this.state.schema.attributes.map((attr, index) => {
+        let attributes = this.state.attributes.map((attr, index) => {
 
             let attributeDetails = attributeDetailsSwitch({
                 type: attr.type,
                 onUpdate: (type) => this.updateType(index, type)});
 
             return <Segment key={index}>
-                <Button
-                    floated="right"
-                    icon="trash"
-                    onClick={() => this.remove(index) } />
 
-                <Grid>
-                    <Grid.Row columns={3}>
-                        <Grid.Column>
+
+                <Grid divided="vertically" >
+                    <Grid.Row >
+                        <Grid.Column width={2}>
                             <Button.Group size="mini" compact >
                                 <Button size="mini" compact icon="angle up"
                                     onClick={() => this.moveUp(index)}/>
@@ -229,20 +230,21 @@ export class SchemaDialog extends React.Component<SchemaDialogProps> {
                                         onClick={() => this.moveDown(index)}/>
                             </Button.Group>
                         </Grid.Column>
-                        <Grid.Column>
+                        <Grid.Column  width={8}>
                             <Header >
                                 {attr.saved ?
                                 attr.name :
 
                                 <Form.Input
                                     size="mini"
-                                    label={this.labelWithError(`${index}.name`, _.attribute_name)}
+                                    label={this.labelWithError(`${index}.name`)}
                                     defaultValue={attr.name}
+                                    placeholder={ _.attribute_name}
                                     pattern="[A-Za-z0-9_]*"
                                     onChange={(e, value) => this.changeName(index, value.value)} />}
                             </Header>
                         </Grid.Column>
-                        <Grid.Column>
+                        <Grid.Column width={5}>
                             <Label size="large" >
                                 <Icon name={typeDescr(attr.type.tag).icon as any} />
                                 {typeDescr(attr.type.tag).text}
@@ -252,14 +254,17 @@ export class SchemaDialog extends React.Component<SchemaDialogProps> {
                                     basic size="small" compact className="shy"
                                     onClick={() => this.toggleAttr(index)}>
                                     {_.attribute_details }
-                                    <Icon name={this.isExpanded(index) ? "chevron up" : "chevron down"} />
+                                    <Icon name={attr.expanded ? "chevron up" : "chevron down"} />
                                 </Button>
                             }
                         </Grid.Column>
+                        <Grid.Column width={1}>
+                            <Button icon="trash" size="small" onClick={() => this.remove(index) } />
+                        </Grid.Column>
                     </Grid.Row>
 
-                    {attributeDetails && this.isExpanded(index) &&
-                        <Grid.Row  divided >
+                    {attributeDetails && attr.expanded &&
+                        <Grid.Row  >
                             <Grid.Column>
                                 { attributeDetails }
                             </Grid.Column>
@@ -270,31 +275,33 @@ export class SchemaDialog extends React.Component<SchemaDialogProps> {
             </Segment>
         });
 
+        let addAttributeButton = <Button.Group color='blue' float="left">
+            <Dropdown
+                text={_.add_attribute}
+                button color="blue"
+                labeled icon="add" className="icon"
+                options={TYPE_OPTIONS}
+                style={{marginTop:"1em", marginBottom:"1em"}}
+                onChange={(e, val) => this.addAttribute(val.value as string)}
+            />
+        </Button.Group>;
+
         return <Modal
             closeIcon
             open={true}
             onClose={()=> this.props.close() }>
-            <Header icon='edit' content={_.edit_attributes}/>
+            <Header icon='edit' >
+                {_.edit_attributes}
+            </Header>
             <Modal.Content scrolling >
                 <Form>
+                    {addAttributeButton}
                     <SegmentGroup>
                         {attributes}
                     </SegmentGroup>
                 </Form>
             </Modal.Content>
             <Modal.Actions>
-
-                <Button.Group color='blue' float="left">
-                    <Dropdown
-                        text={_.add_attribute}
-                        button color="blue"
-                        upward labeled icon="add" className="icon"
-                        options={typeOptions}
-                        style={{marginTop:"1em", marginBottom:"1em"}}
-                        onChange={(e, val) => this.addAttribute(val.value as string)}
-                    />
-                </Button.Group>
-
 
                 {this.state.errors.length > 0 ?
                     <Message

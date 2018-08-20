@@ -1,5 +1,5 @@
-import {extractSort} from "../views/sort";
-import {parseParams, updatedQuery} from "../utils";
+import {extractSort, ISort, serializeSort} from "../views/sort";
+import {goTo, parseParams, updatedQuery} from "../utils";
 import {RouteComponentProps, withRouter} from "react-router"
 import {_} from "../i18n/messages";
 import {deleteItem} from "../rest/client";
@@ -14,6 +14,8 @@ import {extractGroupBy} from "../views/group";
 import {Attribute} from "../model/types";
 import {extractFilters} from "../views/filters";
 import {singleFilter} from "./type-handlers/filters";
+import {AttributeDisplayComponent} from "./attribute-display";
+import {AttributeDisplay, extractDisplays} from "../views/display";
 
 type TableProps = ReduxProps & CollectionEventProps & RouteComponentProps<{}>;
 
@@ -26,10 +28,9 @@ function onHeaderClick(props: RouteComponentProps<{}>, attr:string) {
     // Same key ? => toggle sort order
     let newAsc = (sort && sort.key == attr) ? ! sort.asc  : true;
 
-    // Update current query with new sort
-    props.history.push(updatedQuery(
-        props.location.search,
-        {sort: attr + "." + (newAsc ? "asc" : "desc")}))
+    let newSort:ISort = {key:attr, asc:newAsc};
+    let params = serializeSort(newSort);
+    goTo(props, params);
 }
 
 interface EditableCellProps {
@@ -72,31 +73,35 @@ class EditableCell extends React.Component<EditableCellProps> {
 const TableComponent: React.SFC<TableProps> = (props) => {
 
     let attrs = props.schema.attributes;
-
-    let groupBy = extractGroupBy(parseParams(props.location.search));
-
-    // Filter out group-by column
-    let filterColumns = (attr:Attribute) => attr.name != groupBy;
-
-    // First header cell : the menu toolbox
-    let columnsHeader = <Table.HeaderCell collapsing key="menu" >
-        <SafeClickWrapper trigger={<Button icon="columns" size="mini" basic compact />} >
-            <SchemaDialog
-                onUpdate={props.onUpdateSchema}
-                schema={props.schema}
-            />
-        </SafeClickWrapper>
-    </Table.HeaderCell>;
-
     let queryParams = parseParams(props.location.search);
     let sort = extractSort(queryParams);
     let filters = extractFilters(props.schema, queryParams);
+    let displays = extractDisplays(props.schema, queryParams);
+    let groupBy = extractGroupBy(parseParams(props.location.search));
+
+    // Filter out group-by column
+    let filterAttribute = (attr:Attribute) => {
+        return attr.name != groupBy && (displays[attr.name] != AttributeDisplay.HIDDEN);
+    }
+
+    // First header cell : the menu toolbox
+    let columnsHeader = <Table.HeaderCell collapsing key="menu" >
+        <SafePopup trigger={<Button icon="unhide" size="mini" basic compact />} >
+           <AttributeDisplayComponent
+               {...props}
+                schema = {props.schema}
+           />
+        </SafePopup>
+    </Table.HeaderCell>;
+
+
 
     /* Column headers, for each attribute */
-    let headers = attrs.filter(filterColumns).map(attr => {
+    let headers = attrs.filter(filterAttribute).map(attr => {
 
         let sorted = sort && sort.key == attr.name;
         let filter = filters[attr.name];
+
 
         // May be null if filter not supported for this type
         let filterComp = singleFilter(props, attr, filter);
@@ -108,28 +113,31 @@ const TableComponent: React.SFC<TableProps> = (props) => {
 
 
             <div style={{display:"table-row", width:"100%"}}>
+
                 <div style={{display: "table-cell", width:"100%" }}>
                     { attr.name }
                 </div>
 
-
-                    { filterComp &&
-                    <div style={{display: "table-cell"}}>
-                        <SafePopup position="bottom right" trigger={
-                           <Button
-                               size="mini"  className="shy" compact
-                               icon="filter"
-                               color={filter ? "blue" : null}
-                               onClick={(e:any) => e.stopPropagation()}/> }>
-                            {filterComp}
-                        </SafePopup>
-                    </div>}
-
-                    <div style={{display: "table-cell"}}>
+                {sorted && <div style={{display: "table-cell"}}>
                     <Icon
                         name={(sorted) ? (sort.asc ? "sort up" : "sort down") : "sort" }
                         className={sorted ? null: "shy"} />
-                    </div>
+                </div>}
+
+
+                { filterComp &&
+                <div style={{display: "table-cell"}}>
+                    <SafePopup position="bottom right" trigger={
+                       <Button
+                           size="mini"  className="shy" compact
+                           icon="filter"
+                           color={filter ? "blue" : null}
+                           onClick={(e:any) => e.stopPropagation()}/> }>
+                        {filterComp}
+                    </SafePopup>
+                </div>}
+
+
 
             </div>
         </Table.HeaderCell>
@@ -164,7 +172,7 @@ const TableComponent: React.SFC<TableProps> = (props) => {
                 </Button.Group>
             </Table.Cell>
 
-            {attrs.filter(filterColumns).map(attr =>
+            {attrs.filter(filterAttribute).map(attr =>
                 <Table.Cell key={attr.name}>
                     <ValueHandler
                         editMode={false}
