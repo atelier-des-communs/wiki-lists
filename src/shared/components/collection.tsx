@@ -153,7 +153,9 @@ class CollectionComponent extends  React.Component<CollectionProps> {
 
 
         let UpdateSchemaButton = <SafeClickWrapper trigger={
-            <Button icon="configure" content={_.edit_attributes} />} >
+            <Button icon="configure"
+                    color="teal"
+                    content={_.edit_attributes} />} >
                 <SchemaDialog
                     onUpdate={props.onUpdateSchema}
                     schema={props.schema}
@@ -162,7 +164,7 @@ class CollectionComponent extends  React.Component<CollectionProps> {
 
         let toggleSideBarButton = <Button
             title = {_.toggle_filters}
-            icon={this.state.filtersSideBar ? "angle double left " : "angle double right"}
+            icon={this.state.filtersSideBar ? "angle double left" : "angle double right"}
             onClick={() => this.toggleFilters()}
         />
 

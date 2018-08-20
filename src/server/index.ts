@@ -13,6 +13,9 @@ export default function initServer(dist_path:string) {
     server.use(compression({ threshold: 0 }));
     server.use(bodyParser.json());
 
+    // Pretty print JSON result
+    server.set('json spaces', 2);
+
     console.log("dist_path", dist_path);
     server.use(express.static(dist_path));
 

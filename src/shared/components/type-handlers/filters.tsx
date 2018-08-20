@@ -62,6 +62,7 @@ class BooleanFilterComponent extends AbstractSingleFilter<BooleanFilter> {
                     newFilter.showTrue = ! filter.showTrue;
                     this.setFilter(newFilter);
                 }} />
+           &nbsp;
             <Checkbox
                 label={_.no}
                 checked={filter.showFalse}
@@ -115,14 +116,14 @@ class NumberFilterComponent extends AbstractSingleFilter<NumberFilter> {
     render() {
         return <>
         <Input
-            inline size="mini"
+            size="mini"
             type="number"
             label={_.min}
             defaultValue={this.props.filter.min}
             onChange={(e, value) => this.updateMin(strToInt(value.value))}/>
 
         <Input
-            inline size="mini"
+            size="mini"
             type="number"
             label={_.max}
             defaultValue={this.props.filter.max}

@@ -6,9 +6,6 @@ body {
     content: "12";
 }
 
-.ui.modal > .header{
-    background-color: lightgoldenrodyellow !important;
-}
 
 .shy {
     opacity:0.6!important;

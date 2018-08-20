@@ -169,6 +169,29 @@ export class SchemaDialog extends React.Component<SchemaDialogProps> {
     }
 
 
+    swapAttributes(index1:number, index2:number) {
+        let tmp = this.state.schema.attributes[index1];
+        this.state.schema.attributes[index1] = this.state.schema.attributes[index2];
+        this.state.schema.attributes[index2] = tmp;
+
+        let tmpExpanded = this.state.expandedAttrs[index1];
+        this.state.expandedAttrs[index1] = this.state.expandedAttrs[index2];
+        this.state.expandedAttrs[index2] = tmpExpanded;
+
+        this.setState({schema:this.state.schema});
+    }
+
+
+    moveUp(index:number) {
+        if (index <= 0) return;
+        this.swapAttributes(index, index -1);
+    }
+
+    moveDown(index:number) {
+        if (index >= (this.state.schema.attributes.length -1)) return;
+        this.swapAttributes(index, index + 1);
+    }
+
     render()  {
 
         let typeOptions = [
@@ -197,7 +220,15 @@ export class SchemaDialog extends React.Component<SchemaDialogProps> {
                     onClick={() => this.remove(index) } />
 
                 <Grid>
-                    <Grid.Row columns={2}>
+                    <Grid.Row columns={3}>
+                        <Grid.Column>
+                            <Button.Group size="mini" compact >
+                                <Button size="mini" compact icon="angle up"
+                                    onClick={() => this.moveUp(index)}/>
+                                <Button size="mini" compact icon="angle down"
+                                        onClick={() => this.moveDown(index)}/>
+                            </Button.Group>
+                        </Grid.Column>
                         <Grid.Column>
                             <Header >
                                 {attr.saved ?
@@ -249,22 +280,20 @@ export class SchemaDialog extends React.Component<SchemaDialogProps> {
                     <SegmentGroup>
                         {attributes}
                     </SegmentGroup>
-                    <Button.Group color='blue'>
+                </Form>
+            </Modal.Content>
+            <Modal.Actions>
+
+                <Button.Group color='blue' float="left">
                     <Dropdown
                         text={_.add_attribute}
-                        button
-                        color="blue"
-                        labeled icon="add" className="icon"
-                        upward
+                        button color="blue"
+                        upward labeled icon="add" className="icon"
                         options={typeOptions}
                         style={{marginTop:"1em", marginBottom:"1em"}}
                         onChange={(e, val) => this.addAttribute(val.value as string)}
-                        />
-                    </Button.Group>
-                </Form>
-
-            </Modal.Content>
-            <Modal.Actions>
+                    />
+                </Button.Group>
 
 
                 {this.state.errors.length > 0 ?

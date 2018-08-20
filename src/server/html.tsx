@@ -87,7 +87,7 @@ async function getAllWithFilters(db_name:string, query:Map<string>) : Promise<an
     return applySearchAndFilters(records, query, schema);
 }
 
-async function toExcel(db_name:string, req:any, res:any): Promise<any> {
+async function toExcel(db_name:string, req:Request, res:Response): Promise<any> {
     let schema = await getSchema(db_name);
     let records = await getAllWithFilters(db_name, req.query);
 
@@ -97,7 +97,7 @@ async function toExcel(db_name:string, req:any, res:any): Promise<any> {
     for (let record  of records) {
         worksheet.addRow(record);
     }
-    res.setHeader("Content-Disposition", 'attachment; filename="export.xls"');
+    res.setHeader("Content-Disposition", `attachment; filename="${db_name}.xlsx"`);
     res.setHeader("Content-Type", 'application/vnd.ms-excel');
     return workbook.xlsx.write(res);
 }
@@ -105,12 +105,14 @@ async function toExcel(db_name:string, req:any, res:any): Promise<any> {
 export function setUp(server : Express) {
 
     server.get(DOWNLOAD_JSON_URL, function(req:Request, res:Response) {
+        res.setHeader("Content-Disposition", `attachment; filename="${req.params.db_name}.json"`);
+        res.setHeader("Content-Type", 'application/json');
         returnPromise(res, getAllWithFilters(
             req.params.db_name,
             req.query));
     });
 
-    server.get(DOWNLOAD_XLS_URL, function(req:Request, res:Request) {
+    server.get(DOWNLOAD_XLS_URL, function(req:Request, res:Response) {
         toExcel(req.params.db_name, req, res).then();
     });
 
