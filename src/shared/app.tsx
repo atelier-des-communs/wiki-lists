@@ -1,7 +1,7 @@
 import * as React from "react";
 import {connect, Provider, Store} from 'react-redux';
 import { IState } from './redux';
-import { ConnectedCollectionComponent } from "./components/collection";
+import { ConnectedCollectionComponent } from "./jsx/pages/collection";
 
 interface ReduxAppProps {
     store: Store<IState>;

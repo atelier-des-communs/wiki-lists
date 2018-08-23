@@ -1,10 +1,12 @@
+/*  Popup controlling the display of the attributes */
 import * as React from "react";
 import {RouteComponentProps} from "react-router"
-import {StructType} from "../model/types";
+import {StructType} from "../../model/types";
 import {Grid, Button} from "semantic-ui-react"
-import {AttributeDisplay, extractDisplays, serializeDisplay} from "../views/display";
-import {goTo, parseParams} from "../utils";
-import {_} from "../i18n/messages";
+import {AttributeDisplay, extractDisplays, serializeDisplay} from "../../views/display";
+import {goTo, parseParams} from "../../utils";
+import {_} from "../../i18n/messages";
+import {ellipsis} from "../utils/utils";
 
 interface AttributeDisplayComponent extends RouteComponentProps<{}> {
     schema: StructType;
@@ -21,7 +23,7 @@ export const AttributeDisplayComponent : React.SFC<AttributeDisplayComponent> = 
     }
 
     return <>
-    <Button primary content={_.edit_attributes} />
+
         <div style={{padding:"1em"}}>
         {props.schema.attributes.map(attr => {
 
@@ -41,7 +43,7 @@ export const AttributeDisplayComponent : React.SFC<AttributeDisplayComponent> = 
                             onClick={() => setDisplay(attr.name, AttributeDisplay.HIDDEN)} />
                 </Button.Group>
 
-                <span style={{marginLeft:"1em"}} ><b>{attr.name}</b></span>
+                <span style={{marginLeft:"1em"}} ><b>{ellipsis(attr.name)}</b></span>
 
             </div>})}
         </div>

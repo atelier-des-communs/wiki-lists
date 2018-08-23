@@ -1,7 +1,8 @@
 import * as Immutable from "seamless-immutable";
 import "es6-promise";
 import * as QueryString from "querystring";
-import {RouteComponentProps} from "react-router"
+import {RouteComponentProps} from "react-router";
+import * as React from "react";
 
 
 

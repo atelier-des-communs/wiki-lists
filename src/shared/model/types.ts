@@ -57,7 +57,7 @@ export class Attribute {
     name: string;
     label?: string;
     type: Type<any>;
-    isId: boolean;
+    isName: boolean;
 
     saved?:boolean = false;
 

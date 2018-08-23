@@ -13,3 +13,17 @@ body {
 .shy:hover {
     opacity:1 !important;
 }
+
+.super-shy {
+    visibility: hidden;
+}
+:hover > .super-shy {
+    visibility: visible !important;
+}
+
+.super-shy-th {
+    visibility: hidden;
+}
+th:hover .super-shy-th {
+    visibility: visible !important;
+}

@@ -1,6 +1,5 @@
 import * as React from "react";
-import {Checkbox, Segment, Header, Input, Button} from "semantic-ui-react";
-import {Location, History} from "history";
+import {Checkbox, Segment, Header, Input, Button, Icon, Grid, Popup} from "semantic-ui-react";
 import {
     Filter,
     extractFilters,
@@ -8,7 +7,7 @@ import {
     serializeFilter,
     EnumFilter,
     TextFilter,
-    serializeSearch, extractSearch, IFilter, NumberFilter
+    serializeSearch, extractSearch, IFilter, NumberFilter, clearFiltersOrSearch, hasFiltersOrSearch
 } from "../../views/filters";
 import {RouteComponentProps, withRouter} from "react-router";
 import {Attribute, StructType, Types} from "../../model/types";
@@ -26,6 +25,8 @@ import {
 } from "../../utils";
 import {_} from "../../i18n/messages";
 import  * as debounce from "debounce";
+import {SafePopup} from "../utils/ssr-safe";
+import {ellipsis} from "../utils/utils";
 
 interface IFiltersComponentProps {
     schema:StructType;
@@ -232,35 +233,54 @@ export function singleFilter(props : RouteComponentProps<{}>, attr:Attribute, fi
     </>
 }
 
-/* Filter sidebar */
-export const FiltersSidebar : React.SFC<IFiltersComponentProps & RouteComponentProps<{}>> = (props) => {
+/* Filter popup */
+export const FiltersPopup : React.SFC<IFiltersComponentProps & RouteComponentProps<{}>> = (props) => {
 
     let queryParams = parseParams(props.location.search);
     let filters = extractFilters(props.schema, queryParams);
 
-    return <>
-        <div style={{textAlign:"center"}}>
-            <Header as={"span"} >
-                {_.filters}
-            </Header>
-        </div>
+    let bigPopupStyle = {
+        width:"80%",
+        left: "10%",
+        right: "10%",
+        maxWidth: "none"
+    }
 
-        <div style={{margin:"1em"}}>
+    let hasFilters = hasFiltersOrSearch(props.schema, props);
+
+    return <Button.Group>
+    <SafePopup position="bottom center" className="big-popup" style={bigPopupStyle} trigger={
+            <Button icon labelPosition="left" {...hasFilters && {attached:"left"}}>
+                <Icon name="filter" />
+                {_.filters} </Button>
+
+        }>
+        <Popup.Content>
+        <Grid celled divided columns={12}>
             {props.schema.attributes.map((attr) => {
 
                 let filterComp = singleFilter(props, attr, filters[attr.name]);
 
-                return filterComp && <>
-                    <Header attached="top">
-                        {attr.name}
+                return filterComp && <Grid.Column mobile={12} tablet={6} computer={4}>
+                    <Header >
+                        {ellipsis(attr.name)}
                     </Header>
-                    <Segment attached="bottom" key={attr.name} >
+                    <div  key={attr.name} >
                         { filterComp }
-                    </Segment>
-                </>
+                    </div>
+                </Grid.Column>
             })}
-        </div>
-    </>;
+        </Grid>
+        </Popup.Content>
+    </SafePopup>
+        { hasFilters &&
+        <Button
+            iconed
+            icon="delete"
+            attached="right"
+            title={_.clear_filters}
+            onClick={() => clearFiltersOrSearch(props.schema, props) } />}
+    </Button.Group>
 };
 
 /* Search component, for all fields */

@@ -1,11 +1,11 @@
 /*
-* Some common
+* Some common props for components
 */
-import {Attribute, StructType} from "../model/types";
-import {Record} from "../model/instances";
+import {Attribute, StructType} from "../../model/types";
+import {Record} from "../../model/instances";
 
-/** Props injected by react-redux (the state) */
-export interface ReduxProps {
+/** Props for components displaying a list of records */
+export interface RecordProps {
     schema : StructType;
     records: Record[]}
 

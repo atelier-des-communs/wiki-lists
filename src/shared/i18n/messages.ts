@@ -1,11 +1,12 @@
-export class IMessages {
+export class DefaultMessages {
 
-    daadle_title = "Daadle : Instant structured data authoring, for human beings";
+    daadle_title = "Daadle : Online structured data, for human beings.";
 
     filters = "Filters";
 
     add_item = "Add item";
     edit_item = "Edit item";
+    delete_item = "Delete item";
     columns = "Columns";
     cancel = "Cancel";
     save = "Save";
@@ -57,9 +58,12 @@ export class IMessages {
 
     show_attribute = "show attribute"
     hide_attribute = "hide attribute"
+
+    view_type = "View";
+    table_view = "table";
+    card_view = "card";
 }
 
-class enMessages extends IMessages {
-}
 
-export let _ = new enMessages();
+export const _ = new DefaultMessages();
+

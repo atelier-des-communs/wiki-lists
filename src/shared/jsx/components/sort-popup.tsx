@@ -1,12 +1,14 @@
-import {_} from "../i18n/messages";
+/* popup controlling the sorting */
+import {_} from "../../i18n/messages";
 import {Button, Icon} from "semantic-ui-react";
 import * as React from "react";
 import {RouteComponentProps} from "react-router";
-import {StructType} from "../model/types";
-import {goTo, parseParams} from "../utils";
-import {AttributeDisplay, extractDisplays, serializeDisplay} from "../views/display";
-import {extractSort, ISort, serializeSort} from "../views/sort";
-import {SafePopup} from "./utils/ssr-safe";
+import {StructType} from "../../model/types";
+import {goTo, parseParams} from "../../utils";
+import {AttributeDisplay, extractDisplays, serializeDisplay} from "../../views/display";
+import {extractSort, ISort, serializeSort} from "../../views/sort";
+import {SafePopup} from "../utils/ssr-safe";
+import {ellipsis} from "../utils/utils";
 
 interface SortProps extends RouteComponentProps<{}> {
     schema : StructType;
@@ -23,7 +25,7 @@ export const SortPopup : React.SFC<SortProps> = (props) => {
     }
 
 
-    return <SafePopup
+    return <SafePopup wide="very"
         // Force to redraw (and hence close) upon update
         key={Date.now()}
         trigger={
@@ -33,7 +35,7 @@ export const SortPopup : React.SFC<SortProps> = (props) => {
             icon="sort amount down" >
             <Icon name="sort amount down" />
             <span>
-                {sort.key} <Icon name={sort.asc ? "angle up" : "angle down"} />
+                {ellipsis(sort.key)} <Icon name={sort.asc ? "angle up" : "angle down"} />
             </span>
         </Button>} >
 
@@ -54,7 +56,7 @@ export const SortPopup : React.SFC<SortProps> = (props) => {
                                 onClick={() => setSort(attr.name, false)} /> />
                     </Button.Group>
 
-                    <span style={{marginLeft:"1em"}} ><b>{attr.name}</b></span>
+                    <span style={{marginLeft:"1em"}} ><b>{ellipsis(attr.name)}</b></span>
 
                 </div>})}
         </div>

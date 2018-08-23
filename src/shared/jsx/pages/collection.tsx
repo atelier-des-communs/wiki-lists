@@ -1,17 +1,11 @@
-
+/* Main page displaying a single collection, with sorting, filtering, grouping */
 import * as React from 'react';
-import {
-    Button,
-    Container,
-    Popup,
-    Icon,
-    Input, Table, Header, Dropdown
-} from 'semantic-ui-react'
-import { EditDialog } from "./edit-dialog";
-import {Attribute, StructType, Types} from "../model/types";
-import {deepClone, getDbName, goTo, Map, mapMap, parseParams} from "../utils";
-import {_} from "../i18n/messages";
-import {SafeClickWrapper, SafePopup} from "./utils/ssr-safe";
+import {Button, Header, Dropdown} from 'semantic-ui-react'
+import { EditDialog } from "../dialogs/edit-dialog";
+import {Attribute, StructType, Types} from "../../model/types";
+import {deepClone, getDbName, goTo, Map, mapMap, parseParams} from "../../utils";
+import {_} from "../../i18n/messages";
+import {SafeClickWrapper, SafePopup} from "../utils/ssr-safe";
 import {connect, Dispatch} from "react-redux";
 import {
     createAddItemAction,
@@ -19,26 +13,51 @@ import {
     createDeleteAction,
     createUpdateItemAction,
     createUpdateSchema
-} from "../redux";
+} from "../../redux/index";
 
 import {RouteComponentProps, withRouter} from "react-router"
-import {Record} from "../model/instances";
-import {FiltersSidebar, ConnectedSearchComponent} from "./type-handlers/filters";
-import {applySearchAndFilters, clearFiltersOrSearch, hasFiltersOrSearch} from "../views/filters";
-import {CollectionEventProps, ReduxProps} from "./common";
-import {ConnectedTableComponent} from "./table";
-import {extractGroupBy, groupBy, updatedGroupBy} from "../views/group";
-import {Collapsible} from "./utils/collapsible";
-import {SchemaDialog} from "./schema-dialog";
-import {createItem, deleteItem, updateItem, updateSchema} from "../rest/client";
-import {DOWNLOAD_JSON_URL, DOWNLOAD_XLS_URL} from "../rest/api";
+import {Record} from "../../model/instances";
+import {FiltersPopup, ConnectedSearchComponent} from "../type-handlers/filters";
+import {applySearchAndFilters, clearFiltersOrSearch, hasFiltersOrSearch} from "../../views/filters";
+import {CollectionEventProps, RecordProps} from "../components/props";
+import {ConnectedTableComponent} from "../components/table";
+import {extractGroupBy, groupBy, updatedGroupBy} from "../../views/group";
+import {Collapsible} from "../utils/collapsible";
+import {SchemaDialog} from "../dialogs/schema-dialog";
+import {createItem, deleteItem, updateItem, updateSchema} from "../../rest/client";
+import {DOWNLOAD_JSON_URL, DOWNLOAD_XLS_URL} from "../../rest/api";
 import {DropdownItemProps} from "semantic-ui-react/dist/commonjs/modules/Dropdown/DropdownItem"
-import {SortPopup} from "./sort-popup";
+import {SortPopup} from "../components/sort-popup";
+import {extractViewType, serializeViewType, ViewType} from "../../views/view-type";
+import {CardsComponent} from "../components/cards";
 
-type CollectionProps = ReduxProps & CollectionEventProps & RouteComponentProps<{}>;
+type CollectionProps = RecordProps & CollectionEventProps & RouteComponentProps<{}>;
 
 
-function records(groupAttr: string, props:CollectionProps) {
+function records(groupAttr: string, props:CollectionProps, viewType: ViewType) {
+
+    let recordsComponent = (records: Record[]) => {
+        let result = null;
+        switch (viewType) {
+            case ViewType.TABLE :
+                result =  <ConnectedTableComponent
+                    onUpdate={props.onUpdate}
+                    onCreate={props.onCreate}
+                    onDelete={props.onDelete}
+                    onUpdateSchema={props.onUpdateSchema}
+                    schema={props.schema}
+                    records={records} />
+                break;
+            case ViewType.CARDS:
+                result =  <CardsComponent {...props} records={records} />;
+                break;
+            default :
+                throw new  Error(`unsupported view type : ${viewType}`)
+        }
+        return <div style={{marginTop:"1em", marginRight:"1em"}}>
+            {result}
+        </div>
+    };
 
     if (groupAttr) {
         let groups = groupBy(props.records, groupAttr);
@@ -55,14 +74,7 @@ function records(groupAttr: string, props:CollectionProps) {
                         {groupAttr} : {group.key}
                     </Header></div>} >
 
-                    <ConnectedTableComponent
-                        onUpdate={props.onUpdate}
-                        onCreate={props.onCreate}
-                        onDelete={props.onDelete}
-                        onUpdateSchema={props.onUpdateSchema}
-                        schema={props.schema}
-                        records={group.records}
-                    />
+                    {recordsComponent(group.records)}
                 </Collapsible>
             </div>);
 
@@ -70,36 +82,25 @@ function records(groupAttr: string, props:CollectionProps) {
             {sections}
         </>
     } else {
-        return <ConnectedTableComponent
-            onUpdate={props.onUpdate}
-            onCreate={props.onCreate}
-            onDelete={props.onDelete}
-            onUpdateSchema={props.onUpdateSchema}
-            schema={props.schema}
-            records={props.records}
-        />
+        return recordsComponent(props.records);
     }
 }
 
 
 class CollectionComponent extends  React.Component<CollectionProps> {
 
-    state : {
-        filtersSideBar : boolean;
-    }
 
     constructor(props:CollectionProps) {
         super(props);
         this.state = {filtersSideBar : true}
     }
 
-    toggleFilters() {
-        this.setState({filtersSideBar : !this.state.filtersSideBar})
-    }
-
     render() {
         let props = this.props;
         let dbName = getDbName(props);
+
+        let params = parseParams(props.location.search);
+
         let xls_link =
             DOWNLOAD_XLS_URL.replace(":db_name", dbName)
             + props.location.search;
@@ -127,12 +128,6 @@ class CollectionComponent extends  React.Component<CollectionProps> {
             </SafeClickWrapper>;
 
 
-        let clearFiltersButton = hasFiltersOrSearch(props.schema, props) &&
-            <Button
-                content={_.clear_filters}
-                onClick={() => clearFiltersOrSearch(props.schema, props) }/>
-
-
         let groupAttr = extractGroupBy(parseParams(props.location.search));
         let groupOptions = props.schema.attributes
             .filter(attr => attr.type.tag == Types.ENUM)
@@ -142,12 +137,9 @@ class CollectionComponent extends  React.Component<CollectionProps> {
 
         groupOptions = [{value:null, text:_.empty_group_by} as DropdownItemProps].concat(groupOptions);
 
-        let groupByDropdown = <Dropdown
-                 inline
-                button className="icon"
-                 icon="plus square outline"
-                labeled
-                placeholder={_.group_by}
+        let groupByDropdown = <Dropdown inline
+                button className="icon" icon="plus square outline"
+                labeled placeholder={_.group_by}
                 options={groupOptions}
                 value={groupAttr}
                 onChange={(e, update) =>
@@ -165,24 +157,24 @@ class CollectionComponent extends  React.Component<CollectionProps> {
             />
         </SafeClickWrapper>;
 
-        let toggleSideBarButton = <Button
-            title = {_.toggle_filters}
-            icon={this.state.filtersSideBar ? "angle double left" : "angle double right"}
-            onClick={() => this.toggleFilters()}
-        />
+        let setViewType = (viewType: ViewType) => {
+            goTo(props, serializeViewType(viewType));
+        }
+        let viewType = extractViewType(params);
+        let viewTypeButtons = <Button.Group basic>
+            <Button icon="table"
+                    title={`${_.view_type} : ${_.table_view}`}
+                    active={viewType == ViewType.TABLE}
+                    onClick={() => setViewType(ViewType.TABLE)} />
+            <Button icon="square outline"
+                    title={`${_.view_type} : ${_.card_view}`}
+                    active={viewType == ViewType.CARDS}
+                    onClick={() => setViewType(ViewType.CARDS)}/>
+        </Button.Group>;
+
 
         return <>
-
-
             <div style={{display:"table", width:"100%", padding:"1em"}}>
-
-                { this.state.filtersSideBar &&
-                    <div style={{display: "table-cell"}}>
-                        <FiltersSidebar
-                            {...props}
-                            schema={props.schema} />
-                    </div>}
-
                 <div style={{display:"table-cell", width:"100%"}}>
 
                     <div style={{float:"right"}} >
@@ -191,19 +183,18 @@ class CollectionComponent extends  React.Component<CollectionProps> {
                     </div>
 
                     <div>
-                        { toggleSideBarButton }
-
                         { AddItemButton }
                         { UpdateSchemaButton }
                     </div>
 
                     <div>
+                        { viewTypeButtons } &nbsp;
                         { sortByDropdown }
                         { groupByDropdown}
-                        { clearFiltersButton }
+                        { <FiltersPopup {...props} schema={this.props.schema} /> }
                     </div>
 
-                    { records(groupAttr, props) }
+                    { records(groupAttr, props, viewType) }
                 </div>
             </div>
         </>
@@ -212,7 +203,7 @@ class CollectionComponent extends  React.Component<CollectionProps> {
 
 
 // Fetch data from Redux store and map it to props
-const mapStateToProps =(state : IState, routerProps?: RouteComponentProps<{}>) : ReduxProps => {
+const mapStateToProps =(state : IState, routerProps?: RouteComponentProps<{}>) : RecordProps => {
 
     // Flatten map of records
     let records = mapMap(state.items,(key, item) => item) as Map[];
@@ -266,7 +257,7 @@ const matchDispatchToProps = (dispatch: Dispatch<{}>, props?: RouteComponentProp
 }
 
 // connect to redux
-let CollectionComponentWithRedux = connect<ReduxProps, CollectionEventProps, RouteComponentProps<{}>>(
+let CollectionComponentWithRedux = connect<RecordProps, CollectionEventProps, RouteComponentProps<{}>>(
     mapStateToProps,
     matchDispatchToProps
 )(CollectionComponent);

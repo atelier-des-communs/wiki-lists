@@ -1,16 +1,15 @@
 import * as React from "react";
-import {_} from "../i18n/messages";
-import {Attribute, EnumType, newType, StructType, TextType, Type, Types} from "../model/types";
+import {_} from "../../i18n/messages";
+import {Attribute, EnumType, newType, StructType, TextType, Type, Types} from "../../model/types";
 import {Modal, Header, Button, Icon, Segment, SegmentGroup, Form, Label, Message, Dropdown, Grid} from "semantic-ui-react";
-import {deepClone, Map} from "../utils";
-import {ValidationError, ValidationException} from "../validators/validators";
+import {deepClone, Map} from "../../utils";
+import {ValidationError, ValidationException} from "../../validators/validators";
 
 const TYPE_OPTIONS = [
     {value: Types.BOOLEAN, text:_.type_boolean, icon: "check square outline"},
     {value: Types.NUMBER, text:_.type_number, icon:"number"},
     {value: Types.ENUM, text:_.type_enum, icon:"list"},
-    {value: Types.TEXT, text:_.type_text, icon:"font"},
-]
+    {value: Types.TEXT, text:_.type_text, icon:"font"}];
 
 
 interface SchemaDialogProps  {

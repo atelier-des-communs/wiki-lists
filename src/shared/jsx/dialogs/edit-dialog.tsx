@@ -1,11 +1,14 @@
 import * as React from "react";
-import {_} from "../i18n/messages";
-import {StructType} from "../model/types";
-import {Modal, Header, Button, Icon, Segment, SegmentGroup, Form, List} from "semantic-ui-react";
-import {Map} from "../utils";
-import {ValueHandler} from "./type-handlers/editors";
-import {createItem, updateItem} from "../rest/client";
-import {Record} from "../model/instances";
+import {_} from "../../i18n/messages";
+import {StructType, TextType, Type, Types} from "../../model/types";
+import {Modal, Header, Button, Icon, Segment, SegmentGroup, Form, List, Grid,Label} from "semantic-ui-react";
+import {Map} from "../../utils";
+import {ValueHandler} from "../type-handlers/editors";
+import {createItem, updateItem} from "../../rest/client";
+import {Record} from "../../model/instances";
+import {typeIsWide} from "../utils/utils";
+
+
 
 interface EditDialogProps  {
     create : boolean;
@@ -13,7 +16,7 @@ interface EditDialogProps  {
     onUpdate : (newValue: Object) => Promise<void>;
     schema : StructType;
     close?: () => void;
-};
+}
 
 export class EditDialog extends React.Component<EditDialogProps> {
 
@@ -65,8 +68,9 @@ export class EditDialog extends React.Component<EditDialogProps> {
                     console.log("Record edit updated", this.record);
                 }
 
-                return <Form.Field key={attr.name}>
-                    <label>{attr.name}</label>
+                return <Grid.Column mobile={16} computer={typeIsWide(attr.type) ? 16 : 8}>
+                <Form.Field key={attr.name}>
+                    <Header size="small">{attr.name}</Header>
                     <ValueHandler
                         editMode={true}
                         value={this.record[attr.name]}
@@ -74,6 +78,7 @@ export class EditDialog extends React.Component<EditDialogProps> {
                         onValueChange={callback}
                     />
                 </Form.Field>
+                </Grid.Column>
 
             });
 
@@ -81,9 +86,11 @@ export class EditDialog extends React.Component<EditDialogProps> {
                 open={true}
                 onClose={()=> this.props.close && this.props.close() } >
                 <Header icon='edit' content={this.props.create? _.add_item : _.edit_item}/>
-                <Modal.Content>
+                <Modal.Content scrolling>
                     <Form>
+                        <Grid divided>
                         {fields}
+                        </Grid>
                     </Form>
                 </Modal.Content>
                 <Modal.Actions>
