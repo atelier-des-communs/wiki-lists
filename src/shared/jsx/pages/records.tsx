@@ -2,7 +2,7 @@
 import * as React from 'react';
 import {Button, Header, Dropdown} from 'semantic-ui-react'
 import { EditDialog } from "../dialogs/edit-dialog";
-import {Attribute, StructType, Types} from "../../model/types";
+import {Attribute, attributesMap, StructType, Types} from "../../model/types";
 import {deepClone, getDbName, goTo, Map, mapMap, parseParams} from "../../utils";
 import {_} from "../../i18n/messages";
 import {SafeClickWrapper, SafePopup} from "../utils/ssr-safe";
@@ -19,7 +19,7 @@ import {RouteComponentProps, withRouter} from "react-router"
 import {Record} from "../../model/instances";
 import {FiltersPopup, ConnectedSearchComponent} from "../type-handlers/filters";
 import {applySearchAndFilters, clearFiltersOrSearch, hasFiltersOrSearch} from "../../views/filters";
-import {CollectionEventProps, RecordProps} from "../components/props";
+import {CollectionEventProps, CollectionRouteProps, RecordProps} from "../components/props";
 import {ConnectedTableComponent} from "../components/table";
 import {extractGroupBy, groupBy, updatedGroupBy} from "../../views/group";
 import {Collapsible} from "../utils/collapsible";
@@ -30,22 +30,21 @@ import {DropdownItemProps} from "semantic-ui-react/dist/commonjs/modules/Dropdow
 import {SortPopup} from "../components/sort-popup";
 import {extractViewType, serializeViewType, ViewType} from "../../views/view-type";
 import {CardsComponent} from "../components/cards";
+import {ValueHandler} from "../type-handlers/editors";
 
-type CollectionProps = RecordProps & CollectionEventProps & RouteComponentProps<{}>;
+type CollectionProps = RecordProps & CollectionEventProps & RouteComponentProps<CollectionRouteProps>;
 
 
 function records(groupAttr: string, props:CollectionProps, viewType: ViewType) {
+
+    let attrMap = attributesMap(props.schema);
 
     let recordsComponent = (records: Record[]) => {
         let result = null;
         switch (viewType) {
             case ViewType.TABLE :
                 result =  <ConnectedTableComponent
-                    onUpdate={props.onUpdate}
-                    onCreate={props.onCreate}
-                    onDelete={props.onDelete}
-                    onUpdateSchema={props.onUpdateSchema}
-                    schema={props.schema}
+                    {...props}
                     records={records} />
                 break;
             case ViewType.CARDS:
@@ -60,7 +59,9 @@ function records(groupAttr: string, props:CollectionProps, viewType: ViewType) {
     };
 
     if (groupAttr) {
-        let groups = groupBy(props.records, groupAttr);
+
+        let attr = attrMap[groupAttr];
+        let groups = groupBy(props.records, attr);
         let sections = groups.map(group =>
             <div>
                 <Collapsible trigger={open =>
@@ -71,7 +72,11 @@ function records(groupAttr: string, props:CollectionProps, viewType: ViewType) {
                         size="medium"
                         style={{marginTop:"1em", cursor:"pointer"}}>
 
-                        {groupAttr} : {group.key}
+                        {groupAttr} :
+                            <ValueHandler
+                                type={attr.type}
+                                value={group.value}
+                                editMode={false} />
                     </Header></div>} >
 
                     {recordsComponent(group.records)}
@@ -87,7 +92,7 @@ function records(groupAttr: string, props:CollectionProps, viewType: ViewType) {
 }
 
 
-class CollectionComponent extends  React.Component<CollectionProps> {
+class RecordsPageInternal extends  React.Component<CollectionProps> {
 
 
     constructor(props:CollectionProps) {
@@ -130,7 +135,9 @@ class CollectionComponent extends  React.Component<CollectionProps> {
 
         let groupAttr = extractGroupBy(parseParams(props.location.search));
         let groupOptions = props.schema.attributes
-            .filter(attr => attr.type.tag == Types.ENUM)
+
+            // FIXME find declarative way to handle types that can support grouping
+            .filter(attr => attr.type.tag == Types.ENUM  || attr.type.tag ==  Types.BOOLEAN)
             .map(attr => (
                 {value:attr.name,
                     text:attr.name} as DropdownItemProps));
@@ -166,7 +173,7 @@ class CollectionComponent extends  React.Component<CollectionProps> {
                     title={`${_.view_type} : ${_.table_view}`}
                     active={viewType == ViewType.TABLE}
                     onClick={() => setViewType(ViewType.TABLE)} />
-            <Button icon="square outline"
+            <Button icon="grid layout"
                     title={`${_.view_type} : ${_.card_view}`}
                     active={viewType == ViewType.CARDS}
                     onClick={() => setViewType(ViewType.CARDS)}/>
@@ -218,7 +225,7 @@ const mapStateToProps =(state : IState, routerProps?: RouteComponentProps<{}>) :
 };
 
 // Send actions to redux store upon events
-const matchDispatchToProps = (dispatch: Dispatch<{}>, props?: RouteComponentProps<{}>) : CollectionEventProps => {
+const matchDispatchToProps = (dispatch: Dispatch<{}>, props?: RouteComponentProps<CollectionRouteProps>) : CollectionEventProps => {
 
     // Get db Name from URL
     // FIXME : bad, get it from global context
@@ -254,14 +261,10 @@ const matchDispatchToProps = (dispatch: Dispatch<{}>, props?: RouteComponentProp
         onDelete,
         onUpdateSchema}
 
-}
+};
 
 // connect to redux
-let CollectionComponentWithRedux = connect<RecordProps, CollectionEventProps, RouteComponentProps<{}>>(
+export let RecordsPage = connect<RecordProps, CollectionEventProps, RouteComponentProps<{}>>(
     mapStateToProps,
     matchDispatchToProps
-)(CollectionComponent);
-
-// Inject route props
-export const ConnectedCollectionComponent = withRouter<{}>(CollectionComponentWithRedux);
-
+)(RecordsPageInternal);

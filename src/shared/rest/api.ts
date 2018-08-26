@@ -1,4 +1,22 @@
 
+
+// HTML
+export const RECORDS_PATH = "/db/:db_name";
+export const SINGLE_RECORD_PATH = "/db/:db_name/:id";
+
+
+export function recordsLink(dbName: string) {
+    return RECORDS_PATH.replace(':db_name', dbName);
+}
+
+export function singleRecordLink(dbName: string, recordId:string) {
+    return SINGLE_RECORD_PATH
+        .replace(':db_name', dbName)
+        .replace(":id", recordId);
+}
+
+
+// REST
 export const ADD_ITEM_URL = "/api/:db_name/create";
 export const UPDATE_ITEM_URL = "/api/:db_name/update/";
 export const DELETE_ITEM_URL = "/api/:db_name/delete/:id";

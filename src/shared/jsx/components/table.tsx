@@ -1,10 +1,10 @@
 /* Display type : table */
 import {extractSort, ISort, serializeSort} from "../../views/sort";
-import {goTo, parseParams, updatedQuery} from "../../utils";
+import {getDbName, goTo, goToUrl, parseParams, updatedQuery} from "../../utils";
 import {RouteComponentProps, withRouter} from "react-router"
 import {_} from "../../i18n/messages";
 import {deleteItem} from "../../rest/client";
-import {CollectionEventProps, RecordProps} from "./props";
+import {CollectionEventProps, CollectionRouteProps, RecordProps} from "./props";
 import * as React from "react";
 import {Button, Icon, Table} from 'semantic-ui-react'
 import {SafeClickWrapper, SafePopup} from "../utils/ssr-safe";
@@ -20,8 +20,9 @@ import {AttributeDisplay, extractDisplays} from "../../views/display";
 import {ellipsis, filterAttribute} from "../utils/utils";
 import {Record} from "../../model/instances";
 import {editButtons} from "./edit-button";
+import {singleRecordLink} from "../../rest/api";
 
-type TableProps = RecordProps & CollectionEventProps & RouteComponentProps<{}>;
+type TableProps = RecordProps & CollectionEventProps & RouteComponentProps<CollectionRouteProps>;
 
 /** Switch sort order upon click, do it via search parameters / location */
 function onHeaderClick(props: RouteComponentProps<{}>, attr:string) {
@@ -59,6 +60,9 @@ const TableComponent: React.SFC<TableProps> = (props) => {
         </SafePopup>
     </Table.HeaderCell>;
 
+    let goToRecord = (id:string) => {
+        goToUrl(props, singleRecordLink(getDbName(props), id));
+    }
 
 
     /* Column headers, for each attribute */
@@ -104,7 +108,9 @@ const TableComponent: React.SFC<TableProps> = (props) => {
             </Table.Cell>
 
             {attrs.filter(filterAttributeFunc).map(attr =>
-                <Table.Cell key={attr.name}>
+                <Table.Cell key={attr.name}
+                            style={{cursor:"pointer"}}
+                onClick={() => goToRecord(record._id)}>
                     <ValueHandler
                         editMode={false}
                         type={attr.type}

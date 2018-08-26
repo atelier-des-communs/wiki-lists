@@ -3,6 +3,7 @@ import "es6-promise";
 import * as QueryString from "querystring";
 import {RouteComponentProps} from "react-router";
 import * as React from "react";
+import {CollectionRouteProps} from "./jsx/components/props";
 
 
 
@@ -96,6 +97,10 @@ export function goTo(props:RouteComponentProps<{}>, queryParams: Map<string>) {
     props.history.push(updatedQuery(props.location.search, queryParams));
 }
 
+export function goToUrl(props:RouteComponentProps<{}>, link:string) {
+    props.history.push(link);
+}
+
 
 export function eqSet(as:string[], bs:string  []) {
     if (as.length !== bs.length) return false;
@@ -124,11 +129,8 @@ export function empty(a: any) {
 }
 
 // Fixme : dirty. Use globl context to inject dbName instead
-const DB_URL_PATTERN = /.*db\/([a-zA-Z0-9\-_]*).*/;
-export function getDbName(props: RouteComponentProps<{}>) : string {
-    let path = props.location.pathname;
-    let match = DB_URL_PATTERN.exec(path);
-    return match[1];
+export function getDbName(props: RouteComponentProps<CollectionRouteProps>) : string {
+    return props.match.params.db_name;
 }
 
 // Builds a function calling a event handler and stoping propagation

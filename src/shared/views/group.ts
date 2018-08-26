@@ -1,28 +1,32 @@
 import {Record} from "../model/instances";
 import {Map, mapMap, mapToArray, sortBy, sortByFunc} from "../utils";
+import {Attribute} from "../model/types";
 
 export class Group {
-    key:string;
+    value:any;
+    attr:Attribute;
     records:Record[] = [];
-    constructor(key:string) {
-        this.key = key;
+    constructor(attr:Attribute, value:any) {
+        this.attr = attr;
+        this.value = value;
     }
 }
 
 
-export function groupBy(records:Record[], attr:string): Group[] {
+export function groupBy(records:Record[], attr:Attribute): Group[] {
     let groups: Map<Group> = {};
     records.forEach((record)=>{
-        let groupName = record[attr] + "";
+        let value = record[attr.name];
+        let groupName = value + "";
         let group = groups[groupName];
         if (group == null) {
-            group = new Group(groupName);
+            group = new Group(attr, value);
             groups[groupName] = group;
         }
         group.records.push(record)
     });
     let res = mapToArray(groups);
-    sortByFunc(res, group => group.key);
+    sortByFunc(res, group => group.value);
     return res;
 }
 

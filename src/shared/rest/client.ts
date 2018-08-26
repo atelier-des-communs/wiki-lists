@@ -18,6 +18,7 @@ function unwrapAxiosResponse<T>(promise : AxiosPromise<T>) : Promise<T> {
        if (error.response && error.response.status == VALIDATION_STATUS_CODE) {
            throw new ValidationException(error.response.data);
        } else {
+           alert("A network error happened : " + error);
            // otherwize, continue
            throw error;
        }

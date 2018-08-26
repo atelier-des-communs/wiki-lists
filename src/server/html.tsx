@@ -34,7 +34,6 @@ function renderHtml(dbName:string, url: string, store: Store<IState> ) {
 
     let context : IMarshalledContext = {
         state : store.getState(),
-        dbName : dbName,
         env: process.env.NODE_ENV
     };
 
@@ -117,6 +116,10 @@ export function setUp(server : Express) {
     });
 
     server.get("/db/:db_name", function(req:Request, res:Response) {
+        let html = index(req.params.db_name, req);
+        returnPromise(res, html);
+    });
+    server.get("/db/:db_name/*", function(req:Request, res:Response) {
         let html = index(req.params.db_name, req);
         returnPromise(res, html);
     });

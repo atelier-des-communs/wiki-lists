@@ -4,6 +4,15 @@
 import {Attribute, StructType} from "../../model/types";
 import {Record} from "../../model/instances";
 
+export interface CollectionRouteProps {
+    db_name :string;
+}
+
+export interface SingleRecordRouteProps extends CollectionRouteProps {
+    id :string;
+}
+
+
 /** Props for components displaying a list of records */
 export interface RecordProps {
     schema : StructType;
