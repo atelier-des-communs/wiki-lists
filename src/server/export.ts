@@ -4,7 +4,7 @@ import {Express} from "express";
 import {AttributeDisplay, extractDisplays} from "../shared/views/display";
 import {Record} from "../shared/model/instances";
 import {applySearchAndFilters} from "../shared/views/filters";
-import {getAllRecordsDb, getSchema} from "./db/db";
+import {getAllRecordsDb, getDbDefinition} from "./db/db";
 import {deepClone, Map} from "../shared/utils";
 import {Workbook} from "exceljs";
 import {Request, Response} from "express-serve-static-core"
@@ -23,7 +23,7 @@ const EXTENSION = {
 
 
 async function getAllWithFilters(db_name:string, query:Map<string>) : Promise<Record[]> {
-    let schema = await getSchema(db_name);
+    let schema = (await getDbDefinition(db_name)).schema;
     let records = await getAllRecordsDb(db_name);
     return applySearchAndFilters(records, query, schema);
 }
@@ -41,7 +41,7 @@ function filterObj(obj : Map<any>, displays : Map<AttributeDisplay>) {
 
 
 async function exportAs(db_name:string, req:Request, res:Response, exportType: ExportType) {
-    let schema = await getSchema(db_name);
+    let schema = (await getDbDefinition(db_name)).schema;
     let displays = extractDisplays(schema, req.query);
     let records = await getAllWithFilters(db_name, req.query);
     records = records.map(record => filterObj(record, displays));
