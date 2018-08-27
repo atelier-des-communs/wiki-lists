@@ -1,5 +1,5 @@
 import {DOWNLOAD_JSON_URL, DOWNLOAD_XLS_URL} from "../shared/rest/api";
-import {returnPromise} from "./utils";
+import {returnPromise, splitDbName} from "./utils";
 import {Express} from "express";
 import {AttributeDisplay, extractDisplays} from "../shared/views/display";
 import {Record} from "../shared/model/instances";
@@ -40,7 +40,9 @@ function filterObj(obj : Map<any>, displays : Map<AttributeDisplay>) {
 }
 
 
-async function exportAs(db_name:string, req:Request, res:Response, exportType: ExportType) {
+async function exportAs(db_str:string, req:Request, res:Response, exportType: ExportType) {
+
+    let [db_name, pass] = splitDbName(db_str);
     let schema = (await getDbDefinition(db_name)).schema;
     let displays = extractDisplays(schema, req.query);
     let records = await getAllWithFilters(db_name, req.query);
