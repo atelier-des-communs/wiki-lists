@@ -27,3 +27,11 @@ body {
 th:hover .super-shy-th {
     visibility: visible !important;
 }
+
+@media print
+{
+    .no-print, .no-print *
+    {
+        display: none !important;
+    }
+}

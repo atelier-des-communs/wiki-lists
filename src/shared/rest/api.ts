@@ -1,6 +1,9 @@
 
 
 // HTML
+import {IState} from "../redux";
+import {AccessRight} from "../access";
+
 export const RECORDS_PATH = "/db/:db_name";
 export const SINGLE_RECORD_PATH = "/db/:db_name/:id";
 
@@ -27,3 +30,10 @@ export const DOWNLOAD_XLS_URL  = "/xls/:db_name";
 export const DOWNLOAD_JSON_URL  = "/json/:db_name";
 
 export const VALIDATION_STATUS_CODE = 444;
+
+// Marshalled JSN within the page
+export interface IMarshalledContext {
+    state: IState,
+    env:string,
+    rights : AccessRight[]
+}

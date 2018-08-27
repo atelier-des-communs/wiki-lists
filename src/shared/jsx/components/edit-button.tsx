@@ -6,10 +6,12 @@ import {Button} from "semantic-ui-react"
 import {SafeClickWrapper} from "../utils/ssr-safe";
 import * as React from "react";
 import {EditDialog} from "../dialogs/edit-dialog";
+import {AccessRight, AuthProvider} from "../../access";
 
-export function editButtons(record: Record, props: CollectionEventProps, schema:StructType) {
+export function editButtons(record: Record, props: CollectionEventProps, schema:StructType, auth:AuthProvider) {
     return <Button.Group basic>
 
+        {auth.hasRight(AccessRight.EDIT) &&
         <SafeClickWrapper trigger={
             <Button
                 className="shy"
@@ -22,8 +24,9 @@ export function editButtons(record: Record, props: CollectionEventProps, schema:
                 schema={schema}
                 create={false}
                 onUpdate={props.onUpdate}/>
-        </SafeClickWrapper>
+        </SafeClickWrapper>}
 
+        {auth.hasRight(AccessRight.DELETE) &&
         <Button
             icon="delete"
             className="shy" size="mini"
@@ -33,6 +36,6 @@ export function editButtons(record: Record, props: CollectionEventProps, schema:
             if (confirm(_.confirm_delete)) {
                 props.onDelete(record._id);
             }
-        }}/>
+        }}/>}
     </Button.Group>;
 }

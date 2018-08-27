@@ -4,7 +4,7 @@ import * as compression from "compression";
 import * as path from "path";
 import {setUp as setUpRest} from "./rest";
 import {setUp as setUpHtml} from "./html";
-
+import {setUp as setUpExport} from "./export";
 
 
 export default function initServer(dist_path:string) {
@@ -21,6 +21,7 @@ export default function initServer(dist_path:string) {
 
     setUpHtml(server);
     setUpRest(server);
+    setUpExport(server);
 
     return server;
 }

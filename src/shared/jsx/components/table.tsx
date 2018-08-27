@@ -4,7 +4,7 @@ import {getDbName, goTo, goToUrl, parseParams, updatedQuery} from "../../utils";
 import {RouteComponentProps, withRouter} from "react-router"
 import {_} from "../../i18n/messages";
 import {deleteItem} from "../../rest/client";
-import {CollectionEventProps, CollectionRouteProps, RecordProps} from "./props";
+import {CollectionEventProps, RecordsRouteProps, RecordsProps} from "./props";
 import * as React from "react";
 import {Button, Icon, Table} from 'semantic-ui-react'
 import {SafeClickWrapper, SafePopup} from "../utils/ssr-safe";
@@ -21,8 +21,10 @@ import {ellipsis, filterAttribute} from "../utils/utils";
 import {Record} from "../../model/instances";
 import {editButtons} from "./edit-button";
 import {singleRecordLink} from "../../rest/api";
+import {GlobalContext, GlobalContextProps, withGlobalContext} from "../context/context";
+import {AccessRight} from "../../access";
 
-type TableProps = RecordProps & CollectionEventProps & RouteComponentProps<CollectionRouteProps>;
+type TableProps = RecordsProps & CollectionEventProps & RouteComponentProps<RecordsRouteProps> & GlobalContextProps;
 
 /** Switch sort order upon click, do it via search parameters / location */
 function onHeaderClick(props: RouteComponentProps<{}>, attr:string) {
@@ -39,8 +41,6 @@ function onHeaderClick(props: RouteComponentProps<{}>, attr:string) {
 }
 
 
-
-
 const TableComponent: React.SFC<TableProps> = (props) => {
 
     let attrs = props.schema.attributes;
@@ -49,10 +49,16 @@ const TableComponent: React.SFC<TableProps> = (props) => {
     let filters = extractFilters(props.schema, queryParams);
 
     let filterAttributeFunc = filterAttribute(props, props.schema);
+    let auth = props.global.auth;
 
     // First header cell : the menu toolbox
-    let columnsHeader = <Table.HeaderCell collapsing key="menu" >
-        <SafePopup position="bottom left" trigger={<Button icon="unhide" size="mini" basic compact />} >
+    let columnsHeader = auth.hasRight(AccessRight.EDIT) && <Table.HeaderCell className="no-print" collapsing key="menu" >
+        <SafePopup position="bottom left" trigger={
+            <Button
+                icon="unhide"
+                size="mini"
+                title={_.select_columns}
+                basic compact />} >
            <AttributeDisplayComponent
                {...props}
                 schema = {props.schema}
@@ -103,9 +109,10 @@ const TableComponent: React.SFC<TableProps> = (props) => {
 
         <Table.Row key={record["_id"] as string}>
 
-            <Table.Cell collapsing key="actions">
-                {editButtons(record, props, props.schema)}
-            </Table.Cell>
+            {auth.hasRight(AccessRight.EDIT) &&
+            <Table.Cell collapsing key="actions" className="no-print" >
+                {editButtons(record, props, props.schema, auth)}
+            </Table.Cell>}
 
             {attrs.filter(filterAttributeFunc).map(attr =>
                 <Table.Cell key={attr.name}
@@ -134,5 +141,5 @@ const TableComponent: React.SFC<TableProps> = (props) => {
     </Table>
 }
 
-export const ConnectedTableComponent = withRouter<RecordProps & CollectionEventProps>(TableComponent);
+export const ConnectedTableComponent = withRouter<RecordsProps & CollectionEventProps>(withGlobalContext(TableComponent));
 

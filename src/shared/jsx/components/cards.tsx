@@ -1,50 +1,44 @@
 /* Display type : table */
-import {extractSort, ISort, serializeSort} from "../../views/sort";
-import {goTo, parseParams, updatedQuery} from "../../utils";
 import {RouteComponentProps, withRouter} from "react-router"
-import {_} from "../../i18n/messages";
-import {deleteItem} from "../../rest/client";
-import {Grid, Header, Card} from "semantic-ui-react";
-import {CollectionEventProps, RecordProps} from "./props";
+import {Card} from "semantic-ui-react";
+import {CollectionEventProps, RecordsRouteProps, RecordsProps} from "./props";
 import * as React from "react";
-import {ellipsis, filterAttribute, typeIsWide} from "../utils/utils";
-import {Record} from "../../model/instances";
-import {ValueHandler} from "../type-handlers/editors";
 import {editButtons} from "./edit-button";
+import {SingleRecordComponent} from "./single-record-component";
+import {getDbName, goToUrl} from "../../utils";
+import {singleRecordLink} from "../../rest/api";
+import {GlobalContextProps} from "../context/context";
 
-type CardsProps = RecordProps & CollectionEventProps & RouteComponentProps<{}>;
+type CardsProps = RecordsProps & CollectionEventProps & RouteComponentProps<RecordsRouteProps> & GlobalContextProps;
 
 export const CardsComponent : React.SFC<CardsProps> = (props) => {
 
-    let filterAttributeFunc = filterAttribute(props, props.schema);
+    let goToRecord = (id:string) => {
+        goToUrl(props, singleRecordLink(getDbName(props), id));
+    };
 
-
-    let singleCard = (record : Record) => <>
-        {props.schema.attributes
-            .filter(filterAttributeFunc).map(attr =>
-                <div style={{marginBottom: "0.5em"}}>
-                    <b>{ellipsis(attr.name, 10)} : </b>
-                    <ValueHandler
-                        editMode={false}
-                        value={record[attr.name]}
-                        type={attr.type} />
-                </div>)}
-    </>
-
+    let auth = props.global.auth;
 
     return <Card.Group >
         {props.records.map(record =>
             <Card>
                 <Card.Content>
                 <div style={{float:"right"}} className="super-shy" >
-                    {editButtons(record, props, props.schema)}
+                    {editButtons(record, props, props.schema, auth)}
                 </div>
-                { singleCard(record) }
+
+                <div onClick={() => goToRecord(record._id)} style={{cursor:"pointer"}} >
+                    <SingleRecordComponent
+                    {...props}
+                    record={record} />
+                </div>
+
                 </Card.Content>
+
             </Card>)}
     </Card.Group>
 
 };
 
-export const ConnectedCardsComponent = withRouter<RecordProps & CollectionEventProps>(CardsComponent);
+export const ConnectedCardsComponent = withRouter<RecordsProps & CollectionEventProps>(CardsComponent);
 

@@ -1,36 +1,57 @@
 import {ADD_ITEM_URL, DELETE_ITEM_URL, UPDATE_ITEM_URL, UPDATE_SCHEMA_URL} from "../shared/rest/api";
-import {createRecordDb, deleteRecordDb, updateRecordDb, updateSchemaDb} from "./db/db";
+import {createRecordDb, deleteRecordDb, getDbDefinition, updateRecordDb, updateSchemaDb} from "./db/db";
 import {Record} from "../shared/model/instances";
-import {returnPromise} from "./utils";
+import {HttpError, requiresRight, returnPromise, splitDbName} from "./utils";
 import {Express} from "express";
 import {StructType} from "../shared/model/types";
 import {Request, Response} from "express-serve-static-core"
+import {AccessRight} from "../shared/access";
+
+
+
+async function addItemAsync(req:Request) : Promise<Record>{
+    let [db_name, pass] = splitDbName(req.params.db_name);
+    let record = req.body as Record;
+    await requiresRight(db_name, pass, AccessRight.EDIT);
+    return createRecordDb(db_name, record);
+}
+
+async function updateItemAsync(req:Request) : Promise<Record>{
+    let [db_name, pass] = splitDbName(req.params.db_name);
+    let record = req.body as Record;
+    await requiresRight(db_name, pass, AccessRight.EDIT);
+    return updateRecordDb(db_name, record);
+}
+
+async function deleteItemAsync(req:Request) : Promise<boolean>{
+    let [db_name, pass] = splitDbName(req.params.db_name);
+    let id = req.params.id;
+    await requiresRight(db_name, pass, AccessRight.DELETE);
+    return deleteRecordDb(db_name, id);
+}
+
+async function updateSchemaAsync(req:Request) : Promise<StructType>{
+    let [db_name, pass] = splitDbName(req.params.db_name);
+    let schema = req.body as StructType;
+    await requiresRight(db_name, pass, AccessRight.ADMIN);
+    return updateSchemaDb(db_name, schema);
+}
 
 export function setUp(server:Express) {
 
     server.post(ADD_ITEM_URL, function (req: Request, res: Response) {
-        let record = req.body as Record;
-        let recordWithId = createRecordDb(req.params.db_name, record);
-        returnPromise(res, recordWithId);
+        returnPromise(res, addItemAsync(req));
     });
 
     server.post(UPDATE_ITEM_URL, function (req: Request, res: Response) {
-        // Echo
-        let record = req.body as Record;
-        let updatedRecord = updateRecordDb(req.params.db_name, record);
-        returnPromise(res, updatedRecord);
+        returnPromise(res, updateItemAsync(req));
     });
 
     server.post(DELETE_ITEM_URL, function (req: Request, res: Response) {
-        let id = req.params.id;
-        let updatedRecord = deleteRecordDb(req.params.db_name, id);
-        returnPromise(res, updatedRecord);
+        returnPromise(res, deleteItemAsync(req));
     });
 
     server.post(UPDATE_SCHEMA_URL, function (req: Request, res: Response) {
-        let dbName = req.params.db_name;
-        let schema = req.body as StructType;
-        let updatedRecord = updateSchemaDb(req.params.db_name, schema);
-        returnPromise(res, updatedRecord);
+        returnPromise(res, updateSchemaAsync(req));
     });
 }

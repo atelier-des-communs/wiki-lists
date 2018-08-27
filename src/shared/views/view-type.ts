@@ -2,6 +2,7 @@ import {Map} from "../utils";
 import {TAction} from "../redux";
 
 export enum ViewType {
+    PRINT = "print",
     TABLE = "table",
     CARDS = "cards"
 }

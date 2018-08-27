@@ -26,8 +26,6 @@ export function filterAttribute(props: RouteComponentProps<{}>, schema:StructTyp
     let groupBy = extractGroupBy(queryParams);
 
     return (attr:Attribute) => {
-        let displays = extractDisplays(schema, queryParams);
-        let groupBy = extractGroupBy(parseParams(props.location.search));
         return attr.name != groupBy && (displays[attr.name] != AttributeDisplay.HIDDEN);
     }
 }

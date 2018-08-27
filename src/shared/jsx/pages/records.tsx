@@ -19,7 +19,7 @@ import {RouteComponentProps, withRouter} from "react-router"
 import {Record} from "../../model/instances";
 import {FiltersPopup, ConnectedSearchComponent} from "../type-handlers/filters";
 import {applySearchAndFilters, clearFiltersOrSearch, hasFiltersOrSearch} from "../../views/filters";
-import {CollectionEventProps, CollectionRouteProps, RecordProps} from "../components/props";
+import {CollectionEventProps, RecordsRouteProps, RecordsProps} from "../components/props";
 import {ConnectedTableComponent} from "../components/table";
 import {extractGroupBy, groupBy, updatedGroupBy} from "../../views/group";
 import {Collapsible} from "../utils/collapsible";
@@ -31,8 +31,15 @@ import {SortPopup} from "../components/sort-popup";
 import {extractViewType, serializeViewType, ViewType} from "../../views/view-type";
 import {CardsComponent} from "../components/cards";
 import {ValueHandler} from "../type-handlers/editors";
+import {AttributeDisplayComponent} from "../components/attribute-display";
+import {GlobalContextProps, withGlobalContext} from "../context/context";
+import {AccessRight} from "../../access";
 
-type CollectionProps = RecordProps & CollectionEventProps & RouteComponentProps<CollectionRouteProps>;
+type CollectionProps =
+    GlobalContextProps &
+    RecordsProps & // mapped from redux react
+    CollectionEventProps &
+    RouteComponentProps<RecordsRouteProps>;
 
 
 function records(groupAttr: string, props:CollectionProps, viewType: ViewType) {
@@ -106,6 +113,9 @@ class RecordsPageInternal extends  React.Component<CollectionProps> {
 
         let params = parseParams(props.location.search);
 
+        console.log("context", this.props.global);
+        let auth = this.props.global.auth;
+
         let xls_link =
             DOWNLOAD_XLS_URL.replace(":db_name", dbName)
             + props.location.search;
@@ -122,7 +132,8 @@ class RecordsPageInternal extends  React.Component<CollectionProps> {
             </SafePopup>;
 
         // Add item dilaog and button
-        let AddItemButton = <SafeClickWrapper  trigger={
+        let AddItemButton = auth.hasRight(AccessRight.EDIT) &&
+            <SafeClickWrapper  trigger={
                 <Button primary style={{marginBottom:"1em"}} icon="plus" content={_.add_item} />
             }>
                 <EditDialog
@@ -144,7 +155,7 @@ class RecordsPageInternal extends  React.Component<CollectionProps> {
 
         groupOptions = [{value:null, text:_.empty_group_by} as DropdownItemProps].concat(groupOptions);
 
-        let groupByDropdown = <Dropdown inline
+        let groupByDropdown = <Dropdown inline title={_.group_by}
                 button className="icon" icon="plus square outline"
                 labeled placeholder={_.group_by}
                 options={groupOptions}
@@ -154,7 +165,8 @@ class RecordsPageInternal extends  React.Component<CollectionProps> {
 
         let sortByDropdown = <SortPopup {...props} />
 
-        let UpdateSchemaButton = <SafeClickWrapper trigger={
+        let UpdateSchemaButton = auth.hasRight(AccessRight.ADMIN) &&
+            <SafeClickWrapper trigger={
             <Button icon="configure"
                     color="teal"
                     content={_.edit_attributes} />} >
@@ -180,25 +192,36 @@ class RecordsPageInternal extends  React.Component<CollectionProps> {
         </Button.Group>;
 
 
+        let attributeDisplayButton = <SafePopup position="bottom left" trigger={
+            <Button icon="unhide"
+                    title={_.select_columns} />} >
+            <AttributeDisplayComponent
+                {...props}
+                schema = {props.schema}
+            />
+        </SafePopup>
+
         return <>
             <div style={{display:"table", width:"100%", padding:"1em"}}>
                 <div style={{display:"table-cell", width:"100%"}}>
 
-                    <div style={{float:"right"}} >
+                    <div style={{float:"right"}} className="no-print" >
                         <ConnectedSearchComponent schema={props.schema} />
                         { DownloadButton }
                     </div>
 
-                    <div>
+                    <div className="no-print">
                         { AddItemButton }
                         { UpdateSchemaButton }
                     </div>
 
-                    <div>
+                    <div className="no-print">
                         { viewTypeButtons } &nbsp;
                         { sortByDropdown }
                         { groupByDropdown}
                         { <FiltersPopup {...props} schema={this.props.schema} /> }
+                        &nbsp;
+                        { attributeDisplayButton }
                     </div>
 
                     { records(groupAttr, props, viewType) }
@@ -210,7 +233,7 @@ class RecordsPageInternal extends  React.Component<CollectionProps> {
 
 
 // Fetch data from Redux store and map it to props
-const mapStateToProps =(state : IState, routerProps?: RouteComponentProps<{}>) : RecordProps => {
+const mapStateToProps =(state : IState, routerProps?: RouteComponentProps<{}>) : RecordsProps => {
 
     // Flatten map of records
     let records = mapMap(state.items,(key, item) => item) as Map[];
@@ -225,7 +248,7 @@ const mapStateToProps =(state : IState, routerProps?: RouteComponentProps<{}>) :
 };
 
 // Send actions to redux store upon events
-const matchDispatchToProps = (dispatch: Dispatch<{}>, props?: RouteComponentProps<CollectionRouteProps>) : CollectionEventProps => {
+const matchDispatchToProps = (dispatch: Dispatch<{}>, props?: RouteComponentProps<RecordsRouteProps>) : CollectionEventProps => {
 
     // Get db Name from URL
     // FIXME : bad, get it from global context
@@ -264,7 +287,7 @@ const matchDispatchToProps = (dispatch: Dispatch<{}>, props?: RouteComponentProp
 };
 
 // connect to redux
-export let RecordsPage = connect<RecordProps, CollectionEventProps, RouteComponentProps<{}>>(
+export let RecordsPage =  connect<RecordsProps, CollectionEventProps, RouteComponentProps<{}>>(
     mapStateToProps,
     matchDispatchToProps
-)(RecordsPageInternal);
+)(withGlobalContext(RecordsPageInternal));

@@ -42,24 +42,25 @@ class  Connection {
     }
 }
 
-interface DbSchema {
+interface DbDefinition {
     name : string;
     schema: StructType;
+    secret:string;
 }
 
-export async function getSchema(dbName: string) : Promise<StructType> {
+export async function getDbDefinition(dbName: string) : Promise<DbDefinition> {
     let db = await Connection.getDb();
-    let col = db.collection<DbSchema>(DATABASES_COL);
+    let col = db.collection<DbDefinition>(DATABASES_COL);
     let database = await col.findOne({name: dbName});
     if (!database) throw new Error(`Missing db: ${dbName}`);
-    return database.schema;
+    return database;
 }
 
 
 
 export async function updateSchemaDb(dbName: string, schema:StructType) : Promise<StructType> {
     let db = await Connection.getDb();
-    let col = db.collection<DbSchema>(DATABASES_COL);
+    let col = db.collection<DbDefinition>(DATABASES_COL);
 
     // Validate errors
     raiseExceptionIfErrors(validateSchemaAttributes(schema.attributes))

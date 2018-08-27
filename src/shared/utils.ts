@@ -3,7 +3,7 @@ import "es6-promise";
 import * as QueryString from "querystring";
 import {RouteComponentProps} from "react-router";
 import * as React from "react";
-import {CollectionRouteProps} from "./jsx/components/props";
+import {RecordsRouteProps} from "./jsx/components/props";
 
 
 
@@ -17,6 +17,9 @@ export function  mapMap<T, O>(map: {[key:string] : T}, callback: Callback<T, O>)
 export function  mapToArray<T>(map: {[key:string] : T}) : Array<T> {
     return Object.keys(map).map(key => map[key]);
 }
+
+
+
 
 /** Handy map definition */
 export interface Map<T = {}> {
@@ -129,7 +132,7 @@ export function empty(a: any) {
 }
 
 // Fixme : dirty. Use globl context to inject dbName instead
-export function getDbName(props: RouteComponentProps<CollectionRouteProps>) : string {
+export function getDbName(props: RouteComponentProps<RecordsRouteProps>) : string {
     return props.match.params.db_name;
 }
 

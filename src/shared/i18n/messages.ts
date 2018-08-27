@@ -62,6 +62,8 @@ export class DefaultMessages {
     view_type = "View";
     table_view = "table";
     card_view = "card";
+
+    select_columns = "Attributes visibility"
 }
 
 

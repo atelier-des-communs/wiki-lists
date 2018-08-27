@@ -1,12 +1,15 @@
 import * as React from 'react';
 import {render}  from "react-dom";
-import {IMarshalledContext, MainApp} from "../shared/app";
+import {MainApp} from "../shared/app";
 import { BrowserRouter } from 'react-router-dom'
 import "../shared/favicon.ico";
 import {createStore} from "redux";
 import {IState, reducers} from "../shared/redux";
 import {toImmutable} from "../shared/utils";
 import "./index.css";
+import {GlobalContext} from "../shared/jsx/context/context";
+import {IMarshalledContext} from "../shared/rest/api";
+import {SimpleUserRights} from "../shared/access";
 
 
 /** Initial state of the store has been serialized for us by server side rendering */
@@ -25,9 +28,11 @@ let store = marshalledContext.env == "development" ?
         reducers,
         toImmutable(marshalledContext.state));
 
+let auth = new SimpleUserRights(marshalledContext.rights);
+let context : GlobalContext = {store, auth}
 
 render((
     <BrowserRouter>
-        <MainApp store={store} />
+        <MainApp global={context} />
     </BrowserRouter>
 ), document.getElementById("app"));
