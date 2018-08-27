@@ -49,7 +49,7 @@ async function exportAs(db_str:string, req:Request, res:Response, exportType: Ex
     records = records.map(record => filterObj(record, displays));
 
     let filename = `${db_name}.${EXTENSION[exportType]}`;
-    res.setHeader("Content-Disposition", `attachment; filename="filename"`);
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.setHeader("Content-Type", MIME_TYPES[exportType]);
 
     if (exportType == ExportType.EXCEL) {
