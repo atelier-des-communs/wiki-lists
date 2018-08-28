@@ -10,21 +10,16 @@ import {
 } from "../../shared/model/types";
 import {IState} from "../../shared/redux";
 import {empty, Map} from "../../shared/utils";
-
+import {DB_NAME, DB_PORT, DB_HOST} from "../../conf"
 import {MongoClient, Db, ObjectId} from "mongodb";
 import {Record} from "../../shared/model/instances";
 import {_} from "../../shared/i18n/messages";
 import {validateSchemaAttributes} from "../../shared/validators/schema-validators";
 import {raiseExceptionIfErrors} from "../../shared/validators/validators";
+import * as xss from "xss";
 
-const DB_HOST = "localhost";
-const DB_NAME = "codata";
-const DB_PORT = 27017;
-
-const DATABASES_COL ="schemas";
+const DATABASES_COL = "schemas";
 const DATABASE_COL_TEMPLATE ="db.{name}";
-
-
 
 /* Singleton instance */
 class  Connection {

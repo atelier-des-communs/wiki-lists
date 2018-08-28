@@ -46,6 +46,7 @@ function renderHtml(dbName:string, url: string, store: Store<IState>, rights:Acc
 			<head>
 				<meta charset="UTF-8">
 				<title>${_.daadle_title}</title>
+				<meta name="referrer" content="no-referrer">
 				<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.css" />
 				<link rel="stylesheet" href="${BUNDLE_ROOT}/client.bundle.css" />
 			</head>
