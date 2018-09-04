@@ -1,7 +1,7 @@
 import Axios from "axios";
 import {AxiosPromise} from "axios";
 import {Record} from "../model/instances";
-import {ADD_ITEM_URL, DELETE_ITEM_URL, UPDATE_ITEM_URL, UPDATE_SCHEMA_URL, VALIDATION_STATUS_CODE} from "./api";
+import {ADD_ITEM_URL, DELETE_ITEM_URL, UPDATE_ITEM_URL, UPDATE_SCHEMA_URL, VALIDATION_STATUS_CODE} from "../api";
 import {StructType} from "../model/types";
 import {ValidationException} from "../validators/validators";
 

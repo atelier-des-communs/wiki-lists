@@ -3,21 +3,23 @@ import * as React from "react";
 import {Store} from "react-redux";
 import {IState} from "../../redux";
 import * as PropTypes from "prop-types";
+import {ReduxEventsProps} from "../common-props";
 
-export interface GlobalContext {
+// Global props, passed to the main app, as is
+export interface GlobalContextProps  {
+    dbName:string,
     auth:AuthProvider;
     store: Store<IState>;
 }
 
-export interface GlobalContextProps {
-    global : GlobalContext;
+export interface GlobalContextProviderProps {
+    global:GlobalContextProps;
 }
 
-
 /** Global provider */
-export class GlobalContextProvider extends React.Component<GlobalContextProps>{
+export class GlobalContextProvider extends React.Component<GlobalContextProviderProps>{
 
-    constructor(props:GlobalContextProps) {
+    constructor(props:GlobalContextProviderProps) {
         super(props);
     }
 
@@ -25,8 +27,8 @@ export class GlobalContextProvider extends React.Component<GlobalContextProps>{
         global: PropTypes.object
     };
 
-    getChildContext() : GlobalContextProps {
-        return {global: this.props.global}
+    getChildContext() : GlobalContextProviderProps  {
+        return {global:this.props.global}
     }
 
     render() {
@@ -37,20 +39,20 @@ export class GlobalContextProvider extends React.Component<GlobalContextProps>{
 
 }
 
-/** Higher order component, injecting the global context */
+/** Higher order component, injecting the global context as root props */
 export function withGlobalContext <P> (
     WrappedComponent: React.ComponentType<P & GlobalContextProps>,
 ): React.ComponentClass<P> {
     return class extends React.Component<P> {
 
-        context: GlobalContextProps;
+        context: GlobalContextProviderProps;
 
         static  contextTypes = {
             global: PropTypes.object
         };
 
         public render() {
-            return <WrappedComponent {...this.props} global={this.context.global} />;
+            return <WrappedComponent {...this.context.global} {...this.props}  />;
         }
     };
 }

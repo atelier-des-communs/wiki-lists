@@ -1,14 +1,14 @@
 import * as React from 'react';
 import {render}  from "react-dom";
-import {MainApp} from "../shared/app";
+import {DbApp} from "../shared/app";
 import { BrowserRouter } from 'react-router-dom'
 import "../shared/favicon.ico";
 import {createStore} from "redux";
 import {IState, reducers} from "../shared/redux";
 import {toImmutable} from "../shared/utils";
 import "./index.css";
-import {GlobalContext} from "../shared/jsx/context/context";
-import {IMarshalledContext} from "../shared/rest/api";
+import {GlobalContextProps} from "../shared/jsx/context/global-context";
+import {IMarshalledContext} from "../shared/api";
 import {SimpleUserRights} from "../shared/access";
 
 
@@ -29,10 +29,12 @@ let store = marshalledContext.env == "development" ?
         toImmutable(marshalledContext.state));
 
 let auth = new SimpleUserRights(marshalledContext.rights);
-let context : GlobalContext = {store, auth}
+let context : GlobalContextProps = {
+    store, auth,
+    dbName:marshalledContext.dbName};
 
 render((
     <BrowserRouter>
-        <MainApp global={context} />
+        { DbApp(context) }
     </BrowserRouter>
 ), document.getElementById("app"));

@@ -1,5 +1,5 @@
-import {DOWNLOAD_JSON_URL, DOWNLOAD_XLS_URL} from "../shared/rest/api";
-import {returnPromise, splitDbName} from "./utils";
+import {DOWNLOAD_JSON_URL, DOWNLOAD_XLS_URL} from "../shared/api";
+import {returnPromise} from "./utils";
 import {Express} from "express";
 import {AttributeDisplay, extractDisplays} from "../shared/views/display";
 import {Record} from "../shared/model/instances";
@@ -8,6 +8,7 @@ import {getAllRecordsDb, getDbDefinition} from "./db/db";
 import {deepClone, Map} from "../shared/utils";
 import {Workbook} from "exceljs";
 import {Request, Response} from "express-serve-static-core"
+import {attrLabel} from "../shared/jsx/utils/utils";
 
 enum ExportType {
     JSON = "json",
@@ -40,9 +41,8 @@ function filterObj(obj : Map<any>, displays : Map<AttributeDisplay>) {
 }
 
 
-async function exportAs(db_str:string, req:Request, res:Response, exportType: ExportType) {
+async function exportAs(db_name:string, req:Request, res:Response, exportType: ExportType) {
 
-    let [db_name, pass] = splitDbName(db_str);
     let schema = (await getDbDefinition(db_name)).schema;
     let displays = extractDisplays(schema, req.query);
     let records = await getAllWithFilters(db_name, req.query);
@@ -57,7 +57,7 @@ async function exportAs(db_str:string, req:Request, res:Response, exportType: Ex
         let worksheet = workbook.addWorksheet("main");
         worksheet.columns = schema.attributes
             .filter(attr => displays[attr.name] != AttributeDisplay.HIDDEN)
-            .map(attr => ({header:attr.name, key:attr.name}));
+            .map(attr => ({header:attrLabel(attr), key:attr.name}));
         for (let record  of records) {
             worksheet.addRow(filterObj(record, displays));
         }

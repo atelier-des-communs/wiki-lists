@@ -3,7 +3,7 @@ import * as React from "react";
 import { renderToString } from "react-dom/server";
 import { StaticRouter } from "react-router";
 import {createStore } from "redux";
-import {MainApp} from "../shared/app";
+import {DbApp} from "../shared/app";
 import "../shared/favicon.ico";
 import {IState, reducers} from "../shared/redux";
 import {getAllRecordsDb, getDbDefinition} from "./db/db";
@@ -13,25 +13,23 @@ import {Express} from "express";
 import {getAccessRights, HttpError, returnPromise} from "./utils";
 import {Request, Response} from "express-serve-static-core"
 import {_} from "../shared/i18n/messages";
-import {IMarshalledContext} from "../shared/rest/api";
-import {GlobalContext} from "../shared/jsx/context/context";
+import {cookieName, IMarshalledContext} from "../shared/api";
+import {GlobalContextProps} from "../shared/jsx/context/global-context";
 import {AccessRight, SimpleUserRights} from "../shared/access";
-
-
 
 const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '' : 'http://localhost:8081';
 
 function renderHtml(dbName:string, url: string, store: Store<IState>, rights:AccessRight[]) {
 
-    let globalContext : GlobalContext = {
+    let globalContext : GlobalContextProps = {
         auth : new SimpleUserRights([AccessRight.ADMIN, AccessRight.EDIT, AccessRight.VIEW]),
-        store}
+        store,
+        dbName};
 
     let app = <StaticRouter
         location={url}
         context={{}}>
-
-        <MainApp global={globalContext} />
+        <DbApp {...globalContext} />
     </StaticRouter>
 
 	let appHTML = renderToString(app);
@@ -39,7 +37,7 @@ function renderHtml(dbName:string, url: string, store: Store<IState>, rights:Acc
     let context : IMarshalledContext = {
         state : store.getState(),
         env: process.env.NODE_ENV,
-        rights};
+        rights, dbName};
 
 	return `<!DOCTYPE html>
 		<html>
@@ -63,11 +61,11 @@ function renderHtml(dbName:string, url: string, store: Store<IState>, rights:Acc
 }
 
 
-export async function index(db_str:string, req: Request): Promise<string> {
+export async function index(db_name:string, req: Request): Promise<string> {
 
-    // db_name may be composed of db_name@pass, for admin access
-    let [db_name, pass] = db_str.split("@");
-    let rights = await getAccessRights(db_name, pass);
+    console.log("cookies", req.cookies);
+
+    let rights = await getAccessRights(db_name, req.cookies[cookieName(db_name)]);
     let dbDef = await getDbDefinition(db_name);
 
     let records = await getAllRecordsDb(db_name);
@@ -88,12 +86,17 @@ export async function index(db_str:string, req: Request): Promise<string> {
 
 export function setUp(server : Express) {
 
-    server.get("/db/:db_name", function(req:Request, res:Response) {
+    // Admin URL => set cookie and redirect
+    server.get("/db/:db_name@:db_pass", function(req:Request, res:Response) {
+        res.cookie(cookieName(req.params.db_name), req.params.db_pass, {
+            maxAge : 31 * 24 * 3600 * 1000 // one month
+        });
+        res.redirect(`/db/${req.params.db_name}`);
+    });
+
+    server.get("/db/:db_name*", function(req:Request, res:Response) {
         let html = index(req.params.db_name, req);
         returnPromise(res, html);
     });
-    server.get("/db/:db_name/*", function(req:Request, res:Response) {
-        let html = index(req.params.db_name, req);
-        returnPromise(res, html);
-    });
+
 }

@@ -31,6 +31,7 @@ export interface EnumValue {
     label?: string,
     icon?: string,
     color?:string
+    saved?:boolean;
 }
 
 export class EnumType implements Type<string> {
@@ -47,7 +48,11 @@ export function newType(typeTag:string) {
         case Types.BOOLEAN :
             return new BooleanType();
         case Types.ENUM:
-            return new EnumType();
+            let res = new EnumType();
+            // Two empty values for the UI
+            res.values.push({value:null});
+            res.values.push({value:null});
+            return res;
         default:
             throw new Error(`Type not supported : ${typeTag}`);
     }
@@ -57,20 +62,23 @@ export class Attribute {
     name: string;
     label?: string;
     type: Type<any>;
-    isName: boolean;
-
+    isName?: boolean = false;
+    isMandatory?: boolean = false;
     saved?:boolean = false;
-
 }
 
 
 export class StructType implements Type<Map<any>> {
     tag: Types.STRUCT;
-    attributes : Array<Attribute> = [];
+    attributes : Attribute[] = [];
 }
 
 export function attributesMap(schema:StructType) : Map<Attribute> {
     return arrayToMap(schema.attributes, attr => attr.name);
+}
+
+export function enumValuesMap(type:EnumType) : Map<EnumValue> {
+    return arrayToMap(type.values, enumVal => enumVal.value);
 }
 
 

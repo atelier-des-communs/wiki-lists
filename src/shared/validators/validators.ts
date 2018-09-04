@@ -4,11 +4,11 @@ import {_} from "../i18n/messages";
 import {itToArray} from "../utils";
 
 export class ValidationError {
-    field: string;
+    attribute: string;
     message:string;
     shown:boolean = false;
     constructor(field:string, message:string) {
-        this.field = field;
+        this.attribute = field;
         this.message = message;
     }
 }

@@ -26,12 +26,14 @@ import {
 import {_} from "../../i18n/messages";
 import  * as debounce from "debounce";
 import {SafePopup} from "../utils/ssr-safe";
-import {ellipsis} from "../utils/utils";
+import {attrLabel, ellipsis} from "../utils/utils";
+
+
+const DEBOUNCE_DELAY= 1000;
 
 interface IFiltersComponentProps {
     schema:StructType;
 }
-
 
 
 // Main siwtch on attribute type
@@ -86,7 +88,7 @@ class TextFilterComponent extends AbstractSingleFilter<TextFilter> {
         let newFilter = Object.create(this.props.filter);
         newFilter.search = value;
         this.setFilter(newFilter);
-    }, 1000);
+    }, DEBOUNCE_DELAY);
 
     render() {
         return <Input
@@ -104,14 +106,13 @@ class NumberFilterComponent extends AbstractSingleFilter<NumberFilter> {
         let newFilter = Object.create(this.props.filter);
         newFilter.min = min;
         this.setFilter(newFilter);
-    }, 1000);
+    }, DEBOUNCE_DELAY);
 
     updateMax = debounce((max: number) => {
         let newFilter = Object.create(this.props.filter);
         newFilter.max = max;
         this.setFilter(newFilter);
-    }, 1000);
-
+    }, DEBOUNCE_DELAY);
 
 
     render() {
@@ -252,10 +253,12 @@ export const FiltersPopup : React.SFC<IFiltersComponentProps & RouteComponentPro
     <SafePopup position="bottom center" className="big-popup" style={bigPopupStyle} trigger={
             <Button icon labelPosition="left" {...hasFilters && {attached:"left"}}>
                 <Icon name="filter" />
-                {_.filters} </Button>
+                {_.filters}
+            </Button>
 
         }>
         <Popup.Content>
+            <Header as={"h4"}>{_.filters}</Header>
         <Grid celled divided columns={12}>
             {props.schema.attributes.map((attr) => {
 
@@ -263,9 +266,9 @@ export const FiltersPopup : React.SFC<IFiltersComponentProps & RouteComponentPro
 
                 return filterComp && <Grid.Column mobile={12} tablet={6} computer={4}>
                     <Header >
-                        {ellipsis(attr.name)}
+                        {ellipsis(attrLabel(attr))}
                     </Header>
-                    <div  key={attr.name} >
+                    <div key={attr.name} >
                         { filterComp }
                     </div>
                 </Grid.Column>
@@ -273,6 +276,7 @@ export const FiltersPopup : React.SFC<IFiltersComponentProps & RouteComponentPro
         </Grid>
         </Popup.Content>
     </SafePopup>
+
         { hasFilters &&
         <Button
             iconed
@@ -284,11 +288,12 @@ export const FiltersPopup : React.SFC<IFiltersComponentProps & RouteComponentPro
 };
 
 /* Search component, for all fields */
-class SearchComponent extends React.Component<IFiltersComponentProps & RouteComponentProps<{}>> {
+class SearchComponentInternal extends React.Component<IFiltersComponentProps & RouteComponentProps<{}>> {
 
+    // Don' update location / view on each key stroke ... wait a bit for it
     updateSearch = debounce((search: string) => {
         goTo(this.props, serializeSearch(search));
-    }, 1000);
+    }, DEBOUNCE_DELAY);
 
     render() {
         let search = extractSearch(parseParams(this.props.location.search));
@@ -300,4 +305,5 @@ class SearchComponent extends React.Component<IFiltersComponentProps & RouteComp
                       }} />
     }
 }
-export const ConnectedSearchComponent = withRouter<IFiltersComponentProps>(SearchComponent);
+
+export const SearchComponent = withRouter<IFiltersComponentProps>(SearchComponentInternal);

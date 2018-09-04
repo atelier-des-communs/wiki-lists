@@ -6,7 +6,7 @@ import {Grid, Button} from "semantic-ui-react"
 import {AttributeDisplay, extractDisplays, serializeDisplay} from "../../views/display";
 import {goTo, parseParams} from "../../utils";
 import {_} from "../../i18n/messages";
-import {ellipsis} from "../utils/utils";
+import {attrLabel, ellipsis} from "../utils/utils";
 
 interface AttributeDisplayComponent extends RouteComponentProps<{}> {
     schema: StructType;
@@ -43,7 +43,7 @@ export const AttributeDisplayComponent : React.SFC<AttributeDisplayComponent> = 
                             onClick={() => setDisplay(attr.name, AttributeDisplay.HIDDEN)} />
                 </Button.Group>
 
-                <span style={{marginLeft:"1em"}} ><b>{ellipsis(attr.name)}</b></span>
+                <span style={{marginLeft:"1em"}} ><b>{ellipsis(attrLabel(attr))}</b></span>
 
             </div>})}
         </div>

@@ -3,11 +3,11 @@ import "es6-promise";
 import * as QueryString from "querystring";
 import {RouteComponentProps} from "react-router";
 import * as React from "react";
-import {RecordsRouteProps} from "./jsx/components/props";
+import {DbPathParams} from "./jsx/common-props";
+import slugify from "slugify";
 
 
-
-/** Helper for mapping key => values to f(key, value)*/
+/** Helper for mapping key => values to f(key, record)*/
 type Callback<T,O> = (key: string, value:T) => O;
 
 /** Loop over key, vlues of a map or object, and apply the function */
@@ -81,7 +81,7 @@ export function updatedParams(queryParams: Map<string>, newQuery:any) : Map<stri
     for (let param in newQuery) {
         let value = newQuery[param];
         if (value == null) {
-            // Null value ? => remove key from query
+            // Null record ? => remove key from query
             delete res[param];
         } else {
             res[param] = value;
@@ -128,12 +128,7 @@ export function copyArr(arr:string[]) {
 
 /** Undefined, null or empty string */
 export function empty(a: any) {
-    return typeof(a) == "undefined" || a == null || a == "";
-}
-
-// Fixme : dirty. Use globl context to inject dbName instead
-export function getDbName(props: RouteComponentProps<RecordsRouteProps>) : string {
-    return props.match.params.db_name;
+    return typeof(a) == "undefined" || a === null || a === "";
 }
 
 // Builds a function calling a event handler and stoping propagation
@@ -165,4 +160,8 @@ export function intToStr(value:number) {
         return null;
     }
     return value + "";
+}
+
+export function slug(input:string) {
+    return slugify(input, {remove: /[*+~.()'"!:@\\?]/g, lower: true})
 }

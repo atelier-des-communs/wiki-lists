@@ -1,36 +1,38 @@
 import * as React from "react";
 import {_} from "../../i18n/messages";
-import {StructType, TextType, Type, Types} from "../../model/types";
-import {Modal, Header, Button, Icon, Segment, SegmentGroup, Form, List, Grid,Label} from "semantic-ui-react";
-import {Map} from "../../utils";
+import {StructType} from "../../model/types";
+import {Modal, Header, Button, Icon, Form, Grid, Message, Label} from "semantic-ui-react";
 import {ValueHandler} from "../type-handlers/editors";
-import {createItem, updateItem} from "../../rest/client";
 import {Record} from "../../model/instances";
-import {typeIsWide} from "../utils/utils";
+import {attrLabel, typeIsWide} from "../utils/utils";
+import {CloseableDialog, ValidatingDialog} from "./common-dialog";
+import {ValidationError} from "../../validators/validators";
 
 
-
-interface EditDialogProps  {
+interface EditDialogProps extends CloseableDialog {
     create : boolean;
-    value : Record;
+    record : Record;
     onUpdate : (newValue: Object) => Promise<void>;
     schema : StructType;
-    close?: () => void;
 }
 
-export class EditDialog extends React.Component<EditDialogProps> {
+export class EditDialog extends ValidatingDialog<EditDialogProps> {
 
-    state : {loading: boolean};
+    state : {
+        loading: boolean,
+        errors:ValidationError[] };
     record : any;
 
     constructor(props: EditDialogProps) {
         super(props);
 
         // Clone the input object : not modify it until we validate
-        this.state =  {loading: false};
+        this.state =  {
+            loading: false,
+            errors:[]};
 
         // copy of the record
-        this.record = {...props.value};
+        this.record = {...props.record};
     }
 
     open() {
@@ -41,19 +43,8 @@ export class EditDialog extends React.Component<EditDialogProps> {
         this.setState(newState);
     }
 
-    async validate() {
-
-        // "Loading" icon
-        this.setState({loading:true});
-
-        // Update local state
-        try {
-            await this.props.onUpdate(this.record);
-        } finally {
-            this.setState({loading:false});
-        }
-
-        this.props.close && this.props.close();
+    async validateInternal() {
+        await this.props.onUpdate(this.record);
     }
 
     render()  {
@@ -61,7 +52,7 @@ export class EditDialog extends React.Component<EditDialogProps> {
             // Loop on schema attributes
             let fields = this.props.schema.attributes.map(attr => {
 
-                // Update record for this field upon change
+                // Update record for this attribute upon change
                 // Don't update state : we don't want a redraw here
                 let callback = (newValue: any) => {
                     this.record[attr.name] = newValue;
@@ -69,14 +60,18 @@ export class EditDialog extends React.Component<EditDialogProps> {
                 }
 
                 return <Grid.Column mobile={16} computer={typeIsWide(attr.type) ? 16 : 8}>
-                <Form.Field key={attr.name}>
-                    <Header size="small">{attr.name}</Header>
+                <Form.Field key={attr.name} >
+                    <Header size="small" title={attr.isMandatory && _.mandatory_attribute}>
+                        {attrLabel(attr)}
+                        {attr.isMandatory && <Label circular color="red" size="tiny" empty />}
+                        </Header>
                     <ValueHandler
                         editMode={true}
                         value={this.record[attr.name]}
                         type={attr.type}
                         onValueChange={callback}
                     />
+                    {this.errorLabel(`${attr.name}`)}
                 </Form.Field>
                 </Grid.Column>
 
@@ -85,15 +80,25 @@ export class EditDialog extends React.Component<EditDialogProps> {
             return <Modal
                 open={true}
                 onClose={()=> this.props.close && this.props.close() } >
+
                 <Header icon='edit' content={this.props.create? _.add_item : _.edit_item}/>
-                <Modal.Content scrolling>
+
+                <Modal.Content>
                     <Form>
                         <Grid divided>
-                        {fields}
+                            {fields}
                         </Grid>
                     </Form>
                 </Modal.Content>
+
                 <Modal.Actions>
+
+                    {this.state.errors.length > 0 ?
+                        <Message
+                            error
+                            header={_.form_error}
+                            content={this.remainingErrors()} /> : null }
+
                     <Button color='red' onClick={this.props.close}>
                         <Icon name='remove'/> {_.cancel}
                     </Button>
@@ -101,6 +106,7 @@ export class EditDialog extends React.Component<EditDialogProps> {
                         <Icon name='checkmark'/> {_.save}
                     </Button>
                 </Modal.Actions>
+
             </Modal>;
 
     }

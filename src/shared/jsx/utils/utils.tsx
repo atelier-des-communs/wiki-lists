@@ -1,9 +1,12 @@
 import * as React from "react";
 import {extractGroupBy} from "../../views/group";
-import {Attribute, StructType, TextType, Type, Types} from "../../model/types";
+import {Attribute, EnumValue, StructType, TextType, Type, Types} from "../../model/types";
 import {AttributeDisplay, extractDisplays} from "../../views/display";
 import {RouteComponentProps} from "react-router"
+import {Popup, Label} from "semantic-ui-react";
 import {parseParams} from "../../utils";
+import {_} from "../../i18n/messages";
+import {Record} from "../../model/instances";
 
 export function ellipsis(text:string, maxWidth:number= 15) {
     if (text.length > maxWidth) {
@@ -34,4 +37,36 @@ export function filterAttribute(props: RouteComponentProps<{}>, schema:StructTyp
 // Find better solution then
 export function typeIsWide(type:Type<any>) : boolean {
     return (type.tag == Types.TEXT && (type as TextType).rich)
+}
+
+/** Use "label" if present, "name" otherwize */
+export function attrLabel(attr:Attribute) : string {
+    return attr.label || attr.name;
+}
+
+/** Use "label" if present, "value" otherwize */
+export function enumLabel(enumVal:EnumValue) : string {
+    return enumVal.label || enumVal.value;
+}
+
+interface InfoProps {
+    message:string;
+}
+
+export const Info : React.SFC<InfoProps> = (props) => {
+    return <Popup trigger={<Label size="small" circular compact color="blue" icon="info" />} >
+        {nl2br(props.message)}
+    </Popup>
+}
+
+export function nl2br(text:string) {
+   return text.split('\n').map(part => <>{part}<br/></>);
+}
+
+
+/** Extract text from attributes marked as name, and render it to spans */
+export function recordName(schema:StructType, record:Record) {
+    return schema.attributes
+        .filter(attr => attr.isName)
+        .map(attr => <span>{record[attr.name]}&nbsp;</span>);
 }

@@ -1,17 +1,34 @@
 import {StructType} from "../../model/types";
 import {Record} from "../../model/instances";
-import {CollectionEventProps} from "./props";
+import {ReduxEventsProps, DbPageProps, DbPathParams, SingleRecordProps} from "../common-props";
 import {_} from "../../i18n/messages";
 import {Button} from "semantic-ui-react"
 import {SafeClickWrapper} from "../utils/ssr-safe";
 import * as React from "react";
 import {EditDialog} from "../dialogs/edit-dialog";
 import {AccessRight, AuthProvider} from "../../access";
+import {goToUrl} from "../../utils";
+import {singleRecordLink} from "../../api";
 
-export function editButtons(record: Record, props: CollectionEventProps, schema:StructType, auth:AuthProvider) {
+
+interface EditButtonsProps extends  DbPageProps, SingleRecordProps, ReduxEventsProps {
+    hideViewButton?:boolean;
+}
+
+export const EditButtons: React.SFC<EditButtonsProps> = (props) => {
     return <Button.Group basic>
 
-        {auth.hasRight(AccessRight.EDIT) &&
+
+        {!props.hideViewButton && <Button
+            className="shy"
+            icon="eye"
+            title={_.view_item}
+            size="mini" basic compact
+            onClick={(e) => {
+                e.stopPropagation();
+                goToUrl(props, singleRecordLink(props.dbName, props.record._id))}}/>}
+
+        {props.auth.hasRight(AccessRight.EDIT) &&
         <SafeClickWrapper trigger={
             <Button
                 className="shy"
@@ -20,22 +37,23 @@ export function editButtons(record: Record, props: CollectionEventProps, schema:
                 size="mini" basic compact/>}>
 
             <EditDialog
-                value={record}
-                schema={schema}
+                record={props.record}
+                schema={props.schema}
                 create={false}
                 onUpdate={props.onUpdate}/>
         </SafeClickWrapper>}
 
-        {auth.hasRight(AccessRight.DELETE) &&
+        {props.auth.hasRight(AccessRight.DELETE) &&
         <Button
             icon="delete"
             className="shy" size="mini"
             basic compact
             title={_.delete_item}
-            onClick={() => {
-            if (confirm(_.confirm_delete)) {
-                props.onDelete(record._id);
-            }
-        }}/>}
+            onClick={(e) => {
+                e.stopPropagation();
+                if (confirm(_.confirm_delete)) {
+                    props.onDelete(props.record._id);
+                }}}
+        />}
     </Button.Group>;
 }

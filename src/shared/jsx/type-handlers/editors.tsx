@@ -1,11 +1,22 @@
 import * as React from "react";
-import {Types, BooleanType, NumberType, TextType, Type, EnumType} from "../../model/types";
+import {
+    Types,
+    BooleanType,
+    NumberType,
+    TextType,
+    Type,
+    EnumType,
+    attributesMap,
+    enumValuesMap
+} from "../../model/types";
 import {Checkbox, Input, Dropdown, Label, FormSelect, Button, Icon, TextArea} from "semantic-ui-react";
 import ReactQuill from 'react-quill';
 import {DropdownItemProps} from "semantic-ui-react/dist/commonjs/modules/Dropdown/DropdownItem"
 import 'react-quill/dist/quill.snow.css';
 import {strToInt} from "../../utils";
 import {AttributeDisplay} from "../../views/display";
+import {_} from "../../i18n/messages";
+import {enumLabel} from "../utils/utils";
 
 
 interface ValueHandlerProps<T, TypeT extends Type<T>> {
@@ -32,13 +43,13 @@ abstract class ControlledValueHandler<T, TypeT extends Type<T>> extends React.Co
         this.state = {innerValue:this.toInnerValue(this.props.value)};
     }
 
-    // By default value and inner value are the same
+    // By default record and inner record are the same
     extractValue(innerValue:any) : T {
         return innerValue as T;
     }
 
     toInnerValue(value:any) {
-        // By default copy inner value
+        // By default copy inner record
         return value;
     }
 
@@ -149,15 +160,25 @@ class NumberHandler extends ControlledValueHandler<number, NumberType> {
 
 class EnumHandler extends ControlledValueHandler<string, EnumType> {
     renderView() {
-        return this.state.innerValue ? <Label>{this.state.innerValue}</Label> : null;
+        let enumMap = enumValuesMap(this.props.type);
+        let enumValue = enumMap[this.state.innerValue];
+        let text = enumValue && enumValue.label ? enumValue.label : this.state.innerValue;
+        return text ? <Label
+            style={enumValue && enumValue.color && {backgroundColor:enumValue.color}}>
+                {text}
+            </Label> :
+            <Label ><i>
+                {_.empty}
+            </i></Label>;
     }
     renderEdit() {
         let valuesWithEmpty = [ {value:null}, ...this.props.type.values];
         let options = valuesWithEmpty.map(enumVal => ({
-            text:enumVal.value,
+            text:enumLabel(enumVal),
             value:enumVal.value} as DropdownItemProps));
 
         return <FormSelect
+            style={{zIndex:9999}}
             value={this.state.innerValue}
             options={options}
             onChange={(e, data) => this.onChange(data.value)} />
@@ -165,7 +186,7 @@ class EnumHandler extends ControlledValueHandler<string, EnumType> {
 }
 
 
-/** Generic value handler, making the switch */
+/** Generic record handler, making the switch */
 export const ValueHandler = (props: ValueHandlerProps<any, any>) => {
     switch(props.type.tag) {
         case Types.BOOLEAN :

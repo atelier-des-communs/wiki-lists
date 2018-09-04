@@ -1,30 +1,24 @@
-/* Display type : table */
+/* Display several records with Type : table */
 import {extractSort, ISort, serializeSort} from "../../views/sort";
-import {getDbName, goTo, goToUrl, parseParams, updatedQuery} from "../../utils";
+import {goTo, goToUrl, parseParams} from "../../utils";
+import { Link } from 'react-router-dom'
 import {RouteComponentProps, withRouter} from "react-router"
 import {_} from "../../i18n/messages";
-import {deleteItem} from "../../rest/client";
-import {CollectionEventProps, RecordsRouteProps, RecordsProps} from "./props";
+import {ReduxEventsProps, DbPathParams, RecordsProps} from "../common-props";
 import * as React from "react";
 import {Button, Icon, Table} from 'semantic-ui-react'
 import {SafeClickWrapper, SafePopup} from "../utils/ssr-safe";
-import {SchemaDialog} from "../dialogs/schema-dialog";
-import {EditDialog} from "../dialogs/edit-dialog";
 import {ValueHandler} from "../type-handlers/editors";
-import {extractGroupBy} from "../../views/group";
-import {Attribute, StructType} from "../../model/types";
 import {extractFilters} from "../../views/filters";
 import {singleFilter} from "../type-handlers/filters";
 import {AttributeDisplayComponent} from "./attribute-display";
-import {AttributeDisplay, extractDisplays} from "../../views/display";
-import {ellipsis, filterAttribute} from "../utils/utils";
-import {Record} from "../../model/instances";
-import {editButtons} from "./edit-button";
-import {singleRecordLink} from "../../rest/api";
-import {GlobalContext, GlobalContextProps, withGlobalContext} from "../context/context";
+import {attrLabel, ellipsis, filterAttribute} from "../utils/utils";
+import {EditButtons} from "./edit-button";
+import {singleRecordLink} from "../../api";
+import {GlobalContextProps, withGlobalContext} from "../context/global-context";
 import {AccessRight} from "../../access";
 
-type TableProps = RecordsProps & CollectionEventProps & RouteComponentProps<RecordsRouteProps> & GlobalContextProps;
+type TableProps = RecordsProps & ReduxEventsProps & RouteComponentProps<DbPathParams> & GlobalContextProps;
 
 /** Switch sort order upon click, do it via search parameters / location */
 function onHeaderClick(props: RouteComponentProps<{}>, attr:string) {
@@ -49,13 +43,13 @@ const TableComponent: React.SFC<TableProps> = (props) => {
     let filters = extractFilters(props.schema, queryParams);
 
     let filterAttributeFunc = filterAttribute(props, props.schema);
-    let auth = props.global.auth;
+    let auth = props.auth;
 
     // First header cell : the menu toolbox
     let columnsHeader = auth.hasRight(AccessRight.EDIT) && <Table.HeaderCell className="no-print" collapsing key="menu" >
         <SafePopup position="bottom left" trigger={
             <Button
-                icon="unhide"
+                icon="columns"
                 size="mini"
                 title={_.select_columns}
                 basic compact />} >
@@ -66,9 +60,9 @@ const TableComponent: React.SFC<TableProps> = (props) => {
         </SafePopup>
     </Table.HeaderCell>;
 
-    let goToRecord = (id:string) => {
-        goToUrl(props, singleRecordLink(getDbName(props), id));
-    }
+    let urlToRecord = (id:string) => {
+        return singleRecordLink(props.dbName, id);
+    };
 
 
     /* Column headers, for each attribute */
@@ -83,6 +77,7 @@ const TableComponent: React.SFC<TableProps> = (props) => {
 
         return <Table.HeaderCell
             key={attr.name}
+            className="hoverable"
             style={{cursor:"pointer"}}
             onClick={() => onHeaderClick(props, attr.name)}
             sorted={sorted ? (sort.asc ? "ascending" : "descending"): null} >
@@ -91,15 +86,16 @@ const TableComponent: React.SFC<TableProps> = (props) => {
             <div style={{float:"right"}}>
                 <SafePopup position="bottom right" wide="very" trigger={
                    <Button
-                       size="mini" className={filter ? "shy" : "super-shy-th"} compact
+                       size="mini" className={filter ? "shy" : "super-shy"} compact
                        icon="filter"
+                       title={_.filter}
                        color={filter ? "blue" : null}
                        onClick={(e:any) => e.stopPropagation()}/> }>
                     {filterComp}
                 </SafePopup>
             </div>}
 
-            { ellipsis(attr.name) }
+            { ellipsis(attrLabel(attr)) }
 
         </Table.HeaderCell>
     });
@@ -111,19 +107,40 @@ const TableComponent: React.SFC<TableProps> = (props) => {
 
             {auth.hasRight(AccessRight.EDIT) &&
             <Table.Cell collapsing key="actions" className="no-print" >
-                {editButtons(record, props, props.schema, auth)}
+                <EditButtons {...props} record={record} />
             </Table.Cell>}
 
-            {attrs.filter(filterAttributeFunc).map(attr =>
-                <Table.Cell key={attr.name}
-                            style={{cursor:"pointer"}}
-                onClick={() => goToRecord(record._id)}>
-                    <ValueHandler
-                        editMode={false}
-                        type={attr.type}
-                        value={record[attr.name]}/>
+            {attrs.filter(filterAttributeFunc).map(attr => {
+
+                let valueEl = <ValueHandler
+                    editMode={false}
+                    type={attr.type}
+                    value={record[attr.name]}/>;
+
+                // In case of "name" attributes, render as link and make whole table cell clickable
+                let extraAttrs = attr.isName ?
+                    {
+                        style: {cursor: "pointer"},
+                        onClick : (e:Event) => {
+                            e.stopPropagation();
+                            goToUrl(props, urlToRecord(record._id));
+                        }
+                    }
+                    : {};
+
+                return <Table.Cell key={attr.name}
+                                   {...extraAttrs} >
+                    {
+                        /* Attribute part of the name ? => wrap it in a link */
+                        attr.isName ?
+                        <Link to={urlToRecord(record._id)} >
+                            {valueEl}
+                        </Link> :
+                            valueEl
+                    }
+
                 </Table.Cell>
-            )}
+            })}
 
         </Table.Row>);
 
@@ -141,5 +158,5 @@ const TableComponent: React.SFC<TableProps> = (props) => {
     </Table>
 }
 
-export const ConnectedTableComponent = withRouter<RecordsProps & CollectionEventProps>(withGlobalContext(TableComponent));
+export const ConnectedTableComponent = withRouter(withGlobalContext(TableComponent));
 

@@ -17,14 +17,8 @@ body {
 .super-shy {
     visibility: hidden;
 }
-:hover > .super-shy {
-    visibility: visible !important;
-}
 
-.super-shy-th {
-    visibility: hidden;
-}
-th:hover .super-shy-th {
+.hoverable:hover .super-shy {
     visibility: visible !important;
 }
 
@@ -34,4 +28,21 @@ th:hover .super-shy-th {
     {
         display: none !important;
     }
+}
+
+.editable {
+    cursor: pointer;
+}
+.editable:hover:after {
+    font-family: Icons;
+    content: " \f044";
+}
+
+.hoverable:hover .editable:after {
+    font-family: Icons;
+    content: " \f044";
+}
+
+.inline-block {
+    display: inline-block;
 }

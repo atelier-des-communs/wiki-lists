@@ -17,6 +17,7 @@ import {_} from "../../shared/i18n/messages";
 import {validateSchemaAttributes} from "../../shared/validators/schema-validators";
 import {raiseExceptionIfErrors} from "../../shared/validators/validators";
 import * as xss from "xss";
+import {validateRecord} from "../../shared/validators/record-validator";
 
 const DATABASES_COL = "schemas";
 const DATABASE_COL_TEMPLATE ="db.{name}";
@@ -37,10 +38,17 @@ class  Connection {
     }
 }
 
-interface DbDefinition {
+
+interface DbSettings {
+    label:string;
+    description:string;
+}
+
+// Entire description, with read only fields
+interface DbDefinition extends DbSettings {
     name : string;
     schema: StructType;
-    secret:string;
+    secret?:string;
 }
 
 export async function getDbDefinition(dbName: string) : Promise<DbDefinition> {
@@ -60,8 +68,14 @@ export async function updateSchemaDb(dbName: string, schema:StructType) : Promis
     // Validate errors
     raiseExceptionIfErrors(validateSchemaAttributes(schema.attributes))
 
+    // Marked attributes as saved
     for (let attr of schema.attributes) {
         attr.saved = true;
+
+        // Marke each enum record as saved
+        if (attr.type.tag == Types.ENUM) {
+            (attr.type as EnumType).values.map(enumVal => enumVal.saved = true);
+        }
     }
 
     let result = await col.updateOne({name: dbName}, {$set : {schema:schema}});
@@ -79,6 +93,10 @@ export async function getAllRecordsDb(dbName: string) : Promise<Record[]> {
 
 export async function updateRecordDb(dbName: string, record : Record) : Promise<Record> {
     let col = await Connection.getDbCol(dbName);
+    let dbDef = await getDbDefinition(dbName);
+
+    // Validate record
+    raiseExceptionIfErrors(validateRecord(record, dbDef.schema));
 
     // Transform string ID to BSON ObjectID
     let copy = { ...record} as any;
@@ -95,20 +113,16 @@ export async function updateRecordDb(dbName: string, record : Record) : Promise<
 }
 
 
-export async function deleteRecordDb(dbName: string, id : string) : Promise<boolean> {
-    let col = await Connection.getDbCol(dbName);
-    let res = await col.deleteOne({"_id" : new ObjectId(id)});
-    if (res.deletedCount != 1) {
-        throw Error(`No record deleted with id: ${id}`);
-    }
-    return true;
-}
-
-
 export async function createRecordDb(dbName: string, record : Record) : Promise<Record> {
     let col = await Connection.getDbCol(dbName);
+    let dbDef = await getDbDefinition(dbName);
+
+    // Validate record
+    raiseExceptionIfErrors(validateRecord(record, dbDef.schema));
+
+
     if (record._id) {
-        throw new Error("New records shouldnot have _id yet");
+        throw new Error("New records should not have _id yet");
     }
 
     if (typeof(record._pos) == "undefined" || record._pos == null) {
@@ -121,4 +135,13 @@ export async function createRecordDb(dbName: string, record : Record) : Promise<
     let res = await col.insertOne(record);
     record._id = res.insertedId.toHexString();
     return record;
+}
+
+export async function deleteRecordDb(dbName: string, id : string) : Promise<boolean> {
+    let col = await Connection.getDbCol(dbName);
+    let res = await col.deleteOne({"_id" : new ObjectId(id)});
+    if (res.deletedCount != 1) {
+        throw Error(`No record deleted with id: ${id}`);
+    }
+    return true;
 }
