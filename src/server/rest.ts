@@ -1,5 +1,12 @@
-import {ADD_ITEM_URL, cookieName, DELETE_ITEM_URL, UPDATE_ITEM_URL, UPDATE_SCHEMA_URL} from "../shared/api";
-import {createRecordDb, deleteRecordDb, getDbDefinition, updateRecordDb, updateSchemaDb} from "./db/db";
+import {
+    ADD_ITEM_URL,
+    cookieName,
+    DELETE_ITEM_URL, GET_DB_DEFINITION_URL,
+    GET_ITEM_URL, GET_ITEMS_URL,
+    UPDATE_ITEM_URL,
+    UPDATE_SCHEMA_URL
+} from "../shared/api";
+import {createRecordDb, dbDataFetcher, deleteRecordDb, updateRecordDb, updateSchemaDb} from "./db/db";
 import {Record} from "../shared/model/instances";
 import {HttpError, requiresRight, returnPromise, traverse} from "./utils";
 import {Express} from "express";
@@ -48,6 +55,18 @@ export function setUp(server:Express) {
 
     server.post(UPDATE_SCHEMA_URL, function (req: Request, res: Response) {
         returnPromise(res, updateSchemaAsync(req));
+    });
+
+    server.get(GET_ITEM_URL, function (req: Request, res: Response) {
+        returnPromise(res, dbDataFetcher.getRecord(req.params.db_name, req.params.id));
+    });
+
+    server.get(GET_ITEMS_URL, function (req: Request, res: Response) {
+        returnPromise(res, dbDataFetcher.getRecords(req.params.db_name));
+    });
+
+    server.get(GET_DB_DEFINITION_URL, function (req: Request, res: Response) {
+        returnPromise(res, dbDataFetcher.getDbDefinition(req.params.db_name));
     });
 }
 

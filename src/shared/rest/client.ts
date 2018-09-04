@@ -1,11 +1,21 @@
 import Axios from "axios";
 import {AxiosPromise} from "axios";
 import {Record} from "../model/instances";
-import {ADD_ITEM_URL, DELETE_ITEM_URL, UPDATE_ITEM_URL, UPDATE_SCHEMA_URL, VALIDATION_STATUS_CODE} from "../api";
+import {
+    ADD_ITEM_URL,
+    DataFetcher,
+    DELETE_ITEM_URL, GET_DB_DEFINITION_URL, GET_ITEM_URL, GET_ITEMS_URL,
+    UPDATE_ITEM_URL,
+    UPDATE_SCHEMA_URL,
+    VALIDATION_STATUS_CODE
+} from "../api";
 import {StructType} from "../model/types";
 import {ValidationException} from "../validators/validators";
+import {DbDefinition} from "../../server/db/db";
 
 let axios = Axios.create();
+
+
 
 // Catch sepcific status code and unwrap it as a validation exception
 function unwrapAxiosResponse<T>(promise : AxiosPromise<T>) : Promise<T> {
@@ -51,11 +61,32 @@ export async function updateSchema(dbName: string, schema:StructType) : Promise<
 
 /** Return the image of the update item, as saved in DB */
 export async function deleteItem(dbName: string, id : string) : Promise<boolean> {
-    return await unwrapAxiosResponse(
-        axios.post(
+    return await unwrapAxiosResponse(axios.post(
             DELETE_ITEM_URL
             .replace(":db_name", dbName)
             .replace(":id", id)));
+}
+
+export let restDataFetcher : DataFetcher = {
+
+    async getDbDefinition(dbName:string) : Promise<DbDefinition>{
+        return await unwrapAxiosResponse(axios.get(
+                GET_DB_DEFINITION_URL
+                    .replace(":db_name", dbName)));
+    },
+
+    async getRecord(dbName:string, id:string) : Promise<Record> {
+        return await unwrapAxiosResponse(axios.get(
+            GET_ITEM_URL
+                .replace(":db_name", dbName)
+                .replace(":id", id)));
+    },
+
+    async getRecords(dbName:string) : Promise<Record[]> {
+        return await unwrapAxiosResponse(axios.get(
+            GET_ITEMS_URL
+                .replace(":db_name", dbName)));
+    }
 }
 
 

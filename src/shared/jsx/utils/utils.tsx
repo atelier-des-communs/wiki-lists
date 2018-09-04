@@ -64,9 +64,19 @@ export function nl2br(text:string) {
 }
 
 
-/** Extract text from attributes marked as name, and render it to spans */
-export function recordName(schema:StructType, record:Record) {
+function recordNames(schema:StructType, record:Record, str:boolean=false) {
     return schema.attributes
         .filter(attr => attr.isName)
-        .map(attr => <span>{record[attr.name]}&nbsp;</span>);
+        .map(attr => record[attr.name]);
+}
+
+/** Extract text from attributes marked as name, and render it to spans */
+export function recordName(schema:StructType, record:Record) {
+    return recordNames(schema, record)
+        .map(val => <span>{val}&nbsp;</span>);
+}
+
+/** Extract text from attributes marked as name, and render it to spans */
+export function recordNameStr(schema:StructType, record:Record) {
+    return recordNames(schema, record).join(" ");
 }

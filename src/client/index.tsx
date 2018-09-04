@@ -7,9 +7,10 @@ import {createStore} from "redux";
 import {IState, reducers} from "../shared/redux";
 import {toImmutable} from "../shared/utils";
 import "./index.css";
-import {GlobalContextProps} from "../shared/jsx/context/global-context";
+import {GlobalContextProps, HeadSetter} from "../shared/jsx/context/global-context";
 import {IMarshalledContext} from "../shared/api";
 import {SimpleUserRights} from "../shared/access";
+import {restDataFetcher} from "../shared/rest/client";
 
 
 /** Initial state of the store has been serialized for us by server side rendering */
@@ -28,10 +29,19 @@ let store = marshalledContext.env == "development" ?
         reducers,
         toImmutable(marshalledContext.state));
 
+let head : HeadSetter = {
+    setTitle : (newTitle:string) => {
+        document.title = newTitle;
+    }
+};
+
 let auth = new SimpleUserRights(marshalledContext.rights);
 let context : GlobalContextProps = {
-    store, auth,
-    dbName:marshalledContext.dbName};
+    store,
+    auth,
+    head,
+    promises:[],
+    dataFetcher:restDataFetcher};
 
 render((
     <BrowserRouter>

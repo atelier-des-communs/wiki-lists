@@ -26,7 +26,9 @@ export const EditButtons: React.SFC<EditButtonsProps> = (props) => {
             size="mini" basic compact
             onClick={(e) => {
                 e.stopPropagation();
-                goToUrl(props, singleRecordLink(props.dbName, props.record._id))}}/>}
+                goToUrl(props, singleRecordLink(
+                    props.match.params.db_name,
+                    props.record._id))}}/>}
 
         {props.auth.hasRight(AccessRight.EDIT) &&
         <SafeClickWrapper trigger={

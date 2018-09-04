@@ -1,10 +1,8 @@
 
 // Used to fake document && window for some react components that are not SSR ready
-require('jsdom-global')()
-require('dotenv').config()
+require('jsdom-global')();
+require('dotenv').config();
 
-var express = require("express");
-var compress = require("compression");
 var path = require("path");
 var initServer = require("../../dist/server/server.bundle.js").default;
 

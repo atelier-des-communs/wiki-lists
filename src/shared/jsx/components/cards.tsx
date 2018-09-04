@@ -16,7 +16,7 @@ type CardsProps = RecordsProps & ReduxEventsProps & RouteComponentProps<DbPathPa
 export const CardsComponent : React.SFC<CardsProps> = (props) => {
 
     let recordURL = (id:string) => {
-        return singleRecordLink(props.dbName, id);
+        return singleRecordLink(props.match.params.db_name, id);
     };
 
     return <Card.Group >

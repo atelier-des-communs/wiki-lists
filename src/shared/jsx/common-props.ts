@@ -6,6 +6,7 @@ import {Record} from "../model/instances";
 import {GlobalContextProps} from "./context/global-context";
 import {RouteComponentProps} from "react-router";
 
+
 /** Custom route path params parsed for the "records" page */
 export interface DbPathParams {
     db_name :string;

@@ -2,34 +2,37 @@
 import {Record} from "../../model/instances";
 import {GlobalContextProps, withGlobalContext} from "./global-context";
 import {createItem, deleteItem, updateItem, updateSchema} from "../../rest/client";
-import {ReduxEventsProps} from "../common-props";
+import {DbPathParams, ReduxEventsProps} from "../common-props";
 import {Dispatch, connect} from "react-redux";
 import {createAddItemAction, createDeleteAction, createUpdateItemAction, createUpdateSchema} from "../../redux";
 import {StructType} from "../../model/types";
-import {RouteComponentProps, withRouter} from "react-router";
+import {RouteComponentProps} from "react-router";
+import {withAsync} from "../async/async-component";
 
-const matchDispatchToProps = (dispatch: Dispatch<{}>, props?: RouteComponentProps<any> & GlobalContextProps) : ReduxEventsProps => {
+const matchDispatchToProps = (dispatch: Dispatch<{}>, props?: RouteComponentProps<DbPathParams> & GlobalContextProps) : ReduxEventsProps => {
+
+    let dbName = props.match.params.db_name;
 
     let onCreate = (record: Record) : Promise<void> => {
-        return createItem(props.dbName, record).then(function(responseValue) {
+        return createItem(dbName, record).then(function(responseValue) {
             dispatch(createAddItemAction(responseValue));
         })
     };
 
     let onUpdate = (record: Record) : Promise<void> => {
-        return updateItem(props.dbName, record).then(function(responseValue) {
+        return updateItem(dbName, record).then(function(responseValue) {
             dispatch(createUpdateItemAction(responseValue));
         })
     };
 
     let onDelete = (id: string) : Promise<void> => {
-        return deleteItem(props.dbName, id).then(function() {
+        return deleteItem(dbName, id).then(function() {
             dispatch(createDeleteAction(id));
         })
     };
 
     let onUpdateSchema = (schema: StructType) => {
-        return updateSchema(props.dbName, schema).then(function(responseValue) {
+        return updateSchema(dbName, schema).then(function(responseValue) {
             dispatch(createUpdateSchema(responseValue));
         })
     };
@@ -45,12 +48,25 @@ interface MapStateToPropsFunction<TStateProps, PathParams> {
     (state: any, ownProps?: RouteComponentProps<PathParams> & GlobalContextProps): TStateProps;
 }
 
-/** Helper, connecting / injecting : globalContext, redux props and events, routes */
+/**
+ * Helper, connecting / injecting :
+ * - globalContext,
+ * - async data fetching
+ * - redux props and events, routes
+ */
 // @BlackMagic
-export function connectPage<PathParams, TStateProps>(stateMapper : MapStateToPropsFunction<TStateProps, PathParams>) {
+export function connectComponent<PathParams extends DbPathParams, TStateProps>(
+    stateMapper : MapStateToPropsFunction<TStateProps, PathParams>,
+    fetchData : (props:GlobalContextProps & RouteComponentProps<PathParams>) => null | Promise<any> | Promise<any>[]) {
+
+    type TOwnProps = GlobalContextProps & RouteComponentProps<PathParams>;
     type TComponentType = TStateProps & GlobalContextProps & RouteComponentProps<PathParams> & ReduxEventsProps;
-    return (component: React.ComponentClass<TComponentType> | React.SFC<TComponentType>) : React.ComponentClass<RouteComponentProps<PathParams>> | React.SFC<RouteComponentProps<PathParams>> => {
-        let withRedux =  connect(stateMapper, matchDispatchToProps)(component);
-        return withGlobalContext(withRedux);
+
+    return (component: React.ComponentClass<TComponentType> | React.SFC<TComponentType>) :
+        React.ComponentClass<RouteComponentProps<PathParams>> | React.SFC<RouteComponentProps<PathParams>> =>
+    {
+        let withRedux =  connect<TStateProps, ReduxEventsProps, TOwnProps>(stateMapper, matchDispatchToProps)(component);
+        let withPromise = withAsync(fetchData)(withRedux);
+        return withGlobalContext<RouteComponentProps<PathParams>>(withPromise);
     }
 }

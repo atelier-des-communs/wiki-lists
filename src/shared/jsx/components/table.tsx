@@ -60,9 +60,10 @@ const TableComponent: React.SFC<TableProps> = (props) => {
         </SafePopup>
     </Table.HeaderCell>;
 
-    let urlToRecord = (id:string) => {
-        return singleRecordLink(props.dbName, id);
-    };
+    let recordUrl = (id:string) => {
+        return singleRecordLink(
+            props.match.params.db_name,
+            id);};
 
 
     /* Column headers, for each attribute */
@@ -123,7 +124,7 @@ const TableComponent: React.SFC<TableProps> = (props) => {
                         style: {cursor: "pointer"},
                         onClick : (e:Event) => {
                             e.stopPropagation();
-                            goToUrl(props, urlToRecord(record._id));
+                            goToUrl(props, recordUrl(record._id));
                         }
                     }
                     : {};
@@ -133,7 +134,7 @@ const TableComponent: React.SFC<TableProps> = (props) => {
                     {
                         /* Attribute part of the name ? => wrap it in a link */
                         attr.isName ?
-                        <Link to={urlToRecord(record._id)} >
+                        <Link to={recordUrl(record._id)} >
                             {valueEl}
                         </Link> :
                             valueEl

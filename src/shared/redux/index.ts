@@ -4,10 +4,13 @@ import {combineReducers} from "redux-seamless-immutable";
 import {StructType} from "../model/types";
 import * as Immutable from "seamless-immutable";
 import {Record} from "../model/instances";
+import {DbDefinition, DbSettings} from "../../server/db/db";
+import {Map} from "../utils";
+
 
 export interface IState {
     items : {[key:string] : any};
-    schema : StructType;
+    dbDefinition : DbDefinition;
 }
 
 export enum ActionType {
@@ -15,6 +18,7 @@ export enum ActionType {
     UPDATE_ITEM = "UPDATE_ITEM",
     DELETE_ITEM = "DELETE_ITEM",
     UPDATE_SCHEMA = "UPDATE_SCHEMA",
+    UPDATE_DB = "UPDATE_DB",
 }
 
 interface ActionWithRecord extends Action {
@@ -41,6 +45,11 @@ export class UpdateSchemaAction implements Action {
     public schema: StructType;
 }
 
+export class UpdateDbAction implements Action {
+    public type = ActionType.UPDATE_DB;
+    public dbDef: DbDefinition;
+}
+
 export function createAddItemAction(record: Record) : AddItemAction {
     return {type:ActionType.ADD_ITEM, record:Immutable.from(record)}
 }
@@ -53,13 +62,23 @@ export function createDeleteAction(id: string) : DeleteItemAction {
 export function createUpdateSchema(schema:StructType) : UpdateSchemaAction {
     return {type:ActionType.UPDATE_SCHEMA, schema:Immutable.from(schema)};
 }
+export function createUpdateDbAction(dbDef:DbDefinition) : UpdateDbAction {
+    return {type:ActionType.UPDATE_DB, dbDef:Immutable.from(dbDef)};
+}
+export type TAction  =
+    UpdateSchemaAction |
+    UpdateDbAction |
+    UpdateItemAction |
+    AddItemAction |
+    DeleteItemAction;
 
-export type TAction  = UpdateSchemaAction | UpdateItemAction | AddItemAction | DeleteItemAction;
-
-function itemsReducer(items:any={}, action:TAction) {
+function itemsReducer(items:Immutable.ImmutableObject<Map<Record>> = null, action:TAction) {
     switch (action.type) {
         case ActionType.ADD_ITEM:
-        case ActionType.UPDATE_ITEM :
+        case ActionType.UPDATE_ITEM:
+            if (items == null) {
+                items = Immutable.from({} as Map<Record>);
+            }
             let record = (action as ActionWithRecord).record;
             return items.set(record._id, record);
 
@@ -69,17 +88,20 @@ function itemsReducer(items:any={}, action:TAction) {
     return items;
 }
 
-function schemaReducer(schema:{} = {}, action:TAction) {
+function dbDefReducer(dbDef:Immutable.ImmutableObject<DbDefinition> = null, action:TAction) {
     switch (action.type) {
         case ActionType.UPDATE_SCHEMA:
-            return (action as UpdateSchemaAction).schema;
+            let schema = (action as UpdateSchemaAction).schema;
+            return dbDef.set("schema", schema);
+        case ActionType.UPDATE_DB:
+            return (action as UpdateDbAction).dbDef;
     }
-    return schema;
+    return dbDef;
 }
 
 /** Combine reducers */
 export let reducers : Reducer<IState> = combineReducers ({
     items: itemsReducer,
-    schema: schemaReducer
+    dbDefinition: dbDefReducer
 });
 

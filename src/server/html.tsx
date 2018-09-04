@@ -6,44 +6,73 @@ import {createStore } from "redux";
 import {DbApp} from "../shared/app";
 import "../shared/favicon.ico";
 import {IState, reducers} from "../shared/redux";
-import {getAllRecordsDb, getDbDefinition} from "./db/db";
+import {dbDataFetcher} from "./db/db";
 import {Store} from "react-redux";
 import {arrayToMap, deepClone, Map, parseParams, toImmutable} from "../shared/utils";
 import {Express} from "express";
 import {getAccessRights, HttpError, returnPromise} from "./utils";
 import {Request, Response} from "express-serve-static-core"
-import {_} from "../shared/i18n/messages";
 import {cookieName, IMarshalledContext} from "../shared/api";
-import {GlobalContextProps} from "../shared/jsx/context/global-context";
+import {GlobalContextProps, HeadSetter} from "../shared/jsx/context/global-context";
 import {AccessRight, SimpleUserRights} from "../shared/access";
 
 const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '' : 'http://localhost:8081';
 
-function renderHtml(dbName:string, url: string, store: Store<IState>, rights:AccessRight[]) {
+class ServerSideHeaderHandler implements HeadSetter {
+    title = "";
+    setTitle(newTitle:string){
+        this.title=newTitle
+    }
+}
 
-    let globalContext : GlobalContextProps = {
-        auth : new SimpleUserRights([AccessRight.ADMIN, AccessRight.EDIT, AccessRight.VIEW]),
-        store,
-        dbName};
+async function renderHtml(dbName:string, url: string, store: Store<IState>, rights:AccessRight[]) : Promise<string> {
 
-    let app = <StaticRouter
-        location={url}
-        context={{}}>
-        <DbApp {...globalContext} />
-    </StaticRouter>
 
-	let appHTML = renderToString(app);
+    let head = new ServerSideHeaderHandler();
+
+    // Render HTML several time, until all async promises have been resolved
+    // This is the way we do async data fetching on SS
+    // The Redux Store will accumulate state and eventually make the component to render synchronously
+    // @BlackMagic
+    let appHTML = null;
+    do {
+        let globalContext: GlobalContextProps = {
+            auth: new SimpleUserRights([AccessRight.ADMIN, AccessRight.EDIT, AccessRight.VIEW]),
+            store,
+            dataFetcher: dbDataFetcher,
+            promises: [],
+            head: new ServerSideHeaderHandler()
+        };
+
+        let app = <StaticRouter
+            location={url}
+            context={{}}>
+            <DbApp {...globalContext} />
+        </StaticRouter>;
+
+        appHTML = renderToString(app);
+
+        console.log("Promises", globalContext.promises.length);
+
+        if (globalContext.promises.length == 0) {
+            break;
+        } else {
+            await Promise.all(globalContext.promises);
+        }
+
+    } while (true);
 
     let context : IMarshalledContext = {
         state : store.getState(),
         env: process.env.NODE_ENV,
-        rights, dbName};
+        rights};
+
 
 	return `<!DOCTYPE html>
 		<html>
 			<head>
 				<meta charset="UTF-8">
-				<title>${_.daadle_title}</title>
+				<title>${head.title}</title>
 				<meta name="referrer" content="no-referrer">
 				<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.css" />
 				<link rel="stylesheet" href="${BUNDLE_ROOT}/client.bundle.css" />
@@ -63,16 +92,11 @@ function renderHtml(dbName:string, url: string, store: Store<IState>, rights:Acc
 
 export async function index(db_name:string, req: Request): Promise<string> {
 
-    console.log("cookies", req.cookies);
-
     let rights = await getAccessRights(db_name, req.cookies[cookieName(db_name)]);
-    let dbDef = await getDbDefinition(db_name);
-
-    let records = await getAllRecordsDb(db_name);
 
     let state : IState= {
-        items: arrayToMap(records, record => record._id ? record._id : ""),
-        schema: dbDef.schema};
+        items: null,
+        dbDefinition: null};
 
     const store = createStore<IState>(
         reducers,
@@ -80,8 +104,6 @@ export async function index(db_name:string, req: Request): Promise<string> {
 
     return renderHtml(db_name, req.url, store, rights);
 }
-
-
 
 
 export function setUp(server : Express) {

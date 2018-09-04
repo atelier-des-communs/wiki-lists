@@ -1,41 +1,44 @@
 /* Main page displaying a single collection, with sorting, filtering, grouping */
 import * as React from 'react';
 import {Button, Dropdown, Header} from 'semantic-ui-react'
-import { EditDialog } from "../dialogs/edit-dialog";
-import {Attribute, attributesMap, StructType, Types} from "../../model/types";
-import {deepClone, goTo, Map, mapMap, parseParams} from "../../utils";
-import {_} from "../../i18n/messages";
-import {SafeClickWrapper, SafePopup} from "../utils/ssr-safe";
+import { EditDialog } from "../../dialogs/edit-dialog";
+import {Attribute, attributesMap, StructType, Types} from "../../../model/types";
+import {deepClone, goTo, Map, mapMap, parseParams} from "../../../utils";
+import {_} from "../../../i18n/messages";
+import {SafeClickWrapper, SafePopup} from "../../utils/ssr-safe";
 import {connect, Dispatch, DispatchProp} from "react-redux";
 import {
     createAddItemAction,
     IState,
     createDeleteAction,
     createUpdateItemAction,
-    createUpdateSchema
-} from "../../redux/index";
+    createUpdateSchema, createUpdateDbAction
+} from "../../../redux/index";
 
 import {RouteComponentProps, withRouter} from "react-router"
-import {Record} from "../../model/instances";
-import {FiltersPopup, SearchComponent} from "../type-handlers/filters";
-import {applySearchAndFilters, clearFiltersOrSearch, hasFiltersOrSearch} from "../../views/filters";
-import {ReduxEventsProps, DbPathParams, RecordsProps} from "../common-props";
-import {ConnectedTableComponent} from "../components/table";
-import {extractGroupBy, groupBy, updatedGroupBy} from "../../views/group";
-import {Collapsible} from "../utils/collapsible";
-import {SchemaDialog} from "../dialogs/schema-dialog";
-import {createItem, deleteItem, updateItem, updateSchema} from "../../rest/client";
-import {DOWNLOAD_JSON_URL, DOWNLOAD_XLS_URL} from "../../api";
+import {Record} from "../../../model/instances";
+import {FiltersPopup, SearchComponent} from "../../type-handlers/filters";
+import {applySearchAndFilters, clearFiltersOrSearch, hasFiltersOrSearch} from "../../../views/filters";
+import {ReduxEventsProps, DbPathParams, RecordsProps} from "../../common-props";
+import {ConnectedTableComponent} from "../../components/table";
+import {extractGroupBy, groupBy, updatedGroupBy} from "../../../views/group";
+import {Collapsible} from "../../utils/collapsible";
+import {SchemaDialog} from "../../dialogs/schema-dialog";
+import {createItem, deleteItem, updateItem, updateSchema} from "../../../rest/client";
+import {DOWNLOAD_JSON_URL, DOWNLOAD_XLS_URL} from "../../../api";
 import {DropdownItemProps} from "semantic-ui-react/dist/commonjs/modules/Dropdown/DropdownItem"
-import {SortPopup} from "../components/sort-popup";
-import {extractViewType, serializeViewType, ViewType} from "../../views/view-type";
-import {CardsComponent} from "../components/cards";
-import {ValueHandler} from "../type-handlers/editors";
-import {AttributeDisplayComponent} from "../components/attribute-display";
-import {GlobalContextProps, withGlobalContext} from "../context/global-context";
-import {AccessRight} from "../../access";
-import {attrLabel} from "../utils/utils";
-import {connectPage} from "../context/redux-helpers";
+import {SortPopup} from "../../components/sort-popup";
+import {extractViewType, serializeViewType, ViewType} from "../../../views/view-type";
+import {CardsComponent} from "../../components/cards";
+import {ValueHandler} from "../../type-handlers/editors";
+import {AttributeDisplayComponent} from "../../components/attribute-display";
+import {GlobalContextProps, withGlobalContext} from "../../context/global-context";
+import {AccessRight} from "../../../access";
+import {attrLabel} from "../../utils/utils";
+import {connectComponent} from "../../context/redux-helpers";
+import {AsyncComponent} from "../../async/async-component";
+
+
 
 type RecordsPageProps =
     GlobalContextProps &
@@ -127,17 +130,15 @@ function addItemButton(props: RecordsPageProps) {
 }
 
 
-class RecordsPageInternal extends  React.Component<RecordsPageProps> {
-
+class RecordsPageInternal extends React.Component<RecordsPageProps> {
 
     constructor(props:RecordsPageProps) {
         super(props);
-        this.state = {filtersSideBar : true}
     }
 
     render() {
         let props = this.props;
-        let dbName = props.dbName;
+        let dbName = props.match.params.db_name;
 
         let params = parseParams(props.location.search);
         let auth = this.props.auth;
@@ -215,6 +216,9 @@ class RecordsPageInternal extends  React.Component<RecordsPageProps> {
             />
         </SafePopup>
 
+        // Set html HEAD
+        props.head.setTitle(props.match.params.db_name);
+
         return <>
             <div style={{display:"table", width:"100%", padding:"1em"}}>
                 <div style={{display:"table-cell", width:"100%"}}>
@@ -246,7 +250,7 @@ class RecordsPageInternal extends  React.Component<RecordsPageProps> {
 }
 
 
-// Fetch data from Redux store and map it to props
+// Filter data from Redux store and map it to props
 const mapStateToProps =(state : IState, routerProps?: RouteComponentProps<{}>) : RecordsProps => {
 
     // Flatten map of records
@@ -254,13 +258,42 @@ const mapStateToProps =(state : IState, routerProps?: RouteComponentProps<{}>) :
 
     // Apply search and sorting
     let params = parseParams(routerProps.location.search);
-    records = applySearchAndFilters(records, params, state.schema);
+    records = applySearchAndFilters(records, params, state.dbDefinition.schema);
 
     return {
-        schema: state.schema,
+        schema: state.dbDefinition ? state.dbDefinition.schema : null,
         records: records}
 };
 
-// connect to redux
-export let RecordsPage = connectPage(mapStateToProps)(RecordsPageInternal);
+// Async fetch of data
+function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>) {
+    let res = [];
+    let state = props.store.getState();
+
+    if (!state.dbDefinition) {
+        res.push(props.dataFetcher
+            .getDbDefinition(props.match.params.db_name)
+            .then((dbDef) => {
+                // Dispatch to Redux
+                props.store.dispatch(createUpdateDbAction(dbDef));
+            }));
+    }
+    if (!state.items) {
+        res.push(props.dataFetcher
+            .getRecords(props.match.params.db_name)
+            .then((records) => {
+                for (let record of records) {
+                    // Dispatch to redux
+                    props.store.dispatch(createAddItemAction(record));
+                }
+            }));
+    }
+    console.log("Records page : promise number :", res.length);
+    return res;
+}
+
+// Connect to Redux
+export let RecordsPage = connectComponent(
+    mapStateToProps,
+    fetchData)(RecordsPageInternal);
 

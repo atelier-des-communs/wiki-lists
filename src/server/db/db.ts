@@ -18,6 +18,7 @@ import {validateSchemaAttributes} from "../../shared/validators/schema-validator
 import {raiseExceptionIfErrors} from "../../shared/validators/validators";
 import * as xss from "xss";
 import {validateRecord} from "../../shared/validators/record-validator";
+import {DataFetcher} from "../../shared/api";
 
 const DATABASES_COL = "schemas";
 const DATABASE_COL_TEMPLATE ="db.{name}";
@@ -39,25 +40,18 @@ class  Connection {
 }
 
 
-interface DbSettings {
+export interface DbSettings {
     label:string;
     description:string;
 }
 
 // Entire description, with read only fields
-interface DbDefinition extends DbSettings {
+export interface DbDefinition extends DbSettings {
     name : string;
     schema: StructType;
     secret?:string;
 }
 
-export async function getDbDefinition(dbName: string) : Promise<DbDefinition> {
-    let db = await Connection.getDb();
-    let col = db.collection<DbDefinition>(DATABASES_COL);
-    let database = await col.findOne({name: dbName});
-    if (!database) throw new Error(`Missing db: ${dbName}`);
-    return database;
-}
 
 
 
@@ -85,15 +79,10 @@ export async function updateSchemaDb(dbName: string, schema:StructType) : Promis
     return schema;
 }
 
-export async function getAllRecordsDb(dbName: string) : Promise<Record[]> {
-    let col = await Connection.getDbCol(dbName);
-    let cursor = await col.find();
-    return cursor.toArray();
-}
 
 export async function updateRecordDb(dbName: string, record : Record) : Promise<Record> {
     let col = await Connection.getDbCol(dbName);
-    let dbDef = await getDbDefinition(dbName);
+    let dbDef = await dbDataFetcher.getDbDefinition(dbName);
 
     // Validate record
     raiseExceptionIfErrors(validateRecord(record, dbDef.schema));
@@ -115,7 +104,7 @@ export async function updateRecordDb(dbName: string, record : Record) : Promise<
 
 export async function createRecordDb(dbName: string, record : Record) : Promise<Record> {
     let col = await Connection.getDbCol(dbName);
-    let dbDef = await getDbDefinition(dbName);
+    let dbDef = await dbDataFetcher.getDbDefinition(dbName);
 
     // Validate record
     raiseExceptionIfErrors(validateRecord(record, dbDef.schema));
@@ -144,4 +133,44 @@ export async function deleteRecordDb(dbName: string, id : string) : Promise<bool
         throw Error(`No record deleted with id: ${id}`);
     }
     return true;
+}
+
+async function getDbDef(dbName: string) : Promise<DbDefinition> {
+    let db = await Connection.getDb();
+    let col = db.collection<DbDefinition>(DATABASES_COL);
+    let database = await col.findOne({name: dbName});
+    if (!database) throw new Error(`Missing db: ${dbName}`);
+    return database
+}
+
+
+export async function getDbSecret(dbName: string) : Promise<String> {
+    let dbDef = await getDbDef(dbName);
+    return dbDef.secret;
+}
+
+export let dbDataFetcher : DataFetcher = {
+
+    async getDbDefinition(dbName: string) : Promise<DbDefinition> {
+        let dbDef = await getDbDef(dbName);
+
+        // Don' t provide secret
+        delete dbDef.secret;
+
+        return dbDef;
+    },
+
+    async getRecord(dbName:string, id:string) : Promise<Record> {
+        let col = await Connection.getDbCol(dbName);
+        let record = await col.findOne({_id: new ObjectId(id)});
+        if (!record) throw new Error(`Missing db: ${dbName}`);
+        return record;
+    },
+
+    async getRecords(dbName: string) : Promise<Record[]> {
+        let col = await Connection.getDbCol(dbName);
+        let cursor = await col.find();
+        return cursor.toArray();
+    }
+
 }

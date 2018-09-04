@@ -3,13 +3,21 @@ import * as React from "react";
 import {Store} from "react-redux";
 import {IState} from "../../redux";
 import * as PropTypes from "prop-types";
-import {ReduxEventsProps} from "../common-props";
+import {DataFetcher} from "../../api";
+
+
+// Generic definition of hanlder to set title and metas
+export interface HeadSetter {
+    setTitle : (title:string) => void;
+}
 
 // Global props, passed to the main app, as is
 export interface GlobalContextProps  {
-    dbName:string,
+    head: HeadSetter,
     auth:AuthProvider;
     store: Store<IState>;
+    dataFetcher : DataFetcher;
+    promises : Promise<any>[];
 }
 
 export interface GlobalContextProviderProps {

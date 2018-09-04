@@ -3,6 +3,8 @@
 // HTML
 import {IState} from "./redux/index";
 import {AccessRight} from "./access";
+import {Record} from "./model/instances";
+import {DbDefinition} from "../server/db/db";
 
 export const CREATE_DB_PATH = "/create-db";
 export const RECORDS_PATH = "/db/:db_name";
@@ -28,6 +30,9 @@ export function singleRecordLink(dbName: string, recordId:string) {
 export const ADD_ITEM_URL = "/api/:db_name/create";
 export const UPDATE_ITEM_URL = "/api/:db_name/update/";
 export const DELETE_ITEM_URL = "/api/:db_name/delete/:id";
+export const GET_ITEM_URL = "/api/:db_name/item/:id";
+export const GET_ITEMS_URL = "/api/:db_name/items/";
+export const GET_DB_DEFINITION_URL = "/api/:db_name/definition";
 
 export const CREATE_DB_URL = "/api/db/create/";
 export const UPDATE_DB_URL = "/api/:db_name/update/";
@@ -40,8 +45,14 @@ export const VALIDATION_STATUS_CODE = 444;
 
 // Marshalled JSN within the page
 export interface IMarshalledContext {
-    dbName: string,
     state: IState,
     env:string,
     rights : AccessRight[]
+}
+
+// Generic read interface, implemented either on SS directly in DB, or on client side, via REST
+export interface DataFetcher {
+    getRecord(dbName: string, id : string) : Promise<Record>;
+    getRecords(dbName: string) : Promise<Record[]>;
+    getDbDefinition(dbName:string) : Promise<DbDefinition>;
 }
