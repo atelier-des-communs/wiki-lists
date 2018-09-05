@@ -1,7 +1,6 @@
 var webpack = require("webpack");
 var shared = require("./webpack.shared.js");
 var MiniCssExtractPlugin = require('mini-css-extract-plugin');
-var nodeExternals = require('webpack-node-externals');
 var server_loaders = shared.common_loaders();
 var client_loaders = shared.common_loaders();
 

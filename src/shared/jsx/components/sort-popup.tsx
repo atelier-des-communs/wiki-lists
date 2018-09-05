@@ -1,30 +1,51 @@
 /* popup controlling the sorting */
-import {_} from "../../i18n/messages";
 import {Button, Header, Icon} from "semantic-ui-react";
 import * as React from "react";
 import {RouteComponentProps} from "react-router";
-import {attributesMap, StructType} from "../../model/types";
+import {Attribute, attributesMap, StructType} from "../../model/types";
 import {goTo, parseParams} from "../../utils";
 import {extractSort, ISort, serializeSort} from "../../views/sort";
 import {SafePopup} from "../utils/ssr-safe";
 import {attrLabel, ellipsis} from "../utils/utils";
+import {DefaultMessages} from "../../i18n/messages";
 
 interface SortProps extends RouteComponentProps<{}> {
     schema : StructType;
+    messages:DefaultMessages;
 }
 
 export const SortPopup : React.SFC<SortProps> = (props) => {
 
-    let queryParams = parseParams(props.location.search)
+    let queryParams = parseParams(props.location.search);
     let sort = extractSort(queryParams);
+    let {schema} = props;
+    let _ = props.messages;
 
     let setSort = (attrName:string, asc:boolean) => {
         let newSort : ISort = {key:attrName, asc};
         goTo(props, serializeSort(newSort));
-    }
+    };
 
-    let sortAttr = sort.key ? attributesMap(props.schema)[sort.key] : null;
+    let sortAttr = sort.key ? attributesMap(schema)[sort.key] : null;
 
+
+    let singleAttrSort = (attr: Attribute) =>
+        <div key={attr.name} style={{paddingBottom:"0.5em"}}>
+            <Button.Group basic compact size="small" as="span">
+                <Button icon="angle up"
+                        compact size="small"
+                        title={_.sort_asc}
+                        active={sort.key == attr.name && sort.asc}
+                        onClick={() => setSort(attr.name, true)} />
+
+                <Button icon="angle down"
+                        compact size="small"
+                        title={_.sort_desc}
+                        active={sort.key == attr.name && !sort.asc}
+                        onClick={() => setSort(attr.name, false)} />
+            </Button.Group>
+        <span style={{marginLeft:"1em"}} ><b>{ellipsis(attrLabel(attr))}</b></span>
+    </div>;
 
     return <SafePopup wide="very"
         // Force to redraw (and hence close) upon update
@@ -41,27 +62,17 @@ export const SortPopup : React.SFC<SortProps> = (props) => {
         </Button>} >
 
         <div style={{padding:"1em"}}>
-            <Header as="h4">{_.sort_by}</Header>
+            <Header as="h3">{_.sort_by}</Header>
 
-            {props.schema.attributes.map(attr => {
+            {schema.attributes
+                .filter(attr => !attr.system)
+                .map(singleAttrSort)}
 
-                return <div key={attr.name} style={{paddingBottom:"0.5em"}}>
-                    <Button.Group basic compact size="small" as="span">
-                        <Button icon="angle up"
-                                compact size="small"
-                                title={_.sort_asc}
-                                active={sort.key == attr.name && sort.asc}
-                                onClick={() => setSort(attr.name, true)} />
-                        <Button icon="angle down"
-                                compact size="small"
-                                title={_.sort_desc}
-                                active={sort.key == attr.name && !sort.asc}
-                                onClick={() => setSort(attr.name, false)} /> />
-                    </Button.Group>
+            <Header as="h4">{_.system_attributes}</Header>
 
-                    <span style={{marginLeft:"1em"}} ><b>{ellipsis(attrLabel(attr))}</b></span>
-
-                </div>})}
+            {schema.attributes
+                .filter(attr => attr.system)
+                .map(singleAttrSort)}
         </div>
 
     </SafePopup>

@@ -1,5 +1,4 @@
 // Single error message of validation
-import {_} from "../i18n/messages";
 import {itToArray} from "../utils";
 
 export class ValidationError {
@@ -16,8 +15,7 @@ export class ValidationException extends Error {
     validationErrors : ValidationError[];
 
     constructor(errors : ValidationError[]) {
-        super(_.validation_errors + ":" +
-            JSON.stringify(errors));
+        super(JSON.stringify(errors));
         this.validationErrors = errors;
     }
 }

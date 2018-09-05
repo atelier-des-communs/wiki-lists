@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, Checkbox, Grid, Header, Icon, Input, Popup} from "semantic-ui-react";
+import {Button, Checkbox, Grid, Header, Icon, Input, Popup, Divider, Segment} from "semantic-ui-react";
 import {
     BooleanFilter,
     clearFiltersOrSearch,
@@ -16,22 +16,22 @@ import {
 import {RouteComponentProps, withRouter} from "react-router";
 import {Attribute, StructType, Types} from "../../model/types";
 import {copyArr, goTo, isIn, parseParams, remove, stopPropag, strToInt} from "../../utils";
-import {_} from "../../i18n/messages";
 import * as debounce from "debounce";
 import {SafePopup} from "../utils/ssr-safe";
 import {attrLabel, ellipsis} from "../utils/utils";
 import {ValueHandler} from "./editors";
+import {MessagesProps} from "../../i18n/messages";
 
 
 const DEBOUNCE_DELAY= 1000;
 
-interface IFiltersComponentProps {
+interface IFiltersComponentProps extends MessagesProps {
     schema:StructType;
 }
 
 
 // Main siwtch on attribute type
-interface SingleFilterProps<T> extends RouteComponentProps<{}> {
+interface SingleFilterProps<T> extends RouteComponentProps<{}>, MessagesProps {
     attr: Attribute;
     filter: T;
 }
@@ -50,7 +50,9 @@ class BooleanFilterComponent extends AbstractSingleFilter<BooleanFilter> {
 
     render() {
         let filter = this.props.filter;
-       return <>
+        let _ = this.props.messages;
+
+        return <>
             <Checkbox
                 label={_.yes}
                 checked={filter.showTrue}
@@ -110,20 +112,26 @@ class NumberFilterComponent extends AbstractSingleFilter<NumberFilter> {
 
 
     render() {
-        return <>
-        <Input
-            size="mini"
-            type="number"
-            label={_.min}
-            defaultValue={this.props.filter.min}
-            onChange={(e, value) => this.updateMin(strToInt(value.value))}/>
+        let _ = this.props.messages;
 
-        <Input
-            size="mini"
-            type="number"
-            label={_.max}
-            defaultValue={this.props.filter.max}
-            onChange={(e, value) => this.updateMax(strToInt(value.value))}/>
+        return <>
+        <div style={{marginBottom:"0.5em"}}>
+            <Input
+                size="mini"
+                type="number"
+                label={_.min}
+                defaultValue={this.props.filter.min}
+                onChange={(e, value) => this.updateMin(strToInt(value.value))}/>
+        </div>
+
+        <div>
+            <Input
+                size="mini"
+                type="number"
+                label={_.max}
+                defaultValue={this.props.filter.max}
+                onChange={(e, value) => this.updateMax(strToInt(value.value))}/>
+        </div>
         </>
     }
 }
@@ -151,6 +159,7 @@ class EnumFilterComponent extends AbstractSingleFilter<EnumFilter> {
     }
 
     render() {
+        let _ = this.props.messages;
         let filter = this.props.filter;
         let checkboxes = filter.allValues().map(val => (<div>
             <Checkbox
@@ -158,6 +167,7 @@ class EnumFilterComponent extends AbstractSingleFilter<EnumFilter> {
                 checked={isIn(filter.showValues, val)}
                 onClick={() => this.toggleValue(val)}/>
             <ValueHandler
+                {...this.props}
                 value={val}
                 type={this.props.attr.type}
                 editMode={false}
@@ -177,7 +187,9 @@ class EnumFilterComponent extends AbstractSingleFilter<EnumFilter> {
 }
 
 /* Switch on attribute type : may return null in case filter is not supported */
-export function singleFilter(props : RouteComponentProps<{}>, attr:Attribute, filter:Filter | null) {
+export function singleFilter(props : RouteComponentProps<{}> & MessagesProps, attr:Attribute, filter:Filter | null) {
+
+    let _ = props.messages;
 
     let clearFilter = () => {
         let queryParams = serializeFilter(attr, null);
@@ -234,18 +246,48 @@ export function singleFilter(props : RouteComponentProps<{}>, attr:Attribute, fi
     </>
 }
 
+/** Return an array of filter components, for the ones that have filters */
+function getFilters(props: IFiltersComponentProps & RouteComponentProps<{}>) {
+    let queryParams = parseParams(props.location.search);
+    let filters = extractFilters(props.schema, queryParams);
+
+    return props.schema.attributes
+        .filter(attr => !attr.system)
+        .map((attr) => ({attr, comp:singleFilter(props, attr, filters[attr.name])}))
+        .filter((res) => res.comp != null);
+}
+
+export const FilterSidebar : React.SFC<IFiltersComponentProps & RouteComponentProps<{}>> = (props) => {
+
+    let _ = props.messages;
+
+    return <div>
+        <Header as="h3">{_.filters}</Header>
+    {getFilters(props).map( item =>
+        <Segment>
+            <Header as="h4">
+                {ellipsis(attrLabel(item.attr))}
+            </Header>
+            <Divider/>
+            <div key={item.attr.name} >
+                { item.comp }
+            </div>
+        </Segment>
+    )}
+    </div>
+}
+
 /* Filter popup */
 export const FiltersPopup : React.SFC<IFiltersComponentProps & RouteComponentProps<{}>> = (props) => {
 
-    let queryParams = parseParams(props.location.search);
-    let filters = extractFilters(props.schema, queryParams);
+    let _ = props.messages;
 
     let bigPopupStyle = {
         width:"80%",
         left: "10%",
         right: "10%",
         maxWidth: "none"
-    }
+    };
 
     let hasFilters = hasFiltersOrSearch(props.schema, props);
 
@@ -258,21 +300,19 @@ export const FiltersPopup : React.SFC<IFiltersComponentProps & RouteComponentPro
 
         }>
         <Popup.Content>
-            <Header as={"h4"}>{_.filters}</Header>
-        <Grid celled divided columns={12}>
-            {props.schema.attributes.map((attr) => {
-
-                let filterComp = singleFilter(props, attr, filters[attr.name]);
-
-                return filterComp && <Grid.Column mobile={12} tablet={6} computer={4}>
-                    <Header >
-                        {ellipsis(attrLabel(attr))}
+            <Header as={"h3"}>{_.filters}</Header>
+        <Grid columns={12}>
+            {getFilters(props).map( item =>
+                <Grid.Column mobile={12} tablet={6} computer={4}>
+                    <Header as="h4">
+                        {ellipsis(attrLabel(item.attr))}
                     </Header>
-                    <div key={attr.name} >
-                        { filterComp }
+                    <Divider/>
+                    <div key={item.attr.name} >
+                        { item.comp }
                     </div>
                 </Grid.Column>
-            })}
+            )}
         </Grid>
         </Popup.Content>
     </SafePopup>

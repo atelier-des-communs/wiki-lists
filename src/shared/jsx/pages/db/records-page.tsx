@@ -4,14 +4,13 @@ import {Button, Dropdown, Header} from 'semantic-ui-react'
 import {EditDialog} from "../../dialogs/edit-dialog";
 import {attributesMap, Types} from "../../../model/types";
 import {deepClone, goTo, Map, mapMap, parseParams} from "../../../utils";
-import {_} from "../../../i18n/messages";
 import {SafeClickWrapper, SafePopup} from "../../utils/ssr-safe";
 import {DispatchProp} from "react-redux";
 import {createAddItemAction, createUpdateDbAction, IState} from "../../../redux/index";
 
 import {RouteComponentProps} from "react-router"
 import {Record, systemType, withSystemAttributes} from "../../../model/instances";
-import {FiltersPopup, SearchComponent} from "../../type-handlers/filters";
+import {FilterSidebar, FiltersPopup, SearchComponent} from "../../type-handlers/filters";
 import {applySearchAndFilters, clearFiltersOrSearch, hasFiltersOrSearch} from "../../../views/filters";
 import {DbPathParams, RecordsProps, ReduxEventsProps} from "../../common-props";
 import {ConnectedTableComponent} from "../../components/table";
@@ -42,6 +41,7 @@ type RecordsPageProps =
 function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: ViewType) {
 
     let attrMap = attributesMap(props.schema);
+    let _ = props.messages;
 
     // Switch on type of view
     let recordsSwitch = (records: Record[]) => {
@@ -90,6 +90,7 @@ function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: Vie
 
                         {attrLabel(attr)} :
                             <ValueHandler
+                                messages={props.messages}
                                 type={attr.type}
                                 value={group.value}
                                 editMode={false} />
@@ -109,10 +110,12 @@ function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: Vie
 }
 
 function addItemButton(props: RecordsPageProps) {
+    let _ = props.messages;
     return props.auth.hasRight(AccessRight.EDIT) && <SafeClickWrapper  trigger={
         <Button primary style={{marginBottom:"1em"}} icon="plus" content={_.add_item} />
     }>
         <EditDialog
+            {...props}
             record={{}}
             schema={props.schema}
             create={true}
@@ -123,13 +126,23 @@ function addItemButton(props: RecordsPageProps) {
 
 class RecordsPageInternal extends React.Component<RecordsPageProps> {
 
+    state : {
+        filtersSidebar : boolean;
+    }
+
     constructor(props:RecordsPageProps) {
         super(props);
+        this.state = {filtersSidebar:true};
+    }
+
+    toggleFilterSidebar() {
+       this.setState({filtersSidebar:!this.state.filtersSidebar});
     }
 
     render() {
         let props = this.props;
         let dbName = props.match.params.db_name;
+        let _ = props.messages;
 
         let params = parseParams(props.location.search);
         let auth = this.props.auth;
@@ -177,6 +190,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
                     color="teal"
                     content={_.edit_attributes} />} >
                 <SchemaDialog
+                    {...props}
                     onUpdateSchema={props.onUpdateSchema}
                     schema={props.schema}
             />
@@ -210,49 +224,65 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
         // Set html HEAD
         props.head.setTitle(props.match.params.db_name);
 
-        return <>
-            <div style={{display:"table", width:"100%", padding:"1em"}}>
-                <div style={{display:"table-cell", width:"100%"}}>
+        let sideBarButton = (floated:"left" | "right") => <Button
+            compact
+            size="mini"
+            floated={floated}
+            onClick={() => this.toggleFilterSidebar()}
+            title={_.toggle_filters}
+            icon={this.state.filtersSidebar ? "angle double left" : "angle double right"} />
 
-                    <div style={{float:"right"}} className="no-print" >
-                        <SearchComponent schema={props.schema} />
-                        { DownloadButton }
+        return <div style={{margin:"1em"}}>
+
+            <div style={{float:"right"}} className="no-print" >
+                <SearchComponent {...props} />
+                { DownloadButton }
+            </div>
+
+            <div className="no-print">
+                { addItemButton(this.props) }
+                { UpdateSchemaButton }
+            </div>
+
+            <div className="no-print">
+                { viewTypeButtons } &nbsp;
+                { sortByDropdown }
+                { groupByDropdown}
+                { <FiltersPopup {...props} schema={this.props.schema} /> }
+                &nbsp;
+                { attributeDisplayButton }
+            </div>
+
+            <div>
+                {this.state.filtersSidebar &&
+                    <div style={{display: "table-cell", paddingTop: "1em", paddingRight:"1em"}}>
+                        {sideBarButton("right")}
+                        <FilterSidebar {...props} />
                     </div>
-
-                    <div className="no-print">
-                        { addItemButton(this.props) }
-                        { UpdateSchemaButton }
-                    </div>
-
-                    <div className="no-print">
-                        { viewTypeButtons } &nbsp;
-                        { sortByDropdown }
-                        { groupByDropdown}
-                        { <FiltersPopup {...props} schema={this.props.schema} /> }
-                        &nbsp;
-                        { attributeDisplayButton }
-                    </div>
-
+                }
+                <div style={{display:"table-cell", paddingTop: "1em"}} >
+                    {!this.state.filtersSidebar && sideBarButton("left")}
                     { groupedRecords(groupAttr, props, viewType) }
                 </div>
             </div>
-        </>
+        </div>
+
     }
 }
 
 
 // Filter data from Redux store and map it to props
-const mapStateToProps =(state : IState, routerProps?: RouteComponentProps<{}>) : RecordsProps => {
+const mapStateToProps =(state : IState, props?: RouteComponentProps<{}> & GlobalContextProps) : RecordsProps => {
 
     // Flatten map of records
     let records = mapMap(state.items,(key, item) => item) as Map[];
 
     // Apply search and sorting
-    let params = parseParams(routerProps.location.search);
+    let params = parseParams(props.location.search);
     records = applySearchAndFilters(records, params, state.dbDefinition.schema);
 
     return {
-        schema:withSystemAttributes(state.dbDefinition.schema),
+        schema:withSystemAttributes(state.dbDefinition.schema, props.messages),
         records}
 };
 

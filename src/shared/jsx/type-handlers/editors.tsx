@@ -6,11 +6,11 @@ import {DropdownItemProps} from "semantic-ui-react/dist/commonjs/modules/Dropdow
 import 'react-quill/dist/quill.snow.css';
 import {empty, intToStr, strToInt} from "../../utils";
 import {AttributeDisplay} from "../../views/display";
-import {_} from "../../i18n/messages";
 import {enumLabel} from "../utils/utils";
+import {MessagesProps} from "../../i18n/messages";
 
 
-interface ValueHandlerProps<T, TypeT extends Type<T>> {
+interface ValueHandlerProps<T, TypeT extends Type<T>> extends MessagesProps {
 
     editMode: boolean;
     type: TypeT
@@ -184,6 +184,7 @@ class EnumHandler extends ControlledValueHandler<string, EnumType> {
     renderView() {
 
         let {type, size, ...otherProps} = this.props;
+        let _ = this.props.messages;
 
         let enumMap = enumValuesMap(type);
         let enumValue = enumMap[this.state.innerValue];

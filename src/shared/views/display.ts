@@ -1,4 +1,4 @@
-import {StructType} from "../model/types";
+import {Attribute, attributesMap, StructType} from "../model/types";
 import {Map} from "../utils";
 
 export enum AttributeDisplay {
@@ -10,6 +10,10 @@ export enum AttributeDisplay {
 
 function attrNameToQueryParam(attrName: string) {
     return  `${attrName}.d`;
+}
+
+function defaultDisplay(attr:Attribute) {
+    return attr.system ? AttributeDisplay.HIDDEN : AttributeDisplay.MEDIUM;
 }
 
 // Extract display parameters from URL
@@ -32,16 +36,24 @@ export function extractDisplays(schema:StructType, queryParams: Map<string>) : M
                     throw new Error(`Display type not recognized : ${display}`)
 
             }
+        } else {
+            res[attr.name] = defaultDisplay(attr);
         }
     }
     return res;
 }
 
 // Serialize display state into queryParams
-export function serializeDisplay(displays : Map<AttributeDisplay>) : Map<string> {
+export function serializeDisplay(displays : Map<AttributeDisplay>, schema:StructType) : Map<string> {
     let res : Map<string> = {};
+    let attrMap = attributesMap(schema);
     for (let attrName in displays) {
-        res[attrNameToQueryParam(attrName)] = displays[attrName].charAt(0);
+        let attr = attrMap[attrName];
+        let defDisp = defaultDisplay(attr);
+        let paramName = attrNameToQueryParam(attrName);
+        res[paramName] =
+            (displays[attrName] == defDisp) ?
+                null : displays[attrName].charAt(0);
     }
     return res;
 }

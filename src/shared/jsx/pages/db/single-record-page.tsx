@@ -10,8 +10,7 @@ import {EditButtons} from "../../components/edit-button";
 import {GlobalContextProps} from "../../context/global-context";
 import {connectComponent} from "../../context/redux-helpers";
 import {createAddItemAction, createUpdateDbAction} from "../../../redux";
-import {systemType, withSystemAttributes} from "../../../model/instances";
-import {deepClone} from "../../../utils";
+import {withSystemAttributes} from "../../../model/instances";
 
 type SingleRecordPageProps =
     SingleRecordProps &
@@ -42,12 +41,12 @@ export const SingleRecordPageInternal : React.SFC<SingleRecordPageProps>  = (pro
 };
 
 // Fetch data from Redux store and map it to props
-const mapStateToProps =(state : IState, routerProps?: RouteComponentProps<SingleRecordPathParams>) : SingleRecordProps => {
+const mapStateToProps =(state : IState, props?: RouteComponentProps<SingleRecordPathParams> & GlobalContextProps) : SingleRecordProps => {
 
 
     return {
-        schema:withSystemAttributes(state.dbDefinition.schema),
-        record: state.items[routerProps.match.params.id],
+        schema:withSystemAttributes(state.dbDefinition.schema, props.messages),
+        record: state.items[props.match.params.id],
         large:true}
 };
 

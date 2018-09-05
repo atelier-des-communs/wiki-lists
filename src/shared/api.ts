@@ -3,6 +3,7 @@ import {IState} from "./redux/index";
 import {AccessRight} from "./access";
 import {Record} from "./model/instances";
 import {DbDefinition} from "../server/db/db";
+import {DefaultMessages} from "./i18n/messages";
 
 export const CREATE_DB_PATH = "/create-db";
 export const RECORDS_PATH = "/db/:db_name";
@@ -44,6 +45,7 @@ export const VALIDATION_STATUS_CODE = 444;
 // Marshalled JSN within the page
 export interface IMarshalledContext {
     state: IState,
+    messages : DefaultMessages,
     env:string,
     rights : AccessRight[]
 }

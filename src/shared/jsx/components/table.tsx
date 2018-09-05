@@ -3,7 +3,6 @@ import {extractSort, ISort, serializeSort} from "../../views/sort";
 import {goTo, goToUrl, parseParams} from "../../utils";
 import {Link} from 'react-router-dom'
 import {RouteComponentProps, withRouter} from "react-router"
-import {_} from "../../i18n/messages";
 import {DbPathParams, RecordsProps, ReduxEventsProps} from "../common-props";
 import * as React from "react";
 import {Button, Table} from 'semantic-ui-react'
@@ -41,6 +40,7 @@ const TableComponent: React.SFC<TableProps> = (props) => {
     let queryParams = parseParams(props.location.search);
     let sort = extractSort(queryParams);
     let filters = extractFilters(props.schema, queryParams);
+    let _ = props.messages;
 
     let filterAttributeFunc = filterAttribute(props, props.schema);
     let auth = props.auth;
@@ -114,6 +114,7 @@ const TableComponent: React.SFC<TableProps> = (props) => {
             {attrs.filter(filterAttributeFunc).map(attr => {
 
                 let valueEl = <ValueHandler
+                    messages={props.messages}
                     editMode={false}
                     type={attr.type}
                     value={record[attr.name]}/>;

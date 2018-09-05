@@ -2,19 +2,20 @@
  *  Components showing extra parameters when editing schema attributes
  */
 import {EnumType, EnumValue, TextType, Type, Types} from "../../../model/types";
-import {_} from "../../../i18n/messages";
 import {deepClone, slug} from "../../../utils";
 import * as React from "react";
-import {Button, Form, Header, Label} from "semantic-ui-react";
+import {Button, Form, Header, Label, Grid} from "semantic-ui-react";
 import {SafePopup} from "../../utils/ssr-safe";
 import {SketchPicker} from "react-color";
 import {EditableText} from "../../components/editable-text";
+import {DefaultMessages} from "../../../i18n/messages";
 
 
 const DEFAULT_ENUM_COLOR="#e8e8e8";
 
 
 interface TypeExtraProps<T extends Type<any>> {
+    messages: DefaultMessages,
     type: T;
     onUpdate: (newValue: T) => void;
     errorLabel : (key:string) => JSX.Element;
@@ -24,16 +25,22 @@ interface TypeExtraProps<T extends Type<any>> {
 type TypeExtraComponent<T extends Type<any>> = React.SFC<TypeExtraProps<T>>;
 
 const TextExtra: TypeExtraComponent<TextType> = (props) => {
-    return <Form.Checkbox
-        label={_.rich_edit}
-        checked={props.type.rich}
-        onChange={(e, val) => {
-            let type = deepClone(props.type);
-            type.rich = val.checked;
-            props.onUpdate(type);
-        }}/>
+    let _ = props.messages;
+
+    return <Grid.Column>
+        <Form.Checkbox
+            label={_.rich_edit}
+            checked={props.type.rich}
+            onChange={(e, val) => {
+                let type = deepClone(props.type);
+                type.rich = val.checked;
+                props.onUpdate(type);
+            }}/>
+    </Grid.Column>
 };
 const EnumExtra: TypeExtraComponent<EnumType> = (props) => {
+
+    let _ = props.messages;
 
     // Local copy of type
     let type = deepClone(props.type);
@@ -66,7 +73,7 @@ const EnumExtra: TypeExtraComponent<EnumType> = (props) => {
 
 
 
-    return <div>
+    return <Grid.Column>
 
         <Header as="h4" >
             {_.enum_values}
@@ -96,6 +103,7 @@ const EnumExtra: TypeExtraComponent<EnumType> = (props) => {
                 />
             </SafePopup>
             <EditableText
+                {...props}
                 placeholder={_.option_placeholder + " " + (index+1)}
                 as={Label}
                 value={enumVal.label}
@@ -120,7 +128,7 @@ const EnumExtra: TypeExtraComponent<EnumType> = (props) => {
         {_.add_option}
         </Button>
 
-    </div>;
+    </Grid.Column>;
 };
 
 

@@ -1,8 +1,9 @@
 import * as React from "react"
 import {Input} from "semantic-ui-react";
-import {_} from "../../i18n/messages";
+import {DefaultMessages} from "../../i18n/messages";
 
 interface EditableTextProps {
+    messages:DefaultMessages;
     forceEdit?:boolean;
     as?:React.ComponentClass<any>;
     value:string;
@@ -59,6 +60,7 @@ export class EditableText extends React.Component<EditableTextProps> {
     render(){
 
         let SpanEl = this.props.as;
+        let _ = this.props.messages;
 
         return this.state.editMode ?
             <Input key="edit"

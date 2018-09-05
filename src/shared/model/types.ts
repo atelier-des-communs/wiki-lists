@@ -74,6 +74,7 @@ export class Attribute {
     isMandatory?: boolean = false;
     saved ?:boolean = false;
     system ?:boolean = false;
+    hidden ?:boolean = false;
 }
 
 

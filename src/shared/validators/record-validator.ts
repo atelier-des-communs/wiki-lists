@@ -1,12 +1,12 @@
 import {attributesMap, StructType} from "../model/types";
 import {empty} from "../utils";
-import {_} from "../i18n/messages";
 import {ValidationError} from "./validators";
 import {Record, systemType} from "../model/instances";
+import {DefaultMessages} from "../i18n/messages";
 
-export function * validateRecord(record: Record, schema:StructType) : IterableIterator<ValidationError> {
+export function * validateRecord(record: Record, schema:StructType, _:DefaultMessages) : IterableIterator<ValidationError> {
     let attrMap = attributesMap(schema);
-    let sysAttrMap = attributesMap(systemType);
+    let sysAttrMap = attributesMap(systemType(_));
 
     for (let name in record) {
         if (!(name in attrMap)) {

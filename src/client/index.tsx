@@ -2,7 +2,6 @@ import * as React from 'react';
 import {render} from "react-dom";
 import {DbApp} from "../shared/app";
 import {BrowserRouter} from 'react-router-dom'
-import "../shared/favicon.ico";
 import {createStore} from "redux";
 import {reducers} from "../shared/redux";
 import {toImmutable} from "../shared/utils";
@@ -40,6 +39,7 @@ let context : GlobalContextProps = {
     store,
     auth,
     head,
+    messages:marshalledContext.messages,
     promises:[],
     dataFetcher:restDataFetcher};
 

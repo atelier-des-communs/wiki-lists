@@ -1,5 +1,4 @@
 import * as React from "react";
-import {_} from "../../i18n/messages";
 import {StructType} from "../../model/types";
 import {Button, Form, Grid, Header, Icon, Label, Message, Modal} from "semantic-ui-react";
 import {ValueHandler} from "../type-handlers/editors";
@@ -7,9 +6,11 @@ import {Record, withoutSystemAttributes} from "../../model/instances";
 import {attrLabel, typeIsWide} from "../utils/utils";
 import {CloseableDialog, ValidatingDialog} from "./common-dialog";
 import {ValidationError} from "../../validators/validators";
+import {DefaultMessages} from "../../i18n/messages";
 
 
 interface EditDialogProps extends CloseableDialog {
+    messages : DefaultMessages;
     create : boolean;
     record : Record;
     onUpdate : (newValue: Object) => Promise<void>;
@@ -56,65 +57,69 @@ export class EditDialog extends ValidatingDialog<EditDialogProps> {
 
     render()  {
 
-            // Loop on schema attributes
-            let fields = this.props.schema.attributes.map(attr => {
+        let _ = this.props.messages;
 
-                // Update record for this attribute upon change
-                // Don't update state : we don't want a redraw here
-                let callback = (newValue: any) => {
-                    this.record[attr.name] = newValue;
-                    console.log("Record edit updated", this.record);
-                }
+        // Loop on schema attributes
+        let attributes = this.props.schema.attributes.filter(attr => !attr.system);
+        let fields = attributes.map(attr => {
 
-                return <Grid.Column mobile={16} computer={typeIsWide(attr.type) ? 16 : 8}>
-                <Form.Field key={attr.name} >
-                    <Header size="small" title={attr.isMandatory && _.mandatory_attribute}>
-                        {attrLabel(attr)}
-                        {attr.isMandatory && <Label circular color="red" size="tiny" empty />}
-                        </Header>
-                    <ValueHandler
-                        editMode={true}
-                        value={this.record[attr.name]}
-                        type={attr.type}
-                        onValueChange={callback}
-                    />
-                    {this.errorLabel(`${attr.name}`)}
-                </Form.Field>
-                </Grid.Column>
+            // Update record for this attribute upon change
+            // Don't update state : we don't want a redraw here
+            let callback = (newValue: any) => {
+                this.record[attr.name] = newValue;
+                console.log("Record edit updated", this.record);
+            }
 
-            });
+            return <Grid.Column mobile={16} computer={typeIsWide(attr.type) ? 16 : 8}>
+            <Form.Field key={attr.name} >
+                <Header size="small" title={attr.isMandatory && _.mandatory_attribute}>
+                    {attrLabel(attr)}
+                    {attr.isMandatory && <Label circular color="red" size="tiny" empty />}
+                    </Header>
+                <ValueHandler
+                    messages={this.props.messages}
+                    editMode={true}
+                    value={this.record[attr.name]}
+                    type={attr.type}
+                    onValueChange={callback}
+                />
+                {this.errorLabel(`${attr.name}`)}
+            </Form.Field>
+            </Grid.Column>
 
-            return <Modal
-                open={true}
-                onClose={()=> this.props.close && this.props.close() } >
+        });
 
-                <Header icon='edit' content={this.props.create? _.add_item : _.edit_item}/>
+        return <Modal
+            open={true}
+            onClose={()=> this.props.close && this.props.close() } >
 
-                <Modal.Content>
-                    <Form>
-                        <Grid divided>
-                            {fields}
-                        </Grid>
-                    </Form>
-                </Modal.Content>
+            <Header icon='edit' content={this.props.create? _.add_item : _.edit_item}/>
 
-                <Modal.Actions>
+            <Modal.Content>
+                <Form>
+                    <Grid divided>
+                        {fields}
+                    </Grid>
+                </Form>
+            </Modal.Content>
 
-                    {this.state.errors.length > 0 ?
-                        <Message
-                            error
-                            header={_.form_error}
-                            content={this.remainingErrors()} /> : null }
+            <Modal.Actions>
 
-                    <Button color='red' onClick={this.props.close}>
-                        <Icon name='remove'/> {_.cancel}
-                    </Button>
-                    <Button loading={this.state.loading} color='green' onClick={() => this.validate()}>
-                        <Icon name='checkmark'/> {_.save}
-                    </Button>
-                </Modal.Actions>
+                {this.state.errors.length > 0 ?
+                    <Message
+                        error
+                        header={_.form_error}
+                        content={this.remainingErrors()} /> : null }
 
-            </Modal>;
+                <Button color='red' onClick={this.props.close}>
+                    <Icon name='remove'/> {_.cancel}
+                </Button>
+                <Button loading={this.state.loading} color='green' onClick={() => this.validate()}>
+                    <Icon name='checkmark'/> {_.save}
+                </Button>
+            </Modal.Actions>
+
+        </Modal>;
 
     }
 

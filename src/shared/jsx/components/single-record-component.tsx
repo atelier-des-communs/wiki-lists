@@ -4,8 +4,9 @@ import {RouteComponentProps} from "react-router"
 import {attrLabel, ellipsis, filterAttribute} from "../utils/utils";
 import {ValueHandler} from "../type-handlers/editors";
 import {Attribute} from "../../model/types";
+import {MessagesProps} from "../../i18n/messages";
 
-type SingleRecordComponentProps = SingleRecordProps & RouteComponentProps<{}>;
+type SingleRecordComponentProps = SingleRecordProps & RouteComponentProps<{}> & MessagesProps;
 
 const NAME_ELLIPSIS = 10;
 
@@ -26,6 +27,7 @@ export const SingleRecordComponent : React.SFC<SingleRecordComponentProps> = (pr
                     {props.large && <br/>}
 
                     <ValueHandler
+                        messages={props.messages}
                         editMode={false}
                         value={props.record[attr.name]}
                         type={attr.type} />

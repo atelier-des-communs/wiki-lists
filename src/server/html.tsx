@@ -3,17 +3,20 @@ import {renderToString} from "react-dom/server";
 import {StaticRouter} from "react-router";
 import {createStore} from "redux";
 import {DbApp} from "../shared/app";
-import "../shared/favicon.ico";
+import "../shared/favicon.png";
 import {IState, reducers} from "../shared/redux";
 import {dbDataFetcher} from "./db/db";
 import {Store} from "react-redux";
 import {toImmutable} from "../shared/utils";
 import {Express} from "express";
-import {getAccessRights, returnPromise} from "./utils";
+import {getAccessRights, returnPromise, selectLanguage} from "./utils";
 import {Request, Response} from "express-serve-static-core"
 import {cookieName, IMarshalledContext} from "../shared/api";
 import {GlobalContextProps, HeadSetter} from "../shared/jsx/context/global-context";
 import {AccessRight, SimpleUserRights} from "../shared/access";
+import {MainTemplate} from "../shared/jsx/pages/main-template";
+import {Container} from "semantic-ui-react";
+import {DefaultMessages} from "../shared/i18n/messages";
 
 const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '' : 'http://localhost:8081';
 
@@ -29,7 +32,35 @@ class ServerSideHeaderHandler implements HeadSetter {
     }
 }
 
-async function renderHtml(dbName:string, url: string, store: Store<IState>, rights:AccessRight[]) : Promise<string> {
+function renderHtml(title:string, html:string, context:any=null) {
+    return `<!DOCTYPE html>
+		<html>
+			<head>
+				<meta charset="UTF-8">
+				<title>${title}</title>
+				<meta name="referrer" content="no-referrer">
+				<link rel="shortcut icon" type="image/png" href="/img/favicon.png"/>
+				<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.css" />
+				<link rel="stylesheet" href="${BUNDLE_ROOT}/client.bundle.css" />
+			</head>
+		
+			<body>
+				<div id="app">${html}</div>
+				<script>
+					// Marchall store state in place
+					window.__MARSHALLED_CONTEXT__ = ${JSON.stringify(context)};
+				</script>
+				<script src="${BUNDLE_ROOT}/client.bundle.js"></script>
+			</body>
+		</html>`
+}
+
+async function renderMainApp(
+    dbName:string,
+    url: string,
+    store: Store<IState>,
+    rights:AccessRight[],
+    messages:DefaultMessages) : Promise<string> {
 
 
     let head = new ServerSideHeaderHandler();
@@ -45,6 +76,7 @@ async function renderHtml(dbName:string, url: string, store: Store<IState>, righ
             auth: new SimpleUserRights([AccessRight.ADMIN, AccessRight.EDIT, AccessRight.VIEW]),
             store,
             dataFetcher: dbDataFetcher,
+            messages,
             promises: [],
             head: new ServerSideHeaderHandler()
         };
@@ -71,35 +103,21 @@ async function renderHtml(dbName:string, url: string, store: Store<IState>, righ
 
     } while (true);
 
+    // Object serialized and embedded into final HTML, for passing to client
     let context : IMarshalledContext = {
         state : store.getState(),
         env: process.env.NODE_ENV,
+        messages:messages,
         rights};
 
-
-	return `<!DOCTYPE html>
-		<html>
-			<head>
-				<meta charset="UTF-8">
-				<title>${head.title}</title>
-				<meta name="referrer" content="no-referrer">
-				<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.css" />
-				<link rel="stylesheet" href="${BUNDLE_ROOT}/client.bundle.css" />
-			</head>
-		
-			<body>
-				<div id="app">${appHTML}</div>
-				<script>
-					// Marchall store state in place
-					window.__MARSHALLED_CONTEXT__ = ${JSON.stringify(context)};
-				</script>
-				<script src="${BUNDLE_ROOT}/client.bundle.js"></script>
-			</body>
-		</html>`
+    return renderHtml(
+        head.title,
+        appHTML,
+        context)
 }
 
 
-export async function index(db_name:string, req: Request): Promise<string> {
+async function index(db_name:string, req: Request): Promise<string> {
 
     let rights = await getAccessRights(db_name, req.cookies[cookieName(db_name)]);
 
@@ -111,8 +129,29 @@ export async function index(db_name:string, req: Request): Promise<string> {
         reducers,
         toImmutable(state));
 
-    return renderHtml(db_name, req.url, store, rights);
+    return renderMainApp(
+        db_name,
+        req.url,
+        store,
+        rights,
+        selectLanguage(req));
 }
+
+async function notFound(messages:DefaultMessages) : Promise<string> {
+
+    let content = <MainTemplate messages={messages} >
+        <Container style={{
+            textAlign:"center",
+            padding:"4em"}}>
+
+            <h1>404 - {messages.not_found}</h1>
+
+        </Container>
+    </MainTemplate>;
+    let html = renderToString(content);
+    return renderHtml(messages.not_found, html);
+}
+
 
 
 export function setUp(server : Express) {
@@ -128,6 +167,14 @@ export function setUp(server : Express) {
     server.get("/db/:db_name*", function(req:Request, res:Response) {
         let html = index(req.params.db_name, req);
         returnPromise(res, html);
+    });
+
+    server.use(function(req:Request, res:Response) {
+
+        returnPromise(
+            res,
+            notFound(selectLanguage(req)),
+            404);
     });
 
 }

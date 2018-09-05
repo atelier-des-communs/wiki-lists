@@ -1,11 +1,11 @@
 import {Attribute, EnumType, Types} from "../model/types";
 import {empty, isIn} from "../utils";
-import {_} from "../i18n/messages";
 import {ValidationError} from "./validators";
+import {DefaultMessages} from "../i18n/messages";
 
 const ATTRIBUTE_NAMES_PATTERN = /^[a-zA-Z0-9_\-]+$/;
 
-export function * validateSchemaAttributes(attributes : Attribute[]) : IterableIterator<ValidationError> {
+export function * validateSchemaAttributes(attributes : Attribute[], _:DefaultMessages) : IterableIterator<ValidationError> {
 
     let foundName = false;
 

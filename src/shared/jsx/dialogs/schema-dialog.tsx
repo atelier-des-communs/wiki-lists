@@ -1,5 +1,4 @@
 import * as React from "react";
-import {_} from "../../i18n/messages";
 import {Attribute, newType, StructType, Type, Types} from "../../model/types";
 import {
     Button,
@@ -22,25 +21,24 @@ import {typeExtraSwitch} from "./parts/attribute-extra-components";
 import {Info} from "../utils/utils";
 import {CloseableDialog, ValidatingDialog} from "./common-dialog";
 import {withoutSystemAttributes} from "../../model/instances";
+import {DefaultMessages} from "../../i18n/messages";
 
-const TYPE_OPTIONS = [
-    {value: Types.BOOLEAN, text:_.type_boolean, icon: "check square outline"},
-    {value: Types.NUMBER, text:_.type_number, icon:"number"},
-    {value: Types.ENUM, text:_.type_enum, icon:"list"},
-    {value: Types.DATETIME, text:_.type_datetime, icon:"clock outline"},
-    {value: Types.TEXT, text:_.type_text, icon:"font"}];
 
-interface SchemaDialogProps extends CloseableDialog {
-    onUpdateSchema : (schema: StructType) => Promise<void>;
-    schema : StructType;
-    close?: () => void;
-}
+
+
 
 
 // Add some UI / Client only properties to the Attribute type
 class UIAttribute extends Attribute {
     expanded ?:boolean;
     uid?: number; // Used as React unique "key", since attrirbute name is not yet filled
+}
+
+interface SchemaDialogProps extends CloseableDialog {
+    messages:DefaultMessages;
+    onUpdateSchema : (schema: StructType) => Promise<void>;
+    schema : StructType;
+    close?: () => void;
 }
 
 export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
@@ -117,6 +115,7 @@ export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
     }
 
     remove(index:number) {
+        let _ = this.props.messages;
         let attr = this.state.attributes[index];
         if (attr.saved) {
             if (!confirm(_.confirm_attribute_delete)) {
@@ -153,6 +152,16 @@ export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
     }
 
     render()  {
+        let _ = this.props.messages;
+
+        let TYPE_OPTIONS = [
+            {value: Types.BOOLEAN, text:_.type_boolean, icon: "check square outline"},
+            {value: Types.NUMBER, text:_.type_number, icon:"number"},
+            {value: Types.ENUM, text:_.type_enum, icon:"list"},
+            {value: Types.DATETIME, text:_.type_datetime, icon:"clock outline"},
+            {value: Types.TEXT, text:_.type_text, icon:"font"}];
+
+
 
         // Get type text from options for a given tag
         function typeDescr(tag:string) {
@@ -167,13 +176,18 @@ export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
 
             // Extra paramaeters for this type
             let typeExtra = typeExtraSwitch({
+                messages:this.props.messages,
                 type: attr.type,
                 onUpdate: (type) => this.updateType(index, type),
                 errorLabel : (key) => errorLabel(`type.${key}`)});
 
+
+
             // Extra parameters, common to all attributes
-            let attributeExtra = <>
-                {attr.type.tag == Types.TEXT && <>
+            let attributeExtra = <Grid columns={3}>
+
+                {attr.type.tag == Types.TEXT &&
+                <Grid.Column >
                     <Checkbox
                         checked={attr.isName}
                         label={_.is_name}
@@ -184,8 +198,10 @@ export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
                         }} />
                     &nbsp;
                     <Info message={_.is_name_help}/>
-                </>}
-                <Checkbox
+                </Grid.Column>}
+
+                <Grid.Column >
+                    <Checkbox
                     checked={attr.isMandatory}
                     label={_.is_mandatory}
                     disabled={attr.isName}
@@ -193,8 +209,9 @@ export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
                         attr.isMandatory = val.checked;
                         this.forceRedraw();
                     }} />
+                </Grid.Column>
                 {typeExtra}
-            </>
+            </Grid>
 
             return <Segment key={attr.saved ? attr.name : attr.uid} >
 
@@ -212,6 +229,7 @@ export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
                         <Grid.Column  width={8}>
                             <Header >
                                 <EditableText
+                                    {...this.props}
                                     forceEdit={!attr.saved}
                                     value={attr.label}
                                     placeholder={ _.attribute_name}

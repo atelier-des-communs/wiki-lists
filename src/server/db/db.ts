@@ -7,6 +7,7 @@ import {raiseExceptionIfErrors} from "../../shared/validators/validators";
 import {validateRecord} from "../../shared/validators/record-validator";
 import {DataFetcher} from "../../shared/api";
 import {deepClone} from "../../shared/utils";
+import {DefaultMessages} from "../../shared/i18n/messages";
 
 const DATABASES_COL = "schemas";
 const DATABASE_COL_TEMPLATE ="db.{name}";
@@ -41,12 +42,12 @@ export interface DbDefinition extends DbSettings {
 }
 
 
-export async function updateSchemaDb(dbName: string, schema:StructType) : Promise<StructType> {
+export async function updateSchemaDb(dbName: string, schema:StructType, _:DefaultMessages) : Promise<StructType> {
     let db = await Connection.getDb();
     let col = db.collection<DbDefinition>(DATABASES_COL);
 
     // Validate errors
-    raiseExceptionIfErrors(validateSchemaAttributes(schema.attributes))
+    raiseExceptionIfErrors(validateSchemaAttributes(schema.attributes, _))
 
     // Marked attributes as saved
     for (let attr of schema.attributes) {
@@ -66,12 +67,12 @@ export async function updateSchemaDb(dbName: string, schema:StructType) : Promis
 }
 
 
-export async function updateRecordDb(dbName: string, record : Record) : Promise<Record> {
+export async function updateRecordDb(dbName: string, record : Record, _:DefaultMessages) : Promise<Record> {
     let col = await Connection.getDbCol(dbName);
     let dbDef = await dbDataFetcher.getDbDefinition(dbName);
 
     // Validate record
-    raiseExceptionIfErrors(validateRecord(record, dbDef.schema));
+    raiseExceptionIfErrors(validateRecord(record, dbDef.schema, _));
 
     // Transform string ID to BSON ObjectID
     let copy = { ...record} as any;
@@ -88,12 +89,12 @@ export async function updateRecordDb(dbName: string, record : Record) : Promise<
 }
 
 
-export async function createRecordDb(dbName: string, record : Record) : Promise<Record> {
+export async function createRecordDb(dbName: string, record : Record, _:DefaultMessages) : Promise<Record> {
     let col = await Connection.getDbCol(dbName);
     let dbDef = await dbDataFetcher.getDbDefinition(dbName);
 
     // Validate record
-    raiseExceptionIfErrors(validateRecord(record, dbDef.schema));
+    raiseExceptionIfErrors(validateRecord(record, dbDef.schema, _));
 
 
     if (record._id) {

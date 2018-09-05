@@ -1,9 +1,9 @@
 export class DefaultMessages {
 
-    daadle_title = "Daadle : Online structured data, for human beings.";
+    daadle_title = "Structured data, for human beings.";
 
     filters = "Filters";
-    filter = "filter";
+    filter = "Filter";
 
     add_item = "Add item";
     edit_item = "Edit item";
@@ -39,8 +39,6 @@ export class DefaultMessages {
     attribute_type = "Type";
     rich_edit = "Rich edit";
     enum_values = "Options";
-    comma_separated= "Comma separated list of options";
-
 
     // Schema validation
     attribute_name_mandatory = "Attribute name is mandatory";
@@ -57,13 +55,13 @@ export class DefaultMessages {
     form_error = "This form contains errors";
     toggle_filters = "Toggle filters sidebar";
 
-    min = "Min"
-    max = "Max"
+    min = "Min";
+    max = "Max";
 
-    attribute_details = "details"
+    attribute_details = "details";
 
-    show_attribute = "show attribute"
-    hide_attribute = "hide attribute"
+    show_attribute = "show attribute";
+    hide_attribute = "hide attribute";
 
     view_type = "View";
     table_view = "table";
@@ -74,11 +72,11 @@ export class DefaultMessages {
 
     confirm_attribute_delete = "Are you sure you want to delete this attribute ?\nYou will lose data you already entered for it.";
     add_option = "Add option";
-    option_placeholder = "Option "
-    delete_option = "Delete option"
-    is_name = "Part of the name"
-    is_mandatory = "Mandatory"
-    is_name_help = "Attributes marked as 'name' will be part of the name of each item.\nThere should be at least one attribute marked as a name"
+    option_placeholder = "Option ";
+    delete_option = "Delete option";
+    is_name = "Part of the name";
+    is_mandatory = "Mandatory";
+    is_name_help = "Attributes marked as 'name' will be part of the name of each item.\nThere should be at least one attribute marked as a name";
     missing_name = "There should be at least one text field marked as 'name'";
 
     no_element = "Nothing here";
@@ -90,10 +88,13 @@ export class DefaultMessages {
     update_time_attr = "Update time";
     pos_attr = "Position";
     id_attr = "Unique ID";
+    system_attributes = "System attributes";
+    not_found = "Nothing found here";
+}
 
-
+export interface MessagesProps {
+    messages:DefaultMessages;
 }
 
 
-export const _ = new DefaultMessages();
 

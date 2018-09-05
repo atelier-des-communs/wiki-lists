@@ -1,5 +1,4 @@
 import {DbPageProps, ReduxEventsProps, SingleRecordProps} from "../common-props";
-import {_} from "../../i18n/messages";
 import {Button} from "semantic-ui-react"
 import {SafeClickWrapper} from "../utils/ssr-safe";
 import * as React from "react";
@@ -14,8 +13,9 @@ interface EditButtonsProps extends  DbPageProps, SingleRecordProps, ReduxEventsP
 }
 
 export const EditButtons: React.SFC<EditButtonsProps> = (props) => {
-    return <Button.Group basic>
+    let _ = props.messages;
 
+    return <Button.Group basic>
 
         {!props.hideViewButton && <Button
             className="shy"
@@ -37,6 +37,7 @@ export const EditButtons: React.SFC<EditButtonsProps> = (props) => {
                 size="mini" basic compact/>}>
 
             <EditDialog
+                {...props}
                 record={props.record}
                 schema={props.schema}
                 create={false}
