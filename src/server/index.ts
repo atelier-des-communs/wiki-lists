@@ -2,7 +2,6 @@ import * as express from "express";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as cookieParser from "cookie-parser";
-import * as path from "path";
 import {setUp as setUpRest} from "./rest";
 import {setUp as setUpHtml} from "./html";
 import {setUp as setUpExport} from "./export";

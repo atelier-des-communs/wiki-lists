@@ -1,4 +1,4 @@
-import {Map, sortBy} from "../utils";
+import {Map} from "../utils";
 
 export interface ISort {
     key: string;

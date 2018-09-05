@@ -3,7 +3,7 @@ import {Record} from "../../model/instances";
 import {GlobalContextProps, withGlobalContext} from "./global-context";
 import {createItem, deleteItem, updateItem, updateSchema} from "../../rest/client";
 import {DbPathParams, ReduxEventsProps} from "../common-props";
-import {Dispatch, connect} from "react-redux";
+import {connect, Dispatch} from "react-redux";
 import {createAddItemAction, createDeleteAction, createUpdateItemAction, createUpdateSchema} from "../../redux";
 import {StructType} from "../../model/types";
 import {RouteComponentProps} from "react-router";

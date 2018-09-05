@@ -1,24 +1,12 @@
-import {
-    StructType,
-    BooleanType,
-    Type,
-    NumberType,
-    Attribute,
-    TextType,
-    Types,
-    EnumType
-} from "../../shared/model/types";
-import {IState} from "../../shared/redux";
-import {empty, Map} from "../../shared/utils";
-import {DB_NAME, DB_PORT, DB_HOST} from "../../conf"
-import {MongoClient, Db, ObjectId} from "mongodb";
+import {EnumType, StructType, Types} from "../../shared/model/types";
+import {DB_HOST, DB_NAME, DB_PORT} from "../../conf"
+import {MongoClient, ObjectId} from "mongodb";
 import {Record} from "../../shared/model/instances";
-import {_} from "../../shared/i18n/messages";
 import {validateSchemaAttributes} from "../../shared/validators/schema-validators";
 import {raiseExceptionIfErrors} from "../../shared/validators/validators";
-import * as xss from "xss";
 import {validateRecord} from "../../shared/validators/record-validator";
 import {DataFetcher} from "../../shared/api";
+import {deepClone} from "../../shared/utils";
 
 const DATABASES_COL = "schemas";
 const DATABASE_COL_TEMPLATE ="db.{name}";
@@ -51,8 +39,6 @@ export interface DbDefinition extends DbSettings {
     schema: StructType;
     secret?:string;
 }
-
-
 
 
 export async function updateSchemaDb(dbName: string, schema:StructType) : Promise<StructType> {
@@ -98,7 +84,7 @@ export async function updateRecordDb(dbName: string, record : Record) : Promise<
     if (res.matchedCount != 1) {
         throw Error(`No item matched for id : ${record._id}`);
     }
-    return record;
+    return transformRecord(copy);
 }
 
 
@@ -123,12 +109,12 @@ export async function createRecordDb(dbName: string, record : Record) : Promise<
 
     let res = await col.insertOne(record);
     record._id = res.insertedId.toHexString();
-    return record;
+    return transformRecord(record);
 }
 
 export async function deleteRecordDb(dbName: string, id : string) : Promise<boolean> {
     let col = await Connection.getDbCol(dbName);
-    let res = await col.deleteOne({"_id" : new ObjectId(id)});
+    let res = await col.deleteOne({_id : new ObjectId(id)});
     if (res.deletedCount != 1) {
         throw Error(`No record deleted with id: ${id}`);
     }
@@ -149,6 +135,15 @@ export async function getDbSecret(dbName: string) : Promise<String> {
     return dbDef.secret;
 }
 
+function transformRecord(record: Record) : Record {
+    let res = {...record};
+    if ((res._id as any) instanceof ObjectId) {
+        res._id = (record._id as any).toHexString();
+    }
+    return res;
+}
+
+// DataFetcher for SSR : direct access to DB
 export let dbDataFetcher : DataFetcher = {
 
     async getDbDefinition(dbName: string) : Promise<DbDefinition> {
@@ -164,13 +159,18 @@ export let dbDataFetcher : DataFetcher = {
         let col = await Connection.getDbCol(dbName);
         let record = await col.findOne({_id: new ObjectId(id)});
         if (!record) throw new Error(`Missing db: ${dbName}`);
-        return record;
+        let res = transformRecord(record);
+        console.log("getRecord result", res);
+        return res;
     },
 
     async getRecords(dbName: string) : Promise<Record[]> {
         let col = await Connection.getDbCol(dbName);
         let cursor = await col.find();
-        return cursor.toArray();
+        let records = await cursor.toArray();
+        let res = records.map(transformRecord);
+        console.log("getRecords result", res);
+        return res;
     }
 
 }

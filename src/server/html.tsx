@@ -1,16 +1,15 @@
-///<reference path="../shared/utils.ts"/>
 import * as React from "react";
-import { renderToString } from "react-dom/server";
-import { StaticRouter } from "react-router";
-import {createStore } from "redux";
+import {renderToString} from "react-dom/server";
+import {StaticRouter} from "react-router";
+import {createStore} from "redux";
 import {DbApp} from "../shared/app";
 import "../shared/favicon.ico";
 import {IState, reducers} from "../shared/redux";
 import {dbDataFetcher} from "./db/db";
 import {Store} from "react-redux";
-import {arrayToMap, deepClone, Map, parseParams, toImmutable} from "../shared/utils";
+import {toImmutable} from "../shared/utils";
 import {Express} from "express";
-import {getAccessRights, HttpError, returnPromise} from "./utils";
+import {getAccessRights, returnPromise} from "./utils";
 import {Request, Response} from "express-serve-static-core"
 import {cookieName, IMarshalledContext} from "../shared/api";
 import {GlobalContextProps, HeadSetter} from "../shared/jsx/context/global-context";
@@ -18,6 +17,11 @@ import {AccessRight, SimpleUserRights} from "../shared/access";
 
 const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '' : 'http://localhost:8081';
 
+// Will render HTML several time to render successive depth of Async load (promises)
+// This is the max depth we allow before forcing to return the result back to client :
+// This usually means that something is wrong (conditional data fetching not well written),
+// but we prefer to return this anyway
+const MAX_RENDER_DEPTH = 4;
 class ServerSideHeaderHandler implements HeadSetter {
     title = "";
     setTitle(newTitle:string){
@@ -35,6 +39,7 @@ async function renderHtml(dbName:string, url: string, store: Store<IState>, righ
     // The Redux Store will accumulate state and eventually make the component to render synchronously
     // @BlackMagic
     let appHTML = null;
+    let nbRender = 0;
     do {
         let globalContext: GlobalContextProps = {
             auth: new SimpleUserRights([AccessRight.ADMIN, AccessRight.EDIT, AccessRight.VIEW]),
@@ -52,12 +57,16 @@ async function renderHtml(dbName:string, url: string, store: Store<IState>, righ
 
         appHTML = renderToString(app);
 
-        console.log("Promises", globalContext.promises.length);
-
         if (globalContext.promises.length == 0) {
             break;
         } else {
             await Promise.all(globalContext.promises);
+        }
+
+        nbRender++;
+        if (nbRender > MAX_RENDER_DEPTH) {
+            console.error(`Exceeded max depth of SSR data fetching ${MAX_RENDER_DEPTH}: returning current HTML`, url);
+            break;
         }
 
     } while (true);

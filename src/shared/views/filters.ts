@@ -1,16 +1,4 @@
-import {
-    arrayToMap,
-    empty,
-    eqSet,
-    goTo, intToStr,
-    isIn,
-    Map,
-    mapMap,
-    parseParams, sortBy,
-    strToInt,
-    updatedParams,
-    updatedQuery
-} from "../utils";
+import {empty, eqSet, goTo, intToStr, isIn, Map, parseParams, sortBy, strToInt} from "../utils";
 import {Attribute, attributesMap, EnumType, StructType, Types} from "../model/types";
 import {Record} from "../model/instances";
 // import normalize from "normalize-text";

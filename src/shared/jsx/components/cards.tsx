@@ -1,8 +1,8 @@
 /* Display type : table */
-import {RouteComponentProps, withRouter} from "react-router"
-import { Link } from 'react-router-dom'
+import {RouteComponentProps} from "react-router"
+import {Link} from 'react-router-dom'
 import {Card} from "semantic-ui-react";
-import {ReduxEventsProps, DbPathParams, RecordsProps} from "../common-props";
+import {DbPathParams, RecordsProps, ReduxEventsProps} from "../common-props";
 import * as React from "react";
 import {EditButtons} from "./edit-button";
 import {SingleRecordComponent} from "./single-record-component";

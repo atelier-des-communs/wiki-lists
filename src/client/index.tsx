@@ -1,10 +1,10 @@
 import * as React from 'react';
-import {render}  from "react-dom";
+import {render} from "react-dom";
 import {DbApp} from "../shared/app";
-import { BrowserRouter } from 'react-router-dom'
+import {BrowserRouter} from 'react-router-dom'
 import "../shared/favicon.ico";
 import {createStore} from "redux";
-import {IState, reducers} from "../shared/redux";
+import {reducers} from "../shared/redux";
 import {toImmutable} from "../shared/utils";
 import "./index.css";
 import {GlobalContextProps, HeadSetter} from "../shared/jsx/context/global-context";

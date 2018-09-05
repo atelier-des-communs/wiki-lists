@@ -2,9 +2,8 @@ import * as React from "react";
 import {_} from "../../i18n/messages";
 import {Attribute, newType, StructType, Type, Types} from "../../model/types";
 import {
-    Checkbox,
-    Popup,
     Button,
+    Checkbox,
     Dropdown,
     Form,
     Grid,
@@ -20,13 +19,15 @@ import {deepClone, slug} from "../../utils";
 import {ValidationError} from "../../validators/validators";
 import {EditableText} from "../components/editable-text";
 import {typeExtraSwitch} from "./parts/attribute-extra-components";
-import {attrLabel, Info} from "../utils/utils";
+import {Info} from "../utils/utils";
 import {CloseableDialog, ValidatingDialog} from "./common-dialog";
+import {withoutSystemAttributes} from "../../model/instances";
 
 const TYPE_OPTIONS = [
     {value: Types.BOOLEAN, text:_.type_boolean, icon: "check square outline"},
     {value: Types.NUMBER, text:_.type_number, icon:"number"},
     {value: Types.ENUM, text:_.type_enum, icon:"list"},
+    {value: Types.DATETIME, text:_.type_datetime, icon:"clock outline"},
     {value: Types.TEXT, text:_.type_text, icon:"font"}];
 
 interface SchemaDialogProps extends CloseableDialog {
@@ -52,8 +53,14 @@ export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
     // Counter used for filling UID of new attributes
     uid = 0;
 
+    static cleanSchema(props:SchemaDialogProps) : SchemaDialogProps {
+        let {schema, ...otherProps} = props;
+        return {schema:withoutSystemAttributes(schema), ...otherProps}
+    }
+
     constructor(props: SchemaDialogProps) {
-        super(props);
+
+        super(SchemaDialog.cleanSchema(props));
 
         // Clone the input object : not modify it until we validate
         this.state =  {

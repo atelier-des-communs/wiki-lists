@@ -1,5 +1,3 @@
-
-
 // HTML
 import {IState} from "./redux/index";
 import {AccessRight} from "./access";
@@ -50,7 +48,7 @@ export interface IMarshalledContext {
     rights : AccessRight[]
 }
 
-// Generic read interface, implemented either on SS directly in DB, or on client side, via REST
+// Generic reader interface, implemented directly with DB access for SSR, or as rest client for Browser
 export interface DataFetcher {
     getRecord(dbName: string, id : string) : Promise<Record>;
     getRecords(dbName: string) : Promise<Record[]>;

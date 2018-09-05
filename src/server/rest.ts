@@ -1,14 +1,15 @@
 import {
     ADD_ITEM_URL,
-    cookieName,
-    DELETE_ITEM_URL, GET_DB_DEFINITION_URL,
-    GET_ITEM_URL, GET_ITEMS_URL,
+    DELETE_ITEM_URL,
+    GET_DB_DEFINITION_URL,
+    GET_ITEM_URL,
+    GET_ITEMS_URL,
     UPDATE_ITEM_URL,
     UPDATE_SCHEMA_URL
 } from "../shared/api";
 import {createRecordDb, dbDataFetcher, deleteRecordDb, updateRecordDb, updateSchemaDb} from "./db/db";
 import {Record} from "../shared/model/instances";
-import {HttpError, requiresRight, returnPromise, traverse} from "./utils";
+import {requiresRight, returnPromise, traverse} from "./utils";
 import {Express} from "express";
 import {StructType} from "../shared/model/types";
 import {Request, Response} from "express-serve-static-core"

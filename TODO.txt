@@ -1,22 +1,22 @@
-[SECU] XSS in HTml rich content
+X [SECU] XSS in HTml rich content
 X [BUG] Error report : Dialog (or better, in place)
 [FEAT] text: simple, multi, rich
 x [UX] add light sort icons on columns
 [UX] edit on click line
-[INFRA] global context
+X [INFRA] global context
 [INFRA] prefix to db name in mongo
 [INFRA] test framework
 X [UX]: filter icon in search box
 x [UX] filters on headers
-[UX] group-by button : add label
+X [UX] group-by button : add label
 [FEAT] window for new db
 [UX] Daddle header
-[FEAT] View item
-[FEAT] Rights management
+X [FEAT] View item
+X [FEAT] Rights management
 [FEAT] pos and drag / drop
 [UX] "Create another"
-[FEAT] Import
-[FEAT] Order columns
+[FEAT] Import CSV
+X [FEAT] Order columns
 [FEAT] Web sockets
 [FEAT] Field types :
    - Link
@@ -27,10 +27,12 @@ x [UX] filters on headers
    - Date
    - Date / Time
    - Location
-[FEAT] Views : Card, List, Map, Calendar ?
+.. [FEAT] Views : Card, List, Map, Calendar ?
 [FEAT] RSS
 [FEAT] Alerts
 [FEAT] History
 [FEATURE] Next / previous when editing
-[UX] Add attribute => "dropup" of possiblities
+X [UX] Add attribute => "dropup" of possiblities
+X [Feature] Added support for mandatory attributes
+[BUG] _creationTime becomes string
 

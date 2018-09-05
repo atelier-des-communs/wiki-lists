@@ -1,5 +1,5 @@
 import {Record} from "../model/instances";
-import {Map, mapMap, mapToArray, sortBy, sortByFunc} from "../utils";
+import {Map, mapToArray, sortByFunc} from "../utils";
 import {Attribute} from "../model/types";
 
 export class Group {

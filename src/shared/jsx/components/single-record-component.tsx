@@ -1,6 +1,6 @@
 import * as React from "react";
 import {SingleRecordProps} from "../common-props";
-import {RouteComponentProps, withRouter} from "react-router"
+import {RouteComponentProps} from "react-router"
 import {attrLabel, ellipsis, filterAttribute} from "../utils/utils";
 import {ValueHandler} from "../type-handlers/editors";
 import {Attribute} from "../../model/types";

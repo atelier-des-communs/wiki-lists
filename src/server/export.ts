@@ -1,5 +1,4 @@
 import {DOWNLOAD_JSON_URL, DOWNLOAD_XLS_URL} from "../shared/api";
-import {returnPromise} from "./utils";
 import {Express} from "express";
 import {AttributeDisplay, extractDisplays} from "../shared/views/display";
 import {Record} from "../shared/model/instances";

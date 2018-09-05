@@ -1,4 +1,3 @@
-
 // Single error message of validation
 import {_} from "../i18n/messages";
 import {itToArray} from "../utils";

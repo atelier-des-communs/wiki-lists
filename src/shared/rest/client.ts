@@ -1,10 +1,12 @@
-import Axios from "axios";
-import {AxiosPromise} from "axios";
+import Axios, {AxiosPromise} from "axios";
 import {Record} from "../model/instances";
 import {
     ADD_ITEM_URL,
     DataFetcher,
-    DELETE_ITEM_URL, GET_DB_DEFINITION_URL, GET_ITEM_URL, GET_ITEMS_URL,
+    DELETE_ITEM_URL,
+    GET_DB_DEFINITION_URL,
+    GET_ITEM_URL,
+    GET_ITEMS_URL,
     UPDATE_ITEM_URL,
     UPDATE_SCHEMA_URL,
     VALIDATION_STATUS_CODE

@@ -1,4 +1,4 @@
-import {Attribute, EnumType, StructType, Types} from "../model/types";
+import {Attribute, EnumType, Types} from "../model/types";
 import {empty, isIn} from "../utils";
 import {_} from "../i18n/messages";
 import {ValidationError} from "./validators";

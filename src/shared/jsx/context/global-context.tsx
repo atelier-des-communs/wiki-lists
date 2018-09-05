@@ -11,12 +11,22 @@ export interface HeadSetter {
     setTitle : (title:string) => void;
 }
 
-// Global props, passed to the main app, as is
+// Global props, passed down to all pages & components, via React "context" mecanism
 export interface GlobalContextProps  {
+
+    /** Simple interface for setting title and meta HTML tags */
     head: HeadSetter,
+
+    /** Authorization settings */
     auth:AuthProvider;
+
+    /** Direct access to redux store */
     store: Store<IState>;
+
+    /* Client API for reading data */
     dataFetcher : DataFetcher;
+
+    /* Promises getting accumulated by AsyncComponents, for SSR to wait for their completion */
     promises : Promise<any>[];
 }
 
@@ -47,7 +57,7 @@ export class GlobalContextProvider extends React.Component<GlobalContextProvider
 
 }
 
-/** Higher order component, injecting the global context as root props */
+/** Higher order component, injecting the global context as root props in any component */
 export function withGlobalContext <P> (
     WrappedComponent: React.ComponentType<P & GlobalContextProps>,
 ): React.ComponentClass<P> {

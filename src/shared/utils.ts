@@ -2,8 +2,6 @@ import * as Immutable from "seamless-immutable";
 import "es6-promise";
 import * as QueryString from "querystring";
 import {RouteComponentProps} from "react-router";
-import * as React from "react";
-import {DbPathParams} from "./jsx/common-props";
 import slugify from "slugify";
 
 
@@ -154,6 +152,7 @@ export function strToInt(value:string) {
     }
     return parseInt(value);
 }
+
 
 export function intToStr(value:number) {
     if (typeof(value) == "undefined" || value == null ||  isNaN(value)) {

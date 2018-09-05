@@ -1,6 +1,5 @@
-import {Type, BooleanType, StructType, TextType, NumberType, Attribute} from "./types";
-import {Map} from "../utils";
-import {ObjectId} from "mongodb";
+import {DatetimeType, NumberType, StructType, TextType} from "./types";
+import {deepClone} from "../utils";
 import {_} from "../i18n/messages";
 
 
@@ -19,46 +18,41 @@ export interface Record {
 export let systemType = new StructType();
 systemType.attributes.push({
     name:"_id",
+    saved:true,
+    system:true,
     type: new TextType(),
     label : _.id_attr});
 
 systemType.attributes.push({
     name:"_creationTime",
-    type: new TextType(), // FIXME : Should be date time
+    saved:true,
+    system:true,
+    type: new DatetimeType(),
     label : _.creation_time_attr});
 
 systemType.attributes.push({
     name:"_updateTime",
-    type: new TextType(), // FIXME : Should be date time
+    saved:true,
+    system:true,
+    type: new DatetimeType(),
     label : _.update_time_attr});
 
 systemType.attributes.push({
     name:"_pos",
-    type: new NumberType(), // FIXME : Should be date time
+    saved:true,
+    system:true,
+    type: new NumberType(),
     label : _.pos_attr});
 
-interface Value<T> {
-    type: Type<T>;
-    value: T;
+/** Prepend system attributes to a schema */
+export function withSystemAttributes(schema:StructType) {
+    let res = deepClone(schema);
+    res.attributes = [...systemType.attributes, ...schema.attributes];
+    return res
 }
 
-export class BooleanValue implements Value<boolean> {
-    type: BooleanType;
-    value: boolean;
+export function withoutSystemAttributes(schema:StructType) {
+    let res = deepClone(schema);
+    res.attributes = schema.attributes.filter(attr => !attr.system);
+    return res;
 }
-
-export class TextValue implements Value<string> {
-    type: TextType;
-    value: string;
-}
-
-export class NumberValue implements Value<number> {
-    type: NumberType;
-    value: number;
-}
-
-export class StructValue implements Value<Map<any>> {
-    type: StructType;
-    value: {[key:string]:Value<any>}; // map of values
-}
-

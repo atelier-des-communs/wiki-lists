@@ -1,10 +1,9 @@
-
-import { Action, Reducer, ReducersMapObject} from "redux";
+import {Action, Reducer} from "redux";
 import {combineReducers} from "redux-seamless-immutable";
 import {StructType} from "../model/types";
 import * as Immutable from "seamless-immutable";
 import {Record} from "../model/instances";
-import {DbDefinition, DbSettings} from "../../server/db/db";
+import {DbDefinition} from "../../server/db/db";
 import {Map} from "../utils";
 
 

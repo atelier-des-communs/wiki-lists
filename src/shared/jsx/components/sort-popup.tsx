@@ -1,11 +1,10 @@
 /* popup controlling the sorting */
 import {_} from "../../i18n/messages";
-import {Button, Icon, Header} from "semantic-ui-react";
+import {Button, Header, Icon} from "semantic-ui-react";
 import * as React from "react";
 import {RouteComponentProps} from "react-router";
-import {StructType} from "../../model/types";
+import {attributesMap, StructType} from "../../model/types";
 import {goTo, parseParams} from "../../utils";
-import {AttributeDisplay, extractDisplays, serializeDisplay} from "../../views/display";
 import {extractSort, ISort, serializeSort} from "../../views/sort";
 import {SafePopup} from "../utils/ssr-safe";
 import {attrLabel, ellipsis} from "../utils/utils";
@@ -24,6 +23,8 @@ export const SortPopup : React.SFC<SortProps> = (props) => {
         goTo(props, serializeSort(newSort));
     }
 
+    let sortAttr = sort.key ? attributesMap(props.schema)[sort.key] : null;
+
 
     return <SafePopup wide="very"
         // Force to redraw (and hence close) upon update
@@ -35,7 +36,7 @@ export const SortPopup : React.SFC<SortProps> = (props) => {
             icon="sort amount down" >
             <Icon name="sort amount down" />
             <span>
-                {ellipsis(sort.key)} <Icon name={sort.asc ? "angle up" : "angle down"} />
+                {ellipsis(attrLabel(sortAttr))} <Icon name={sort.asc ? "angle up" : "angle down"} />
             </span>
         </Button>} >
 

@@ -3,9 +3,8 @@ import {extractGroupBy} from "../../views/group";
 import {Attribute, EnumValue, StructType, TextType, Type, Types} from "../../model/types";
 import {AttributeDisplay, extractDisplays} from "../../views/display";
 import {RouteComponentProps} from "react-router"
-import {Popup, Label} from "semantic-ui-react";
+import {Label, Popup} from "semantic-ui-react";
 import {parseParams} from "../../utils";
-import {_} from "../../i18n/messages";
 import {Record} from "../../model/instances";
 
 export function ellipsis(text:string, maxWidth:number= 15) {
@@ -41,6 +40,9 @@ export function typeIsWide(type:Type<any>) : boolean {
 
 /** Use "label" if present, "name" otherwize */
 export function attrLabel(attr:Attribute) : string {
+    if (attr == null) {
+        return null;
+    }
     return attr.label || attr.name;
 }
 

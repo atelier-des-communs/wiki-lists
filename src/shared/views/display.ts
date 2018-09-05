@@ -1,5 +1,5 @@
-import {attributesMap, StructType} from "../model/types";
-import {arrayToMap, Map, mapMap} from "../utils";
+import {StructType} from "../model/types";
+import {Map} from "../utils";
 
 export enum AttributeDisplay {
     HIDDEN = "hidden",

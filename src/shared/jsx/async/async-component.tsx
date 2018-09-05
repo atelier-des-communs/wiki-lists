@@ -4,7 +4,7 @@
  * all of them to resolve and re-rendering.
  */
 import * as React from "react";
-import {GlobalContextProps, GlobalContextProviderProps} from "../context/global-context";
+import {GlobalContextProps} from "../context/global-context";
 import {Loader} from "semantic-ui-react";
 
 export abstract class AsyncComponent<T extends GlobalContextProps> extends React.Component<T> {

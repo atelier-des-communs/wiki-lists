@@ -1,32 +1,26 @@
 import * as React from "react";
-import {Checkbox, Segment, Header, Input, Button, Icon, Grid, Popup} from "semantic-ui-react";
+import {Button, Checkbox, Grid, Header, Icon, Input, Popup} from "semantic-ui-react";
 import {
-    Filter,
-    extractFilters,
     BooleanFilter,
-    serializeFilter,
+    clearFiltersOrSearch,
     EnumFilter,
-    TextFilter,
-    serializeSearch, extractSearch, IFilter, NumberFilter, clearFiltersOrSearch, hasFiltersOrSearch
+    extractFilters,
+    extractSearch,
+    Filter,
+    hasFiltersOrSearch,
+    NumberFilter,
+    serializeFilter,
+    serializeSearch,
+    TextFilter
 } from "../../views/filters";
 import {RouteComponentProps, withRouter} from "react-router";
 import {Attribute, StructType, Types} from "../../model/types";
-import {
-    copyArr,
-    empty,
-    goTo,
-    isIn,
-    parseParams,
-    remove,
-    stopPropag,
-    strToInt,
-    updatedParams,
-    updatedQuery
-} from "../../utils";
+import {copyArr, goTo, isIn, parseParams, remove, stopPropag, strToInt} from "../../utils";
 import {_} from "../../i18n/messages";
-import  * as debounce from "debounce";
+import * as debounce from "debounce";
 import {SafePopup} from "../utils/ssr-safe";
 import {attrLabel, ellipsis} from "../utils/utils";
+import {ValueHandler} from "./editors";
 
 
 const DEBOUNCE_DELAY= 1000;
@@ -158,21 +152,27 @@ class EnumFilterComponent extends AbstractSingleFilter<EnumFilter> {
 
     render() {
         let filter = this.props.filter;
-        let checkboxes = filter.allValues().map(val => (<>
+        let checkboxes = filter.allValues().map(val => (<div>
             <Checkbox
                 key={val}
-                label={val}
                 checked={isIn(filter.showValues, val)}
-                onClick={() => this.toggleValue(val)}/><br/></>));
+                onClick={() => this.toggleValue(val)}/>
+            <ValueHandler
+                value={val}
+                type={this.props.attr.type}
+                editMode={false}
+                onClick={() => this.toggleValue(val)}
+                style={{cursor:"pointer"}} />
+        </div>));
 
-        return <>
+        return <div>
             <Checkbox
+                key="empty"
                 label={_.empty}
                 checked={filter.showEmpty}
                 onClick={() => this.toggleEmpty()}/>
-            <br/>
             {checkboxes}
-        </>
+        </div>
     }
 }
 

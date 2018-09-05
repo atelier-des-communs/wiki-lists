@@ -1,6 +1,5 @@
 import * as React from "react";
 import {ValidationError} from "../../validators/validators";
-import {deepClone} from "../../utils";
 import {Label} from "semantic-ui-react";
 
 export interface CloseableDialog {

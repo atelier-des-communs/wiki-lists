@@ -1,7 +1,7 @@
 /*
 * Some common props for components
 */
-import {Attribute, StructType} from "../model/types";
+import {StructType} from "../model/types";
 import {Record} from "../model/instances";
 import {GlobalContextProps} from "./context/global-context";
 import {RouteComponentProps} from "react-router";
@@ -24,12 +24,12 @@ export type DbPageProps = RouteComponentProps<DbPathParams> & GlobalContextProps
 /** Props for components displaying a list of records */
 export interface RecordsProps {
     schema : StructType;
-    records: Record[]};
+    records: Record[]}
 
 export interface SingleRecordProps {
     schema : StructType;
     record: Record,
-    large?:boolean;}
+    large?:boolean}
 
 /** Event handler props injected by react redux */
 export interface ReduxEventsProps {

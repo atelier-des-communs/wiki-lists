@@ -1,5 +1,4 @@
 import * as React from "react";
-import {Icon, Button} from "semantic-ui-react";
 
 interface CollapsibleProps {
     trigger: (open:boolean) => JSX.Element;

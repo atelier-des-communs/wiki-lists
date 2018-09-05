@@ -2,7 +2,7 @@
 import * as React from "react";
 import {RouteComponentProps} from "react-router"
 import {StructType} from "../../model/types";
-import {Grid, Button} from "semantic-ui-react"
+import {Button} from "semantic-ui-react"
 import {AttributeDisplay, extractDisplays, serializeDisplay} from "../../views/display";
 import {goTo, parseParams} from "../../utils";
 import {_} from "../../i18n/messages";

@@ -1,4 +1,4 @@
-import { Component } from "react";
+import {Component} from "react";
 
 declare module "react-rte/lib/RichTextEditor" {
     interface IProps {

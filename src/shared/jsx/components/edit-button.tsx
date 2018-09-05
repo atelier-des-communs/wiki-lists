@@ -1,12 +1,10 @@
-import {StructType} from "../../model/types";
-import {Record} from "../../model/instances";
-import {ReduxEventsProps, DbPageProps, DbPathParams, SingleRecordProps} from "../common-props";
+import {DbPageProps, ReduxEventsProps, SingleRecordProps} from "../common-props";
 import {_} from "../../i18n/messages";
 import {Button} from "semantic-ui-react"
 import {SafeClickWrapper} from "../utils/ssr-safe";
 import * as React from "react";
 import {EditDialog} from "../dialogs/edit-dialog";
-import {AccessRight, AuthProvider} from "../../access";
+import {AccessRight} from "../../access";
 import {goToUrl} from "../../utils";
 import {singleRecordLink} from "../../api";
 

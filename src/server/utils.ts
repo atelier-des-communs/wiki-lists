@@ -1,10 +1,9 @@
 import * as Express from "express";
-import {ValidationException} from "../shared/validators/validators";
 import {cookieName, VALIDATION_STATUS_CODE} from "../shared/api";
 import {AccessRight} from "../shared/access";
 import {getDbSecret} from "./db/db";
 import {isIn} from "../shared/utils";
-import {Request, Response} from "express-serve-static-core"
+import {Request} from "express-serve-static-core"
 
 // Handy function returing 200 and the payload result of the promise of returning 500 on error
 export function returnPromise(res: Express.Response, promise: Promise<{}>) {

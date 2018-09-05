@@ -18,6 +18,7 @@ export class DefaultMessages {
     type_number =  "Number";
     type_enum =  "Options";
     type_text =  "Text";
+    type_datetime = "Date & time";
 
     // Boolean filter
     all =  "all";

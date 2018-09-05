@@ -1,4 +1,5 @@
 var MiniCssExtractPlugin = require('mini-css-extract-plugin');
+var nodeExternals = require('webpack-node-externals');
 var shared = require("./webpack.shared.js");
 
 var loaders = shared.common_loaders();

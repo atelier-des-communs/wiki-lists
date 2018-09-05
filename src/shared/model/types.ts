@@ -12,6 +12,7 @@ export enum Types {
     TEXT = "text",
     STRUCT = "struct",
     ENUM = "enum",
+    DATETIME = "datetime",
 }
 export class BooleanType implements Type<boolean> {
     tag = Types.BOOLEAN;
@@ -19,6 +20,10 @@ export class BooleanType implements Type<boolean> {
 
 export class NumberType implements Type<number> {
     tag =  Types.NUMBER;
+}
+
+export class DatetimeType implements Type<Date> {
+    tag =  Types.DATETIME;
 }
 
 export class TextType implements Type<string> {
@@ -47,9 +52,12 @@ export function newType(typeTag:string) {
             return new NumberType();
         case Types.BOOLEAN :
             return new BooleanType();
+        case Types.DATETIME:
+            return new DatetimeType();
         case Types.ENUM:
             let res = new EnumType();
             // Two empty values for the UI
+            // Fixme : should be on UI side, not here
             res.values.push({value:null});
             res.values.push({value:null});
             return res;
@@ -64,7 +72,8 @@ export class Attribute {
     type: Type<any>;
     isName?: boolean = false;
     isMandatory?: boolean = false;
-    saved?:boolean = false;
+    saved ?:boolean = false;
+    system ?:boolean = false;
 }
 
 

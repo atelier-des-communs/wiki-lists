@@ -1,30 +1,23 @@
 /* Main page displaying a single collection, with sorting, filtering, grouping */
 import * as React from 'react';
 import {Button, Dropdown, Header} from 'semantic-ui-react'
-import { EditDialog } from "../../dialogs/edit-dialog";
-import {Attribute, attributesMap, StructType, Types} from "../../../model/types";
+import {EditDialog} from "../../dialogs/edit-dialog";
+import {attributesMap, Types} from "../../../model/types";
 import {deepClone, goTo, Map, mapMap, parseParams} from "../../../utils";
 import {_} from "../../../i18n/messages";
 import {SafeClickWrapper, SafePopup} from "../../utils/ssr-safe";
-import {connect, Dispatch, DispatchProp} from "react-redux";
-import {
-    createAddItemAction,
-    IState,
-    createDeleteAction,
-    createUpdateItemAction,
-    createUpdateSchema, createUpdateDbAction
-} from "../../../redux/index";
+import {DispatchProp} from "react-redux";
+import {createAddItemAction, createUpdateDbAction, IState} from "../../../redux/index";
 
-import {RouteComponentProps, withRouter} from "react-router"
-import {Record} from "../../../model/instances";
+import {RouteComponentProps} from "react-router"
+import {Record, systemType, withSystemAttributes} from "../../../model/instances";
 import {FiltersPopup, SearchComponent} from "../../type-handlers/filters";
 import {applySearchAndFilters, clearFiltersOrSearch, hasFiltersOrSearch} from "../../../views/filters";
-import {ReduxEventsProps, DbPathParams, RecordsProps} from "../../common-props";
+import {DbPathParams, RecordsProps, ReduxEventsProps} from "../../common-props";
 import {ConnectedTableComponent} from "../../components/table";
 import {extractGroupBy, groupBy, updatedGroupBy} from "../../../views/group";
 import {Collapsible} from "../../utils/collapsible";
 import {SchemaDialog} from "../../dialogs/schema-dialog";
-import {createItem, deleteItem, updateItem, updateSchema} from "../../../rest/client";
 import {DOWNLOAD_JSON_URL, DOWNLOAD_XLS_URL} from "../../../api";
 import {DropdownItemProps} from "semantic-ui-react/dist/commonjs/modules/Dropdown/DropdownItem"
 import {SortPopup} from "../../components/sort-popup";
@@ -32,12 +25,10 @@ import {extractViewType, serializeViewType, ViewType} from "../../../views/view-
 import {CardsComponent} from "../../components/cards";
 import {ValueHandler} from "../../type-handlers/editors";
 import {AttributeDisplayComponent} from "../../components/attribute-display";
-import {GlobalContextProps, withGlobalContext} from "../../context/global-context";
+import {GlobalContextProps} from "../../context/global-context";
 import {AccessRight} from "../../../access";
 import {attrLabel} from "../../utils/utils";
 import {connectComponent} from "../../context/redux-helpers";
-import {AsyncComponent} from "../../async/async-component";
-
 
 
 type RecordsPageProps =
@@ -261,13 +252,13 @@ const mapStateToProps =(state : IState, routerProps?: RouteComponentProps<{}>) :
     records = applySearchAndFilters(records, params, state.dbDefinition.schema);
 
     return {
-        schema: state.dbDefinition ? state.dbDefinition.schema : null,
-        records: records}
+        schema:withSystemAttributes(state.dbDefinition.schema),
+        records}
 };
 
 // Async fetch of data
-function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>) {
-    let res = [];
+function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>) : Promise<any>[] {
+    let res : Promise<any>[] = [];
     let state = props.store.getState();
 
     if (!state.dbDefinition) {

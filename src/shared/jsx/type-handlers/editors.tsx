@@ -1,19 +1,10 @@
 import * as React from "react";
-import {
-    Types,
-    BooleanType,
-    NumberType,
-    TextType,
-    Type,
-    EnumType,
-    attributesMap,
-    enumValuesMap
-} from "../../model/types";
-import {Checkbox, Input, Dropdown, Label, FormSelect, Button, Icon, TextArea} from "semantic-ui-react";
+import {BooleanType, DatetimeType, EnumType, enumValuesMap, NumberType, TextType, Type, Types} from "../../model/types";
+import {Checkbox, FormSelect, Icon, Input, Label} from "semantic-ui-react";
 import ReactQuill from 'react-quill';
 import {DropdownItemProps} from "semantic-ui-react/dist/commonjs/modules/Dropdown/DropdownItem"
 import 'react-quill/dist/quill.snow.css';
-import {strToInt} from "../../utils";
+import {empty, intToStr, strToInt} from "../../utils";
 import {AttributeDisplay} from "../../views/display";
 import {_} from "../../i18n/messages";
 import {enumLabel} from "../utils/utils";
@@ -48,7 +39,7 @@ abstract class ControlledValueHandler<T, TypeT extends Type<T>> extends React.Co
         return innerValue as T;
     }
 
-    toInnerValue(value:any) {
+    toInnerValue(value:T) : any {
         // By default copy inner record
         return value;
     }
@@ -67,7 +58,7 @@ abstract class ControlledValueHandler<T, TypeT extends Type<T>> extends React.Co
     }
 
     componentWillReceiveProps(nextProps : any) {
-        if ("value" in nextProps && this.toInnerValue(this.props.value) != this.toInnerValue(nextProps)) {
+        if ("value" in nextProps && this.toInnerValue(this.props.value) != this.toInnerValue(nextProps.value)) {
             this.setState({innerValue:this.toInnerValue(nextProps.value)})
         }
     }
@@ -95,6 +86,37 @@ class BooleanHandler extends ControlledValueHandler<boolean, BooleanType>{
 
 
 class SimpleTextHandler extends ControlledValueHandler<string, TextType> {
+    renderView() {
+        return <span>{this.state.innerValue}</span>
+    }
+    renderEdit() {
+        return <Input
+            value={this.state.innerValue}
+            onChange={(e, data) => this.onChange(data.value)} />;
+    }
+}
+
+class DatetimeHandler extends ControlledValueHandler<Date, DatetimeType> {
+
+    extractValue(innerValue:string) {
+        if (empty(innerValue)) {
+            return null;
+        } else {
+            return new Date(innerValue);
+        }
+    }
+
+    toInnerValue(date:Date) {
+        if (date == null) {
+            return null;
+        } else if (typeof(date) == "string") {
+            // FIXME : For backward compatibility : should not happen
+            return date;
+        } else {
+            return date.toISOString();
+        }
+    }
+
     renderView() {
         return <span>{this.state.innerValue}</span>
     }
@@ -144,11 +166,11 @@ class NumberHandler extends ControlledValueHandler<number, NumberType> {
     renderView() {
         return <span>{this.state.innerValue}</span>
     }
-    extractValue(value:any) {
+    extractValue(value:string) {
         return strToInt(value);
     }
-    toInnerValue(value:any) {
-        return strToInt(value);
+    toInnerValue(value:number) {
+        return intToStr(value);
     }
     renderEdit() {
         return <Input
@@ -160,11 +182,21 @@ class NumberHandler extends ControlledValueHandler<number, NumberType> {
 
 class EnumHandler extends ControlledValueHandler<string, EnumType> {
     renderView() {
-        let enumMap = enumValuesMap(this.props.type);
+
+        let {type, size, ...otherProps} = this.props;
+
+        let enumMap = enumValuesMap(type);
         let enumValue = enumMap[this.state.innerValue];
         let text = enumValue && enumValue.label ? enumValue.label : this.state.innerValue;
-        return text ? <Label
-            style={enumValue && enumValue.color && {backgroundColor:enumValue.color}}>
+
+        let style = otherProps.style ? otherProps.style : {};
+        if (enumValue && enumValue.color) {
+            style = {...style, backgroundColor:enumValue.color};
+        }
+        return text ?
+            <Label
+                {...otherProps}
+                style={style} >
                 {text}
             </Label> :
             <Label ><i>
@@ -201,6 +233,8 @@ export const ValueHandler = (props: ValueHandlerProps<any, any>) => {
             return <NumberHandler {...props} />;
         case Types.ENUM:
             return <EnumHandler {...props} />;
+        case Types.DATETIME:
+            return <DatetimeHandler {...props} />;
         default:
             throw new Error( `Type not supported : ${props.type.tag}`);
     }
