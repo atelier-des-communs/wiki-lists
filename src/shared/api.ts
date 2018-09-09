@@ -10,6 +10,8 @@ export const RECORDS_PATH = "/db/:db_name";
 export const SINGLE_RECORD_PATH = "/db/:db_name/:id";
 
 
+export const LANG_COOKIE_NAME = "lang";
+
 export function cookieName(dbName:string) {
     return `_db_pass_${dbName}`;
 }
@@ -47,6 +49,7 @@ export interface IMarshalledContext {
     state: IState,
     messages : DefaultMessages,
     env:string,
+    lang:string,
     rights : AccessRight[]
 }
 

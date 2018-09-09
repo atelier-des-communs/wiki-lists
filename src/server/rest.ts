@@ -9,12 +9,13 @@ import {
 } from "../shared/api";
 import {createRecordDb, dbDataFetcher, deleteRecordDb, updateRecordDb, updateSchemaDb} from "./db/db";
 import {Record} from "../shared/model/instances";
-import {requiresRight, returnPromise, selectLanguage, traverse} from "./utils";
+import {requiresRight, returnPromise, traverse} from "./utils";
 import {Express} from "express";
 import {StructType} from "../shared/model/types";
 import {Request, Response} from "express-serve-static-core"
 import {AccessRight} from "../shared/access";
 import * as xss from "xss";
+import {selectLanguage} from "../shared/i18n/messages";
 
 async function addItemAsync(req:Request) : Promise<Record> {
     let record = sanitizeJson(req.body) as Record;
@@ -22,7 +23,7 @@ async function addItemAsync(req:Request) : Promise<Record> {
     return createRecordDb(
         req.params.db_name,
         record,
-        selectLanguage(req));
+        selectLanguage(req).messages);
 }
 
 async function updateItemAsync(req:Request) : Promise<Record>{
@@ -31,7 +32,7 @@ async function updateItemAsync(req:Request) : Promise<Record>{
     return updateRecordDb(
         req.params.db_name,
         record,
-        selectLanguage(req));
+        selectLanguage(req).messages);
 }
 
 async function deleteItemAsync(req:Request) : Promise<boolean>{
@@ -46,7 +47,7 @@ async function updateSchemaAsync(req:Request) : Promise<StructType>{
     return updateSchemaDb(
         req.params.db_name,
         schema,
-        selectLanguage(req));
+        selectLanguage(req).messages);
 }
 
 export function setUp(server:Express) {
@@ -87,7 +88,7 @@ function sanitizeJson(input:any) {
         if (typeof(value) == "string") {
             obj[prop] = xss(value);
         }
-    }
+    };
     traverse(input, xssFunc);
     return input;
 }

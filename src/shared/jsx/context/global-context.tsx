@@ -31,6 +31,8 @@ export interface GlobalContextProps  {
 
     /* Promises getting accumulated by AsyncComponents, for SSR to wait for their completion */
     promises : Promise<any>[];
+
+    lang : string;
 }
 
 export interface GlobalContextProviderProps {

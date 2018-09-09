@@ -39,6 +39,7 @@ let context : GlobalContextProps = {
     store,
     auth,
     head,
+    lang: marshalledContext.lang,
     messages:marshalledContext.messages,
     promises:[],
     dataFetcher:restDataFetcher};

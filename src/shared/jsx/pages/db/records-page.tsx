@@ -90,7 +90,7 @@ function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: Vie
 
                         {attrLabel(attr)} :
                             <ValueHandler
-                                messages={props.messages}
+                                {...props}
                                 type={attr.type}
                                 value={group.value}
                                 editMode={false} />

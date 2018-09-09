@@ -1,3 +1,7 @@
+import {frMessages} from "./fr";
+import {FlagNameValues} from "semantic-ui-react/dist/commonjs/elements/Flag/Flag";
+import {Request}from "express-serve-static-core";
+
 export class DefaultMessages {
 
     daadle_title = "Structured data, for human beings.";
@@ -94,7 +98,22 @@ export class DefaultMessages {
 
 export interface MessagesProps {
     messages:DefaultMessages;
+    lang:string;
 }
 
 
+export interface Language {
+    key : string,
+    flag : FlagNameValues,
+    messages : DefaultMessages;
+}
+// FIXME avoid packaging all languages to client bundle
+export const supportedLanguages : Language[] = [
+    {key: "en-GB", flag: "united kingdom", messages:new DefaultMessages()},
+    {key: "fr-FR", flag: "france", messages:frMessages}];
+
+export function selectLanguage(req: Request) : Language {
+    let key = (req as any).language
+    return supportedLanguages.filter(lang => lang.key == key)[0];
+}
 

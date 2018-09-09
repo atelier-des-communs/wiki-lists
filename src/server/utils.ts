@@ -73,7 +73,3 @@ export function traverse(o: any, fn: (obj: any, prop: string, value: any) => voi
         }
     }
 }
-
-export function selectLanguage(req: Request) {
-    return frMessages;
-}

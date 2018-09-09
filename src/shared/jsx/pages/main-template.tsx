@@ -1,15 +1,42 @@
 import * as React from "react";
 import  "../../img/daadle.png";
-import {MessagesProps} from "../../i18n/messages";
+import {MessagesProps, supportedLanguages} from "../../i18n/messages";
+import {Button, Flag} from "semantic-ui-react";
+import {SafePopup} from "../utils/ssr-safe";
+import * as cookies from "browser-cookies";
+import {LANG_COOKIE_NAME} from "../../api";
+import {GlobalContextProps} from "../context/global-context";
 
 export const MainTemplate : React.SFC<MessagesProps> = (props) => {
+
+    let _ = props.messages;
 
     function goToHome() {
         window.location.href = "/";
     }
 
+    function changeLang(langKey: string) {
+        cookies.set(LANG_COOKIE_NAME, langKey);
+        window.location.reload();
+    }
+
+    let currentLang = supportedLanguages.filter(lang => lang.key == props.lang)[0];
+
     let pointerCursor = {cursor:'pointer'};
-    let _ = props.messages;
+
+    let langSelector = <Button.Group compact size="small" floated="right">
+        {supportedLanguages.map(lang =>
+            <Button
+                compact
+                size="small"
+                active={props.lang == lang.key}
+                onClick={() => changeLang(lang.key)}>
+
+                <Flag name={lang.flag} />
+
+            </Button>
+        )}
+    </Button.Group >;
 
     return <>
         <div style={{
@@ -17,6 +44,9 @@ export const MainTemplate : React.SFC<MessagesProps> = (props) => {
                 textAlign:"center",
                 backgroundColor:"#f8f0df"
         }}>
+
+            {langSelector}
+
             <img
                 src="/img/daadle.png"
                 width="300"

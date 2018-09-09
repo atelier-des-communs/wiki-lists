@@ -9,18 +9,18 @@ import {dbDataFetcher} from "./db/db";
 import {Store} from "react-redux";
 import {toImmutable} from "../shared/utils";
 import {Express} from "express";
-import {getAccessRights, returnPromise, selectLanguage} from "./utils";
+import {getAccessRights, returnPromise} from "./utils";
 import {Request, Response} from "express-serve-static-core"
 import {cookieName, IMarshalledContext} from "../shared/api";
 import {GlobalContextProps, HeadSetter} from "../shared/jsx/context/global-context";
 import {AccessRight, SimpleUserRights} from "../shared/access";
 import {MainTemplate} from "../shared/jsx/pages/main-template";
 import {Container} from "semantic-ui-react";
-import {DefaultMessages} from "../shared/i18n/messages";
+import {DefaultMessages, Language, selectLanguage} from "../shared/i18n/messages";
 
 const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '' : 'http://localhost:8081';
 
-// Will render HTML several time to render successive depth of Async load (promises)
+// We render HTML several time to fetch successive depth of Async load (promises)
 // This is the max depth we allow before forcing to return the result back to client :
 // This usually means that something is wrong (conditional data fetching not well written),
 // but we prefer to return this anyway
@@ -47,7 +47,6 @@ function renderHtml(title:string, html:string, context:any=null) {
 			<body>
 				<div id="app">${html}</div>
 				<script>
-					// Marchall store state in place
 					window.__MARSHALLED_CONTEXT__ = ${JSON.stringify(context)};
 				</script>
 				<script src="${BUNDLE_ROOT}/client.bundle.js"></script>
@@ -60,7 +59,7 @@ async function renderMainApp(
     url: string,
     store: Store<IState>,
     rights:AccessRight[],
-    messages:DefaultMessages) : Promise<string> {
+    lang:Language) : Promise<string> {
 
 
     let head = new ServerSideHeaderHandler();
@@ -76,7 +75,8 @@ async function renderMainApp(
             auth: new SimpleUserRights([AccessRight.ADMIN, AccessRight.EDIT, AccessRight.VIEW]),
             store,
             dataFetcher: dbDataFetcher,
-            messages,
+            lang:lang.key,
+            messages:lang.messages,
             promises: [],
             head: new ServerSideHeaderHandler()
         };
@@ -107,7 +107,8 @@ async function renderMainApp(
     let context : IMarshalledContext = {
         state : store.getState(),
         env: process.env.NODE_ENV,
-        messages:messages,
+        messages:lang.messages,
+        lang:lang.key,
         rights};
 
     return renderHtml(
@@ -137,19 +138,22 @@ async function index(db_name:string, req: Request): Promise<string> {
         selectLanguage(req));
 }
 
-async function notFound(messages:DefaultMessages) : Promise<string> {
+async function notFound(lang:Language) : Promise<string> {
 
-    let content = <MainTemplate messages={messages} >
+    let _ = lang.messages
+    let content = <MainTemplate
+            lang={lang.key}
+            messages={_}>
         <Container style={{
             textAlign:"center",
             padding:"4em"}}>
 
-            <h1>404 - {messages.not_found}</h1>
+            <h1>404 - {_.not_found}</h1>
 
         </Container>
     </MainTemplate>;
     let html = renderToString(content);
-    return renderHtml(messages.not_found, html);
+    return renderHtml(_.not_found, html);
 }
 
 
@@ -169,12 +173,16 @@ export function setUp(server : Express) {
         returnPromise(res, html);
     });
 
-    server.use(function(req:Request, res:Response) {
 
+
+}
+
+// Should be set at the end, since Express process rules in order of declaration
+export function setUp404(server:Express) {
+    server.use(function(req:Request, res:Response) {
         returnPromise(
             res,
             notFound(selectLanguage(req)),
             404);
     });
-
 }

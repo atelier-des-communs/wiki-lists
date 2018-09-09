@@ -12,7 +12,7 @@ export const DbApp : React.SFC<GlobalContextProps> = (props) => {
     return <Provider store={props.store} >
             <GlobalContextProvider global={props}>
 
-            <MainTemplate messages={props.messages} >
+            <MainTemplate messages={props.messages} lang={props.lang} >
                 <Switch>
                     <Route path={SINGLE_RECORD_PATH} component={SingleRecordPage} />
                     <Route path={RECORDS_PATH} component={RecordsPage} />

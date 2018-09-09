@@ -6,11 +6,10 @@ import {Record, withoutSystemAttributes} from "../../model/instances";
 import {attrLabel, typeIsWide} from "../utils/utils";
 import {CloseableDialog, ValidatingDialog} from "./common-dialog";
 import {ValidationError} from "../../validators/validators";
-import {DefaultMessages} from "../../i18n/messages";
+import {DefaultMessages, MessagesProps} from "../../i18n/messages";
 
 
-interface EditDialogProps extends CloseableDialog {
-    messages : DefaultMessages;
+interface EditDialogProps extends CloseableDialog, MessagesProps{
     create : boolean;
     record : Record;
     onUpdate : (newValue: Object) => Promise<void>;
@@ -77,7 +76,7 @@ export class EditDialog extends ValidatingDialog<EditDialogProps> {
                     {attr.isMandatory && <Label circular color="red" size="tiny" empty />}
                     </Header>
                 <ValueHandler
-                    messages={this.props.messages}
+                    {...this.props}
                     editMode={true}
                     value={this.record[attr.name]}
                     type={attr.type}

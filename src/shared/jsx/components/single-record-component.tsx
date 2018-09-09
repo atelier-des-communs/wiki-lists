@@ -27,7 +27,7 @@ export const SingleRecordComponent : React.SFC<SingleRecordComponentProps> = (pr
                     {props.large && <br/>}
 
                     <ValueHandler
-                        messages={props.messages}
+                        {...props}
                         editMode={false}
                         value={props.record[attr.name]}
                         type={attr.type} />

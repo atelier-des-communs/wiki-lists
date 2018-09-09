@@ -114,7 +114,7 @@ const TableComponent: React.SFC<TableProps> = (props) => {
             {attrs.filter(filterAttributeFunc).map(attr => {
 
                 let valueEl = <ValueHandler
-                    messages={props.messages}
+                    {...props}
                     editMode={false}
                     type={attr.type}
                     value={record[attr.name]}/>;
