@@ -1,3 +1,4 @@
+[BUG] Attribut inconnu après suppresion d'attribut, puis sauvegarde d'ancien record : il faut supprimer les champs
 X [SECU] XSS in HTml rich content
 X [BUG] Error report : Dialog (or better, in place)
 [FEAT] text: simple, multi, rich

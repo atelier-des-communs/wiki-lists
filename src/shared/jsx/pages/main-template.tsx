@@ -20,8 +20,6 @@ export const MainTemplate : React.SFC<MessagesProps> = (props) => {
         window.location.reload();
     }
 
-    let currentLang = supportedLanguages.filter(lang => lang.key == props.lang)[0];
-
     let pointerCursor = {cursor:'pointer'};
 
     let langSelector = <Button.Group compact size="small" floated="right">

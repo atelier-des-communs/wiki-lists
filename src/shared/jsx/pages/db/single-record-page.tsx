@@ -42,10 +42,9 @@ export const SingleRecordPageInternal : React.SFC<SingleRecordPageProps>  = (pro
 
 // Fetch data from Redux store and map it to props
 const mapStateToProps =(state : IState, props?: RouteComponentProps<SingleRecordPathParams> & GlobalContextProps) : SingleRecordProps => {
-
-
     return {
         schema:withSystemAttributes(state.dbDefinition.schema, props.messages),
+        rights: state.dbDefinition.rights,
         record: state.items[props.match.params.id],
         large:true}
 };

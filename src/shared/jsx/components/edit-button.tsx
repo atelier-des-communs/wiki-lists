@@ -3,7 +3,7 @@ import {Button} from "semantic-ui-react"
 import {SafeClickWrapper} from "../utils/ssr-safe";
 import * as React from "react";
 import {EditDialog} from "../dialogs/edit-dialog";
-import {AccessRight} from "../../access";
+import {AccessRight, hasRight} from "../../access";
 import {goToUrl} from "../../utils";
 import {singleRecordLink} from "../../api";
 
@@ -28,7 +28,7 @@ export const EditButtons: React.SFC<EditButtonsProps> = (props) => {
                     props.match.params.db_name,
                     props.record._id))}}/>}
 
-        {props.auth.hasRight(AccessRight.EDIT) &&
+        {hasRight(props, AccessRight.EDIT) &&
         <SafeClickWrapper trigger={
             <Button
                 className="shy"
@@ -44,7 +44,7 @@ export const EditButtons: React.SFC<EditButtonsProps> = (props) => {
                 onUpdate={props.onUpdate}/>
         </SafeClickWrapper>}
 
-        {props.auth.hasRight(AccessRight.DELETE) &&
+        {hasRight(props, AccessRight.DELETE) &&
         <Button
             icon="delete"
             className="shy" size="mini"

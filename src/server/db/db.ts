@@ -5,9 +5,12 @@ import {Record} from "../../shared/model/instances";
 import {validateSchemaAttributes} from "../../shared/validators/schema-validators";
 import {raiseExceptionIfErrors} from "../../shared/validators/validators";
 import {validateRecord} from "../../shared/validators/record-validator";
-import {DataFetcher} from "../../shared/api";
+import {DataFetcher, dbPassCookieName} from "../../shared/api";
 import {deepClone} from "../../shared/utils";
 import {DefaultMessages} from "../../shared/i18n/messages";
+import {AccessRight} from "../../shared/access";
+import {getAccessRights} from "../utils";
+import {Request} from "express-serve-static-core"
 
 const DATABASES_COL = "schemas";
 const DATABASE_COL_TEMPLATE ="db.{name}";
@@ -39,7 +42,10 @@ export interface DbDefinition extends DbSettings {
     name : string;
     schema: StructType;
     secret?:string;
+    rights? : AccessRight[];
 }
+
+
 
 
 export async function updateSchemaDb(dbName: string, schema:StructType, _:DefaultMessages) : Promise<StructType> {
@@ -69,7 +75,7 @@ export async function updateSchemaDb(dbName: string, schema:StructType, _:Defaul
 
 export async function updateRecordDb(dbName: string, record : Record, _:DefaultMessages) : Promise<Record> {
     let col = await Connection.getDbCol(dbName);
-    let dbDef = await dbDataFetcher.getDbDefinition(dbName);
+    let dbDef = await _getDbDefinition(dbName);
 
     // Validate record
     raiseExceptionIfErrors(validateRecord(record, dbDef.schema, _));
@@ -91,7 +97,7 @@ export async function updateRecordDb(dbName: string, record : Record, _:DefaultM
 
 export async function createRecordDb(dbName: string, record : Record, _:DefaultMessages) : Promise<Record> {
     let col = await Connection.getDbCol(dbName);
-    let dbDef = await dbDataFetcher.getDbDefinition(dbName);
+    let dbDef = await _getDbDefinition(dbName);
 
     // Validate record
     raiseExceptionIfErrors(validateRecord(record, dbDef.schema, _));
@@ -144,17 +150,35 @@ function transformRecord(record: Record) : Record {
     return res;
 }
 
+async function _getDbDefinition(dbName: string) : Promise<DbDefinition> {
+    let dbDef = await getDbDef(dbName);
+
+    // Don' t provide secret
+    // FIXME find a type-safe way of exluding critical info
+    delete dbDef.secret;
+
+
+    return dbDef;
+}
+
 // DataFetcher for SSR : direct access to DB
-export let dbDataFetcher : DataFetcher = {
+export class DbDataFetcher implements DataFetcher {
+
+    request : Request;
+
+    constructor(request: Request) {
+        this.request = request;
+    }
 
     async getDbDefinition(dbName: string) : Promise<DbDefinition> {
-        let dbDef = await getDbDef(dbName);
+        let dbDef = await _getDbDefinition(dbName);
 
-        // Don' t provide secret
-        delete dbDef.secret;
+        // Decorate Db with user rights
+        let pass = this.request.cookies[dbPassCookieName(dbName)];
+        dbDef.rights = await getAccessRights(dbName, pass);
 
         return dbDef;
-    },
+    }
 
     async getRecord(dbName:string, id:string) : Promise<Record> {
         let col = await Connection.getDbCol(dbName);
@@ -163,7 +187,7 @@ export let dbDataFetcher : DataFetcher = {
         let res = transformRecord(record);
         console.log("getRecord result", res);
         return res;
-    },
+    }
 
     async getRecords(dbName: string) : Promise<Record[]> {
         let col = await Connection.getDbCol(dbName);

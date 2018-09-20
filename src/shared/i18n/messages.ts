@@ -94,6 +94,7 @@ export class DefaultMessages {
     id_attr = "Unique ID";
     system_attributes = "System attributes";
     not_found = "Nothing found here";
+    download = "Download data";
 }
 
 export interface MessagesProps {

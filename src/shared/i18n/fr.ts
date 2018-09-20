@@ -94,6 +94,7 @@ export let frMessages : DefaultMessages = {
     id_attr : "Identifiant",
     system_attributes : "Attributs système",
     not_found : "Rien ici",
+    download: "Télécharger les données"
 };
 
 

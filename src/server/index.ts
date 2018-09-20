@@ -4,14 +4,14 @@ import * as compression from "compression";
 import * as cookieParser from "cookie-parser";
 import * as language from "express-request-language";
 import {setUp as setUpRest} from "./rest";
-import {setUp as setUpHtml, setUp404} from "./html";
+import {setUp as setUpHtml} from "./html";
 import {setUp as setUpExport} from "./export";
 import {supportedLanguages} from "../shared/i18n/messages";
 import {LANG_COOKIE_NAME} from "../shared/api";
 
 
 
-export default function initServer(dist_path:string) {
+export default function initServer(dist_paths:string[]) {
 
     var server = express();
     server.use(compression({ threshold: 0 }));
@@ -27,13 +27,15 @@ export default function initServer(dist_path:string) {
     // Pretty print JSON result
     server.set('json spaces', 2);
 
-    console.log("dist_path", dist_path);
-    server.use(express.static(dist_path));
+    for (let path of dist_paths) {
+        server.use(express.static(path));
+    }
 
-    setUpHtml(server);
     setUpRest(server);
     setUpExport(server);
-    setUp404(server);
+
+    // Should be last, as it contains 404 page
+    setUpHtml(server);
 
     return server;
 }

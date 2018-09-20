@@ -7,7 +7,7 @@ import {
     UPDATE_ITEM_URL,
     UPDATE_SCHEMA_URL
 } from "../shared/api";
-import {createRecordDb, dbDataFetcher, deleteRecordDb, updateRecordDb, updateSchemaDb} from "./db/db";
+import {createRecordDb, DbDataFetcher, deleteRecordDb, updateRecordDb, updateSchemaDb} from "./db/db";
 import {Record} from "../shared/model/instances";
 import {requiresRight, returnPromise, traverse} from "./utils";
 import {Express} from "express";
@@ -69,15 +69,15 @@ export function setUp(server:Express) {
     });
 
     server.get(GET_ITEM_URL, function (req: Request, res: Response) {
-        returnPromise(res, dbDataFetcher.getRecord(req.params.db_name, req.params.id));
+        returnPromise(res, new DbDataFetcher(req).getRecord(req.params.db_name, req.params.id));
     });
 
     server.get(GET_ITEMS_URL, function (req: Request, res: Response) {
-        returnPromise(res, dbDataFetcher.getRecords(req.params.db_name));
+        returnPromise(res, new DbDataFetcher(req).getRecords(req.params.db_name));
     });
 
     server.get(GET_DB_DEFINITION_URL, function (req: Request, res: Response) {
-        returnPromise(res, dbDataFetcher.getDbDefinition(req.params.db_name));
+        returnPromise(res, new DbDataFetcher(req).getDbDefinition(req.params.db_name));
     });
 }
 

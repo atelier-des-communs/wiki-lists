@@ -12,7 +12,7 @@ export const SINGLE_RECORD_PATH = "/db/:db_name/:id";
 
 export const LANG_COOKIE_NAME = "lang";
 
-export function cookieName(dbName:string) {
+export function dbPassCookieName(dbName:string) {
     return `_db_pass_${dbName}`;
 }
 
@@ -49,9 +49,7 @@ export interface IMarshalledContext {
     state: IState,
     messages : DefaultMessages,
     env:string,
-    lang:string,
-    rights : AccessRight[]
-}
+    lang:string}
 
 // Generic reader interface, implemented directly with DB access for SSR, or as rest client for Browser
 export interface DataFetcher {

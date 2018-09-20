@@ -15,7 +15,7 @@ import {attrLabel, ellipsis, filterAttribute} from "../utils/utils";
 import {EditButtons} from "./edit-button";
 import {singleRecordLink} from "../../api";
 import {GlobalContextProps, withGlobalContext} from "../context/global-context";
-import {AccessRight} from "../../access";
+import {AccessRight, hasRight} from "../../access";
 
 type TableProps = RecordsProps & ReduxEventsProps & RouteComponentProps<DbPathParams> & GlobalContextProps;
 
@@ -43,10 +43,9 @@ const TableComponent: React.SFC<TableProps> = (props) => {
     let _ = props.messages;
 
     let filterAttributeFunc = filterAttribute(props, props.schema);
-    let auth = props.auth;
 
     // First header cell : the menu toolbox
-    let columnsHeader = auth.hasRight(AccessRight.EDIT) && <Table.HeaderCell className="no-print" collapsing key="menu" >
+    let columnsHeader = hasRight(props, AccessRight.EDIT) && <Table.HeaderCell className="no-print" collapsing key="menu" >
         <SafePopup position="bottom left" trigger={
             <Button
                 icon="columns"
@@ -106,7 +105,7 @@ const TableComponent: React.SFC<TableProps> = (props) => {
 
         <Table.Row key={record["_id"] as string}>
 
-            {auth.hasRight(AccessRight.EDIT) &&
+            {hasRight(props, AccessRight.EDIT) &&
             <Table.Cell collapsing key="actions" className="no-print" >
                 <EditButtons {...props} record={record} />
             </Table.Cell>}

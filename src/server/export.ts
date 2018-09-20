@@ -3,7 +3,7 @@ import {Express} from "express";
 import {AttributeDisplay, extractDisplays} from "../shared/views/display";
 import {Record} from "../shared/model/instances";
 import {applySearchAndFilters} from "../shared/views/filters";
-import {dbDataFetcher} from "./db/db";
+import {DbDataFetcher} from "./db/db";
 import {deepClone, Map} from "../shared/utils";
 import {Workbook} from "exceljs";
 import {Request, Response} from "express-serve-static-core"
@@ -22,7 +22,8 @@ const EXTENSION = {
     [ExportType.EXCEL] : "xlsx"};
 
 
-async function getAllWithFilters(db_name:string, query:Map<string>) : Promise<Record[]> {
+async function getAllWithFilters(req:Request, db_name:string, query:Map<string>) : Promise<Record[]> {
+    let dbDataFetcher = new DbDataFetcher(req);
     let schema = (await dbDataFetcher.getDbDefinition(db_name)).schema;
     let records = await dbDataFetcher.getRecords(db_name);
     return applySearchAndFilters(records, query, schema);
@@ -42,9 +43,9 @@ function filterObj(obj : Map<any>, displays : Map<AttributeDisplay>) {
 
 async function exportAs(db_name:string, req:Request, res:Response, exportType: ExportType) {
 
-    let dbDef = await dbDataFetcher.getDbDefinition(db_name);
+    let dbDef = await new DbDataFetcher(req).getDbDefinition(db_name);
     let displays = extractDisplays(dbDef.schema, req.query);
-    let records = await getAllWithFilters(db_name, req.query);
+    let records = await getAllWithFilters(req, db_name, req.query);
     records = records.map(record => filterObj(record, displays));
 
     let filename = `${db_name}.${EXTENSION[exportType]}`;

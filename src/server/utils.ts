@@ -1,5 +1,5 @@
 import * as Express from "express";
-import {cookieName, VALIDATION_STATUS_CODE} from "../shared/api";
+import {dbPassCookieName, VALIDATION_STATUS_CODE} from "../shared/api";
 import {AccessRight} from "../shared/access";
 import {getDbSecret} from "./db/db";
 import {isIn} from "../shared/utils";
@@ -55,7 +55,7 @@ export async function requiresRight(req:Request, right : AccessRight) {
 
     let rights = await getAccessRights(
         req.params.db_name,
-        req.cookies[cookieName(req.params.db_name)]);
+        req.cookies[dbPassCookieName(req.params.db_name)]);
     if (isIn(rights, right)) {
         return true;
     } else {

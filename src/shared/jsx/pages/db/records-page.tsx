@@ -25,7 +25,7 @@ import {CardsComponent} from "../../components/cards";
 import {ValueHandler} from "../../type-handlers/editors";
 import {AttributeDisplayComponent} from "../../components/attribute-display";
 import {GlobalContextProps} from "../../context/global-context";
-import {AccessRight} from "../../../access";
+import {AccessRight, hasRight} from "../../../access";
 import {attrLabel} from "../../utils/utils";
 import {connectComponent} from "../../context/redux-helpers";
 
@@ -79,14 +79,13 @@ function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: Vie
         let attr = attrMap[groupAttr];
         let groups = groupBy(props.records, attr);
         let sections = groups.map(group =>
-            <div>
+            <div style={{marginTop:"1em", cursor:"pointer"}}>
                 <Collapsible trigger={open =>
                     <div style={{marginTop:"1em"}} >
                     <Button circular compact size="small" icon={open ? "chevron down" : "chevron right"} />
                     <Header
                         as="span"
-                        size="medium"
-                        style={{marginTop:"1em", cursor:"pointer"}}>
+                        size="medium" >
 
                         {attrLabel(attr)} :
                             <ValueHandler
@@ -111,7 +110,7 @@ function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: Vie
 
 function addItemButton(props: RecordsPageProps) {
     let _ = props.messages;
-    return props.auth.hasRight(AccessRight.EDIT) && <SafeClickWrapper  trigger={
+    return hasRight(props, AccessRight.EDIT) && <SafeClickWrapper  trigger={
         <Button primary style={{marginBottom:"1em"}} icon="plus" content={_.add_item} />
     }>
         <EditDialog
@@ -145,7 +144,6 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
         let _ = props.messages;
 
         let params = parseParams(props.location.search);
-        let auth = this.props.auth;
 
         let xls_link =
             DOWNLOAD_XLS_URL.replace(":db_name", dbName)
@@ -154,7 +152,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
             DOWNLOAD_JSON_URL.replace(":db_name", dbName)
             + props.location.search;
 
-        let DownloadButton= <SafePopup trigger={<Button icon="download" basic />} >
+        let DownloadButton= <SafePopup  trigger={<Button icon="download" title={_.download} basic />} >
             <>
                 <a href={xls_link}><b>Excel</b></a>
                 <br/>
@@ -184,7 +182,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
 
         let sortByDropdown = <SortPopup {...props} />
 
-        let UpdateSchemaButton = auth.hasRight(AccessRight.ADMIN) &&
+        let UpdateSchemaButton = hasRight(props, AccessRight.ADMIN) &&
             <SafeClickWrapper trigger={
             <Button icon="configure"
                     color="teal"
@@ -224,7 +222,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
         // Set html HEAD
         props.head.setTitle(props.match.params.db_name);
 
-        let sideBarButton = (floated:"left" | "right") => <Button
+        let sideBarButton = (floated:"left" | "right" | null) =><Button
             compact
             size="mini"
             floated={floated}
@@ -255,13 +253,13 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
 
             <div>
                 {this.state.filtersSidebar &&
-                    <div style={{display: "table-cell", paddingTop: "1em", paddingRight:"1em"}}>
+                    <div className="no-print" style={{display: "table-cell", paddingTop: "1em", paddingRight:"1em"}}>
                         {sideBarButton("right")}
                         <FilterSidebar {...props} />
                     </div>
                 }
                 <div style={{display:"table-cell", paddingTop: "1em"}} >
-                    {!this.state.filtersSidebar && sideBarButton("left")}
+                    {!this.state.filtersSidebar && sideBarButton(null)}
                     { groupedRecords(groupAttr, props, viewType) }
                 </div>
             </div>
@@ -283,7 +281,8 @@ const mapStateToProps =(state : IState, props?: RouteComponentProps<{}> & Global
 
     return {
         schema:withSystemAttributes(state.dbDefinition.schema, props.messages),
-        records}
+        records,
+        rights:state.dbDefinition.rights}
 };
 
 // Async fetch of data

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {render} from "react-dom";
-import {DbApp} from "../shared/app";
+import {App} from "../shared/app";
 import {BrowserRouter} from 'react-router-dom'
 import {createStore} from "redux";
 import {reducers} from "../shared/redux";
@@ -8,7 +8,6 @@ import {toImmutable} from "../shared/utils";
 import "./index.css";
 import {GlobalContextProps, HeadSetter} from "../shared/jsx/context/global-context";
 import {IMarshalledContext} from "../shared/api";
-import {SimpleUserRights} from "../shared/access";
 import {restDataFetcher} from "../shared/rest/client";
 
 
@@ -34,10 +33,8 @@ let head : HeadSetter = {
     }
 };
 
-let auth = new SimpleUserRights(marshalledContext.rights);
 let context : GlobalContextProps = {
     store,
-    auth,
     head,
     lang: marshalledContext.lang,
     messages:marshalledContext.messages,
@@ -46,6 +43,6 @@ let context : GlobalContextProps = {
 
 render((
     <BrowserRouter>
-        { DbApp(context) }
+        <App {...context} />
     </BrowserRouter>
 ), document.getElementById("app"));

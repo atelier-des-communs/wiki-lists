@@ -1,4 +1,3 @@
-import {AuthProvider} from "../../access";
 import * as React from "react";
 import {Store} from "react-redux";
 import {IState} from "../../redux";
@@ -20,8 +19,6 @@ export interface GlobalContextProps  {
     /** Simple interface for setting title and meta HTML tags */
     head: HeadSetter,
 
-    /** Authorization settings */
-    auth:AuthProvider;
 
     /** Direct access to redux store */
     store: Store<IState>;
