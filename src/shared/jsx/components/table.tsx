@@ -69,11 +69,6 @@ const TableComponent: React.SFC<TableProps> = (props) => {
     let headers = attrs.filter(filterAttributeFunc).map(attr => {
 
         let sorted = sort && sort.key == attr.name;
-        let filter = filters[attr.name];
-
-
-        // May be null if filter not supported for this type
-        let filterComp = singleFilter(props, attr, filter);
 
         return <Table.HeaderCell
             key={attr.name}
@@ -81,19 +76,7 @@ const TableComponent: React.SFC<TableProps> = (props) => {
             style={{cursor:"pointer"}}
             onClick={() => onHeaderClick(props, attr.name)}
             sorted={sorted ? (sort.asc ? "ascending" : "descending"): null} >
-            
-            { filterComp &&
-            <div style={{float:"right"}}>
-                <SafePopup position="bottom right" wide="very" trigger={
-                   <Button
-                       size="mini" className={filter ? "shy" : "super-shy"} compact
-                       icon="filter"
-                       title={_.filter}
-                       color={filter ? "blue" : null}
-                       onClick={(e:any) => e.stopPropagation()}/> }>
-                    {filterComp}
-                </SafePopup>
-            </div>}
+
 
             { ellipsis(attrLabel(attr)) }
 
@@ -118,19 +101,8 @@ const TableComponent: React.SFC<TableProps> = (props) => {
                     type={attr.type}
                     value={record[attr.name]}/>;
 
-                // In case of "name" attributes, render as link and make whole table cell clickable
-                let extraAttrs = attr.isName ?
-                    {
-                        style: {cursor: "pointer"},
-                        onClick : (e:Event) => {
-                            e.stopPropagation();
-                            goToUrl(props, recordUrl(record._id));
-                        }
-                    }
-                    : {};
 
-                return <Table.Cell key={attr.name}
-                                   {...extraAttrs} >
+                return <Table.Cell key={attr.name} >
                     {
                         /* Attribute part of the name ? => wrap it in a link */
                         attr.isName ?

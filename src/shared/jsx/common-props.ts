@@ -24,17 +24,22 @@ export type DbPageProps = RouteComponentProps<DbPathParams> & GlobalContextProps
 
 /** Props for components acting on a specific DB */
 export interface DbProps {
-    schema : StructType;
-    rights: AccessRight[];
+    schema : StructType,
+    dbLabel: string,
+    dbDescription : string,
+    rights: AccessRight[],
 }
 
 /** Props for components displaying a list of records */
-export interface RecordsProps extends DbProps{
-    records: Record[]}
 
-export interface SingleRecordProps extends DbProps {
+export interface RecordsPropsOnly {
+    records: Record[]};
+export type RecordsProps = RecordsPropsOnly & DbProps;
+
+export interface SingleRecordPropsOnly {
     record: Record,
     large?:boolean}
+export type SingleRecordProps = SingleRecordPropsOnly & DbProps;
 
 /** Event handler props injected by react redux */
 export interface ReduxEventsProps {

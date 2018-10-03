@@ -1,7 +1,7 @@
 import Axios, {AxiosPromise} from "axios";
 import {Record} from "../model/instances";
 import {
-    ADD_ITEM_URL,
+    ADD_ITEM_URL, CHECK_DB_NAME, CREATE_DB_URL,
     DataFetcher,
     DELETE_ITEM_URL,
     GET_DB_DEFINITION_URL,
@@ -62,11 +62,22 @@ export async function updateSchema(dbName: string, schema:StructType) : Promise<
 }
 
 /** Return the image of the update item, as saved in DB */
+export async function createDb(dbDef:DbDefinition) : Promise<boolean> {
+    return await unwrapAxiosResponse(
+        axios.post(CREATE_DB_URL, dbDef));
+}
+
+/** Return the image of the update item, as saved in DB */
 export async function deleteItem(dbName: string, id : string) : Promise<boolean> {
     return await unwrapAxiosResponse(axios.post(
             DELETE_ITEM_URL
             .replace(":db_name", dbName)
             .replace(":id", id)));
+}
+
+export async function checkAvailability(dbName: string) : Promise<boolean> {
+    return await unwrapAxiosResponse(axios.get(
+        CHECK_DB_NAME.replace(":db_name", dbName)));
 }
 
 export let restDataFetcher : DataFetcher = {

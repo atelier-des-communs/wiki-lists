@@ -71,7 +71,7 @@ export class DefaultMessages {
     table_view = "table";
     card_view = "card";
 
-    select_columns = "Attributes visibility";
+    select_columns = "Attributes";
     edit_color = "Edit color";
 
     confirm_attribute_delete = "Are you sure you want to delete this attribute ?\nYou will lose data you already entered for it.";
@@ -95,6 +95,29 @@ export class DefaultMessages {
     system_attributes = "System attributes";
     not_found = "Nothing found here";
     download = "Download data";
+    create_db = "Create new collection";
+    creating_db = "New collection";
+    db_name = "Name of the collection";
+    db_description = "Description";
+    fields = "Attributes";
+    name = "Name";
+    description = "Description" ;
+    default_schema = "Basic";
+    schema_templates=  "Templates of fields";
+    create_db_name_description = "Name and description";
+    create_db_fields = "Fields";
+    create_db_access = "Access";
+    next = "Next";
+    previous = "Previous";
+    finish = "Finish";
+    db_url = "Link";
+
+    //Validators
+    should_not_be_empty = "Should not be empty";
+    slug_regexp_no_match = "Slug should only be composed of 0-9, a-z, '-' and '_' ";
+    db_not_available = "Name is already taken";
+    powered_by = "powered by";
+
 }
 
 export interface MessagesProps {

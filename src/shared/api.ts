@@ -5,12 +5,15 @@ import {Record} from "./model/instances";
 import {DbDefinition} from "../server/db/db";
 import {DefaultMessages} from "./i18n/messages";
 
+export const BASE_DB_PATH = "/db/";
 export const CREATE_DB_PATH = "/create-db";
-export const RECORDS_PATH = "/db/:db_name";
-export const SINGLE_RECORD_PATH = "/db/:db_name/:id";
+export const RECORDS_PATH = BASE_DB_PATH + ":db_name";
+export const SINGLE_RECORD_PATH = BASE_DB_PATH + ":db_name/:id";
 
 
 export const LANG_COOKIE_NAME = "lang";
+
+export const COOKIE_DURATION = 31 * 24 * 3600 * 1000 // one month;
 
 export function dbPassCookieName(dbName:string) {
     return `_db_pass_${dbName}`;
@@ -35,9 +38,11 @@ export const GET_ITEM_URL = "/api/:db_name/item/:id";
 export const GET_ITEMS_URL = "/api/:db_name/items/";
 export const GET_DB_DEFINITION_URL = "/api/:db_name/definition";
 
-export const CREATE_DB_URL = "/api/db/create/";
-export const UPDATE_DB_URL = "/api/:db_name/update/";
-export const UPDATE_SCHEMA_URL = "/api/:db_name/schema/update/";
+export const CREATE_DB_URL = "/api/create-db/";
+export const CHECK_DB_NAME = "/api/check-db/:db_name";
+export const UPDATE_DB_URL = "/api/update-db/:db_name";
+export const UPDATE_SCHEMA_URL = "/api/update-schema/:db_name";
+
 
 export const DOWNLOAD_XLS_URL  = "/xls/:db_name";
 export const DOWNLOAD_JSON_URL  = "/json/:db_name";

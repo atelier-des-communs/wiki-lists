@@ -71,7 +71,7 @@ export let frMessages : DefaultMessages = {
     table_view : "tableau",
     card_view : "grille",
 
-    select_columns : "Affichage des attributs",
+    select_columns : "Attributs",
     edit_color : "Modifier la couleur",
 
     confirm_attribute_delete : "Êtes vous sûr de vouloir supprimer cet attribut ?\nVous allez perdre les données déjà entrées.",
@@ -94,7 +94,34 @@ export let frMessages : DefaultMessages = {
     id_attr : "Identifiant",
     system_attributes : "Attributs système",
     not_found : "Rien ici",
-    download: "Télécharger les données"
+    download: "Télécharger les données",
+    create_db : "Créer une collection",
+    creating_db : "Nouvelle collection",
+    db_name : "Nom de la collection",
+    db_description : "Description",
+    fields : "Attributs",
+
+
+    // Create DB
+    name : "Nom",
+    description : "Description",
+    default_schema : "Basique",
+    schema_templates:  "Modèles de champs",
+    create_db_name_description : "Nom et description",
+    create_db_fields : "Champs",
+    create_db_access : "Accès",
+    next : "Suivant",
+    previous : "Précédent",
+    finish : "Terminer",
+    db_url : "Lien",
+
+    // Validators
+    should_not_be_empty : "Ne doit pas être vide",
+    slug_regexp_no_match: "Doit être composé uniquement de 0-9 a-z '-' et '_'",
+    db_not_available : "Ce nom est déjà pris",
+
+    powered_by : "propulsé par"
+
 };
 
 

@@ -1,7 +1,7 @@
 import * as Express from "express";
 import {dbPassCookieName, VALIDATION_STATUS_CODE} from "../shared/api";
 import {AccessRight} from "../shared/access";
-import {getDbSecret} from "./db/db";
+import {getDbDef} from "./db/db";
 import {isIn} from "../shared/utils";
 import {Request} from "express-serve-static-core"
 import {DefaultMessages} from "../shared/i18n/messages";
@@ -38,9 +38,9 @@ export class HttpError {
 }
 
 export async function getAccessRights(dbStr: string, pass:string) {
-    let secret = await getDbSecret(dbStr);
+    let dbDef = await getDbDef(dbStr);
     if (pass) {
-        if (pass==secret) {
+        if (pass==dbDef.secret) {
             return [AccessRight.DELETE, AccessRight.EDIT, AccessRight.ADMIN, AccessRight.VIEW];
         } else {
             // FIXME: return nice 403, localized page

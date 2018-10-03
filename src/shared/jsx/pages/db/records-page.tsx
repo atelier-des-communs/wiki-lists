@@ -12,7 +12,7 @@ import {RouteComponentProps} from "react-router"
 import {Record, systemType, withSystemAttributes} from "../../../model/instances";
 import {FilterSidebar, FiltersPopup, SearchComponent} from "../../type-handlers/filters";
 import {applySearchAndFilters, clearFiltersOrSearch, hasFiltersOrSearch} from "../../../views/filters";
-import {DbPathParams, RecordsProps, ReduxEventsProps} from "../../common-props";
+import {DbPathParams, DbProps, RecordsProps, RecordsPropsOnly, ReduxEventsProps} from "../../common-props";
 import {ConnectedTableComponent} from "../../components/table";
 import {extractGroupBy, groupBy, updatedGroupBy} from "../../../views/group";
 import {Collapsible} from "../../utils/collapsible";
@@ -138,12 +138,39 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
        this.setState({filtersSidebar:!this.state.filtersSidebar});
     }
 
+    groupByButton(groupAttr:string) {
+        let props = this.props;
+        let _ = props.messages;
+
+        let groupOptions = props.schema.attributes
+
+        // FIXME find declarative way to handle types that can support grouping
+            .filter(attr => attr.type.tag == Types.ENUM  || attr.type.tag ==  Types.BOOLEAN)
+            .map(attr => (
+                {value:attr.name,
+                    text:attrLabel(attr)} as DropdownItemProps));
+
+        // No attributes elligible for grouping ? => show nothing
+        if (groupOptions.length == 0) return null;
+
+        groupOptions = [{value:null, text:_.empty_group_by} as DropdownItemProps].concat(groupOptions);
+
+        return <Dropdown
+            inline title={_.group_by}
+            button className="icon" icon="plus square outline"
+            labeled placeholder={_.group_by}
+            options={groupOptions}
+            value={groupAttr}
+            onChange={(e, update) => goTo(props, updatedGroupBy(update.value as string))} />
+    }
+
     render() {
         let props = this.props;
         let dbName = props.match.params.db_name;
         let _ = props.messages;
 
         let params = parseParams(props.location.search);
+        let groupAttr = extractGroupBy(params);
 
         let xls_link =
             DOWNLOAD_XLS_URL.replace(":db_name", dbName)
@@ -160,25 +187,6 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
             </>
             </SafePopup>;
 
-
-        let groupAttr = extractGroupBy(parseParams(props.location.search));
-        let groupOptions = props.schema.attributes
-
-            // FIXME find declarative way to handle types that can support grouping
-            .filter(attr => attr.type.tag == Types.ENUM  || attr.type.tag ==  Types.BOOLEAN)
-            .map(attr => (
-                {value:attr.name,
-                    text:attrLabel(attr)} as DropdownItemProps));
-
-        groupOptions = [{value:null, text:_.empty_group_by} as DropdownItemProps].concat(groupOptions);
-
-        let groupByDropdown = <Dropdown inline title={_.group_by}
-                button className="icon" icon="plus square outline"
-                labeled placeholder={_.group_by}
-                options={groupOptions}
-                value={groupAttr}
-                onChange={(e, update) =>
-                    goTo(props, updatedGroupBy(update.value as string))} />
 
         let sortByDropdown = <SortPopup {...props} />
 
@@ -211,8 +219,10 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
 
 
         let attributeDisplayButton = <SafePopup position="bottom left" trigger={
-            <Button icon="unhide"
-                    title={_.select_columns} />} >
+            <Button
+                icon="unhide"
+                title={_.select_columns}
+                content={_.select_columns} />} >
             <AttributeDisplayComponent
                 {...props}
                 schema = {props.schema}
@@ -230,7 +240,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
             title={_.toggle_filters}
             icon={this.state.filtersSidebar ? "angle double left" : "angle double right"} />
 
-        return <div style={{margin:"1em"}}>
+        return <>
 
             <div style={{float:"right"}} className="no-print" >
                 <SearchComponent {...props} />
@@ -245,7 +255,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
             <div className="no-print">
                 { viewTypeButtons } &nbsp;
                 { sortByDropdown }
-                { groupByDropdown}
+                { this.groupByButton(groupAttr) }
                 { <FiltersPopup {...props} schema={this.props.schema} /> }
                 &nbsp;
                 { attributeDisplayButton }
@@ -263,53 +273,39 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
                     { groupedRecords(groupAttr, props, viewType) }
                 </div>
             </div>
-        </div>
+        </>
 
     }
 }
 
 
 // Filter data from Redux store and map it to props
-const mapStateToProps =(state : IState, props?: RouteComponentProps<{}> & GlobalContextProps) : RecordsProps => {
+const mapStateToProps =(state : IState, props?: RouteComponentProps<{}> & GlobalContextProps) : RecordsPropsOnly => {
 
     // Flatten map of records
-    let records = mapMap(state.items,(key, item) => item) as Map[];
+    let records = mapMap(state.items || {},(key:string, item:Record) => item) as Record[];
 
     // Apply search and sorting
     let params = parseParams(props.location.search);
     records = applySearchAndFilters(records, params, state.dbDefinition.schema);
 
-    return {
-        schema:withSystemAttributes(state.dbDefinition.schema, props.messages),
-        records,
-        rights:state.dbDefinition.rights}
+    return {records}
 };
 
 // Async fetch of data
-function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>) : Promise<any>[] {
-    let res : Promise<any>[] = [];
+function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>) : Promise<any> {
     let state = props.store.getState();
-
-    if (!state.dbDefinition) {
-        res.push(props.dataFetcher
-            .getDbDefinition(props.match.params.db_name)
-            .then((dbDef) => {
-                // Dispatch to Redux
-                props.store.dispatch(createUpdateDbAction(dbDef));
-            }));
-    }
-    if (!state.items) {
-        res.push(props.dataFetcher
+    if (state.items == null) {
+        return props.dataFetcher
             .getRecords(props.match.params.db_name)
             .then((records) => {
                 for (let record of records) {
                     // Dispatch to redux
                     props.store.dispatch(createAddItemAction(record));
                 }
-            }));
+            });
     }
-    console.log("Records page : promise number :", res.length);
-    return res;
+    return null;
 }
 
 // Connect to Redux

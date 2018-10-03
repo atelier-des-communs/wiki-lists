@@ -26,9 +26,7 @@ export const CardsComponent : React.SFC<CardsProps> = (props) => {
             <Card className="hoverable">
 
                     <Card.Content  >
-                        <Card.Header
-                            onClick={() => goToUrl(props, recordURL(record._id))}
-                            style={{cursor:"pointer"}} >
+                        <Card.Header >
 
                             <Link to={recordURL(record._id)}>
                             {recordName(props.schema, record)}

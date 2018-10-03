@@ -2,11 +2,14 @@ import * as React from "react";
 import {Provider} from 'react-redux';
 import {RecordsPage} from "./jsx/pages/db/records-page";
 import {Route, Switch} from 'react-router';
-import {RECORDS_PATH, SINGLE_RECORD_PATH} from "./api";
+import {RECORDS_PATH, SINGLE_RECORD_PATH, CREATE_DB_PATH} from "./api";
 import {SingleRecordPage} from "./jsx/pages/db/single-record-page";
 import {GlobalContextProps, GlobalContextProvider} from "./jsx/context/global-context";
-import {MainTemplate} from "./jsx/pages/main-template";
+import {MainLayout} from "./jsx/pages/layout/main-layout";
 import {NotFoundPage} from "./jsx/pages/not-found";
+import {HomePage} from "./jsx/pages/home";
+import {AddDbPage} from "./jsx/pages/add-db";
+import {DbPageSwitch} from "./jsx/pages/db/db-page-switch";
 
 /** Global app for single db  */
 export const App : React.SFC<GlobalContextProps> = (props) => {
@@ -14,18 +17,22 @@ export const App : React.SFC<GlobalContextProps> = (props) => {
     let _ = props.messages;
 
     return <Provider store={props.store} >
+
             <GlobalContextProvider global={props}>
 
-            <MainTemplate messages={props.messages} lang={props.lang} >
-                <Switch>
-                    <Route path={SINGLE_RECORD_PATH} component={SingleRecordPage} />
-                    <Route path={RECORDS_PATH} component={RecordsPage} />
+                    <Switch>
 
-                    <Route component={NotFoundPage} />
-                </Switch>
-            </MainTemplate>
+                        <Route exact path="/" component={HomePage} />
+                        <Route exact path={CREATE_DB_PATH} component={AddDbPage} />
+
+                        <Route path={RECORDS_PATH} component={DbPageSwitch} />
+
+                        <Route component={NotFoundPage} />
+
+                    </Switch>
 
             </GlobalContextProvider>
+
         </Provider>
 };
 

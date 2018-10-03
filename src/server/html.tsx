@@ -10,7 +10,7 @@ import {toImmutable} from "../shared/utils";
 import {Express} from "express";
 import {returnPromise} from "./utils";
 import {Request, Response} from "express-serve-static-core"
-import {dbPassCookieName, IMarshalledContext} from "../shared/api";
+import {COOKIE_DURATION, dbPassCookieName, IMarshalledContext} from "../shared/api";
 import {GlobalContextProps, HeadSetter} from "../shared/jsx/context/global-context";
 import {selectLanguage} from "../shared/i18n/messages";
 
@@ -120,7 +120,7 @@ export function setUp(server : Express) {
     // Admin URL => set cookie and redirect
     server.get("/db/:db_name@:db_pass", function(req:Request, res:Response) {
         res.cookie(dbPassCookieName(req.params.db_name), req.params.db_pass, {
-            maxAge : 31 * 24 * 3600 * 1000 // one month
+            maxAge : COOKIE_DURATION
         });
         res.redirect(`/db/${req.params.db_name}`);
     });

@@ -29,6 +29,9 @@ export class DatetimeType implements Type<Date> {
 export class TextType implements Type<string> {
     tag = Types.TEXT;
     rich:boolean = false;
+    constructor(rich:boolean = false) {
+        this.rich = rich;
+    }
 }
 
 export interface EnumValue {
@@ -75,12 +78,17 @@ export class Attribute {
     saved ?:boolean = false;
     system ?:boolean = false;
     hidden ?:boolean = false;
+
+
 }
 
 
 export class StructType implements Type<Map<any>> {
     tag: Types.STRUCT;
     attributes : Attribute[] = [];
+    constructor(attributes:Attribute[] = []) {
+        this.attributes = attributes;
+    }
 }
 
 export function attributesMap(schema:StructType) : Map<Attribute> {

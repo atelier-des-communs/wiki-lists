@@ -6,6 +6,7 @@ export interface CloseableDialog {
     close?: () => void;
 }
 
+/** Generic dialog calling POST method upon validation with potential validation error as results */
 export abstract class ValidatingDialog<T extends CloseableDialog> extends React.Component<T> {
 
     state : {
@@ -30,6 +31,8 @@ export abstract class ValidatingDialog<T extends CloseableDialog> extends React.
             this.props.close();
 
         } catch (e) {
+
+            // Functional error, containing validationErrors to be shown to user
             if (e.validationErrors) {
                 this.setState({errors: e.validationErrors});
             } else {
@@ -42,7 +45,7 @@ export abstract class ValidatingDialog<T extends CloseableDialog> extends React.
     }
 
     /** Return label with potential validation errors.
-     * Mark the error that have been shown in the UI */
+     * Mark the error that have been shown in the UI as "shown" */
     errorLabel(key: string) : JSX.Element {
         let errors = this.state.errors
             .filter(error => error.attribute == key)

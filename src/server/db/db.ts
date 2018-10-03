@@ -6,11 +6,12 @@ import {validateSchemaAttributes} from "../../shared/validators/schema-validator
 import {raiseExceptionIfErrors} from "../../shared/validators/validators";
 import {validateRecord} from "../../shared/validators/record-validator";
 import {DataFetcher, dbPassCookieName} from "../../shared/api";
-import {deepClone} from "../../shared/utils";
+import {deepClone, isIn} from "../../shared/utils";
 import {DefaultMessages} from "../../shared/i18n/messages";
 import {AccessRight} from "../../shared/access";
 import {getAccessRights} from "../utils";
 import {Request} from "express-serve-static-core"
+import {v4  as uuid} from "uuid";
 
 const DATABASES_COL = "schemas";
 const DATABASE_COL_TEMPLATE ="db.{name}";
@@ -32,6 +33,15 @@ class  Connection {
 }
 
 
+// Create collections / indexes
+async function init() : Promise<void> {
+    let db = await Connection.getDb();
+    let col = db.collection<DbDefinition>(DATABASES_COL);
+    col.createIndex(
+        {"name": 1},
+        { unique: true });
+}
+
 export interface DbSettings {
     label:string;
     description:string;
@@ -39,27 +49,27 @@ export interface DbSettings {
 
 // Entire description, with read only fields
 export interface DbDefinition extends DbSettings {
+    // Slug
     name : string;
+    label : string;
     schema: StructType;
     secret?:string;
     rights? : AccessRight[];
 }
-
-
-
 
 export async function updateSchemaDb(dbName: string, schema:StructType, _:DefaultMessages) : Promise<StructType> {
     let db = await Connection.getDb();
     let col = db.collection<DbDefinition>(DATABASES_COL);
 
     // Validate errors
-    raiseExceptionIfErrors(validateSchemaAttributes(schema.attributes, _))
+    raiseExceptionIfErrors(validateSchemaAttributes(schema.attributes, _));
 
-    // Marked attributes as saved
+    // Mark attributes as saved
+    // FIXME : do otherwize - mark new types and atributes as new and don't save it
     for (let attr of schema.attributes) {
         attr.saved = true;
 
-        // Marke each enum record as saved
+        // Mark each enum record as saved
         if (attr.type.tag == Types.ENUM) {
             (attr.type as EnumType).values.map(enumVal => enumVal.saved = true);
         }
@@ -72,10 +82,28 @@ export async function updateSchemaDb(dbName: string, schema:StructType, _:Defaul
     return schema;
 }
 
+export async function createDb(def: DbDefinition, _:DefaultMessages) : Promise<DbDefinition> {
+    let db = await Connection.getDb();
+    let col = db.collection<DbDefinition>(DATABASES_COL);
+
+    // Validate attributes
+    raiseExceptionIfErrors(validateSchemaAttributes(def.schema.attributes, _));
+
+    // FIXME add server side validators of name, label etc
+
+    def.secret = uuid();
+
+    let result = await col.insertOne(def);
+    if (result.insertedCount != 1) {
+        throw new Error(`Db not created`);
+    }
+    return def;
+}
+
 
 export async function updateRecordDb(dbName: string, record : Record, _:DefaultMessages) : Promise<Record> {
     let col = await Connection.getDbCol(dbName);
-    let dbDef = await _getDbDefinition(dbName);
+    let dbDef = await getDbDef(dbName);
 
     // Validate record
     raiseExceptionIfErrors(validateRecord(record, dbDef.schema, _));
@@ -97,7 +125,7 @@ export async function updateRecordDb(dbName: string, record : Record, _:DefaultM
 
 export async function createRecordDb(dbName: string, record : Record, _:DefaultMessages) : Promise<Record> {
     let col = await Connection.getDbCol(dbName);
-    let dbDef = await _getDbDefinition(dbName);
+    let dbDef = await getDbDef(dbName);
 
     // Validate record
     raiseExceptionIfErrors(validateRecord(record, dbDef.schema, _));
@@ -128,7 +156,14 @@ export async function deleteRecordDb(dbName: string, id : string) : Promise<bool
     return true;
 }
 
-async function getDbDef(dbName: string) : Promise<DbDefinition> {
+export async function checkAvailability(dbName:string) : Promise<boolean> {
+    let db = await Connection.getDb();
+    let col = db.collection<DbDefinition>(DATABASES_COL);
+    let database = await col.findOne({name: dbName});
+    return (database == null);
+}
+
+export async function getDbDef(dbName: string) : Promise<DbDefinition> {
     let db = await Connection.getDb();
     let col = db.collection<DbDefinition>(DATABASES_COL);
     let database = await col.findOne({name: dbName});
@@ -137,10 +172,6 @@ async function getDbDef(dbName: string) : Promise<DbDefinition> {
 }
 
 
-export async function getDbSecret(dbName: string) : Promise<String> {
-    let dbDef = await getDbDef(dbName);
-    return dbDef.secret;
-}
 
 function transformRecord(record: Record) : Record {
     let res = {...record};
@@ -150,16 +181,6 @@ function transformRecord(record: Record) : Record {
     return res;
 }
 
-async function _getDbDefinition(dbName: string) : Promise<DbDefinition> {
-    let dbDef = await getDbDef(dbName);
-
-    // Don' t provide secret
-    // FIXME find a type-safe way of exluding critical info
-    delete dbDef.secret;
-
-
-    return dbDef;
-}
 
 // DataFetcher for SSR : direct access to DB
 export class DbDataFetcher implements DataFetcher {
@@ -171,11 +192,16 @@ export class DbDataFetcher implements DataFetcher {
     }
 
     async getDbDefinition(dbName: string) : Promise<DbDefinition> {
-        let dbDef = await _getDbDefinition(dbName);
+        let dbDef = await getDbDef(dbName);
 
         // Decorate Db with user rights
         let pass = this.request.cookies[dbPassCookieName(dbName)];
         dbDef.rights = await getAccessRights(dbName, pass);
+
+        // Remove secret for non admins
+        if (!isIn(dbDef.rights, AccessRight.ADMIN)) {
+            delete dbDef.secret;
+        }
 
         return dbDef;
     }

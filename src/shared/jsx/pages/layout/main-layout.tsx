@@ -1,0 +1,37 @@
+import * as React from "react";
+import "../../../img/logo.png";
+import {MessagesProps, supportedLanguages} from "../../../i18n/messages";
+import {Header} from "./header";
+
+export const MainLayout : React.SFC<MessagesProps> = (props) => {
+
+    let _ = props.messages;
+
+    function goToHome() {
+        window.location.href = "/";
+    }
+
+    let pointerCursor = {cursor:'pointer'};
+
+    return <>
+    <Header {...props}>
+
+            <div style={{textAlign:"center"}}>
+                <img
+                    src="/img/logo.png"
+                    width="300"
+                    style={pointerCursor}
+                    onClick={() => goToHome()} />
+                <br/>
+                <span
+                    onClick={() => goToHome()}
+                    style={{...pointerCursor, fontSize:"large"}}>
+                    {_.daadle_title}</span>
+            </div>
+
+    </Header>
+
+    {props.children}
+
+    </>
+};

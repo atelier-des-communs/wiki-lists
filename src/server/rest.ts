@@ -1,5 +1,5 @@
 import {
-    ADD_ITEM_URL,
+    ADD_ITEM_URL, CHECK_DB_NAME, COOKIE_DURATION, CREATE_DB_URL, dbPassCookieName,
     DELETE_ITEM_URL,
     GET_DB_DEFINITION_URL,
     GET_ITEM_URL,
@@ -7,7 +7,14 @@ import {
     UPDATE_ITEM_URL,
     UPDATE_SCHEMA_URL
 } from "../shared/api";
-import {createRecordDb, DbDataFetcher, deleteRecordDb, updateRecordDb, updateSchemaDb} from "./db/db";
+import {
+    checkAvailability, createDb,
+    createRecordDb,
+    DbDataFetcher, DbDefinition,
+    deleteRecordDb,
+    updateRecordDb,
+    updateSchemaDb
+} from "./db/db";
 import {Record} from "../shared/model/instances";
 import {requiresRight, returnPromise, traverse} from "./utils";
 import {Express} from "express";
@@ -50,6 +57,16 @@ async function updateSchemaAsync(req:Request) : Promise<StructType>{
         selectLanguage(req).messages);
 }
 
+async function createDbAsync(req:Request, res:Response) : Promise<boolean>{
+    let dbDef = sanitizeJson(req.body) as DbDefinition;
+    dbDef = await createDb(dbDef, selectLanguage(req).messages);
+
+    // Set secret in cookies, for admin rights
+    res.cookie(dbPassCookieName(dbDef.name), dbDef.secret, {maxAge:COOKIE_DURATION});
+    return true;
+}
+
+
 export function setUp(server:Express) {
 
     server.post(ADD_ITEM_URL, function (req: Request, res: Response) {
@@ -68,6 +85,14 @@ export function setUp(server:Express) {
         returnPromise(res, updateSchemaAsync(req));
     });
 
+    server.post(CREATE_DB_URL, function (req: Request, res: Response) {
+        returnPromise(res, createDbAsync(req, res));
+    });
+
+    server.get(CHECK_DB_NAME, function (req: Request, res: Response) {
+        returnPromise(res, checkAvailability(req.params.db_name));
+    });
+
     server.get(GET_ITEM_URL, function (req: Request, res: Response) {
         returnPromise(res, new DbDataFetcher(req).getRecord(req.params.db_name, req.params.id));
     });
@@ -79,6 +104,10 @@ export function setUp(server:Express) {
     server.get(GET_DB_DEFINITION_URL, function (req: Request, res: Response) {
         returnPromise(res, new DbDataFetcher(req).getDbDefinition(req.params.db_name));
     });
+
+
+
+
 }
 
 // Recursively sanitize JSON

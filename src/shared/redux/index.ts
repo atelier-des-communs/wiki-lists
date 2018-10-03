@@ -8,7 +8,7 @@ import {Map} from "../utils";
 
 
 export interface IState {
-    items : {[key:string] : any};
+    items : {[key:string] : Record};
     dbDefinition : DbDefinition;
 }
 

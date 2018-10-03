@@ -8,7 +8,7 @@ import {MessagesProps} from "../../i18n/messages";
 
 type SingleRecordComponentProps = SingleRecordProps & RouteComponentProps<{}> & MessagesProps;
 
-const NAME_ELLIPSIS = 10;
+const NAME_ELLIPSIS = 20;
 
 export const SingleRecordComponent : React.SFC<SingleRecordComponentProps> = (props) => {
 
@@ -22,7 +22,9 @@ export const SingleRecordComponent : React.SFC<SingleRecordComponentProps> = (pr
                     <b>{
                         props.large ?
                             attrLabel(attr) :
-                            ellipsis(attrLabel(attr), NAME_ELLIPSIS)} : </b>
+                            ellipsis(attrLabel(attr), NAME_ELLIPSIS)} </b>
+
+                    &nbsp;
 
                     {props.large && <br/>}
 

@@ -138,26 +138,13 @@ class RichTextHandler extends ControlledValueHandler<string, TextType> {
     }
 
     renderEdit() {
-        return <ReactQuill value={this.state.innerValue || ""}
-                    onChange={(content, delta, source, editor) => this.onChange(editor.getHTML())} />
+        return <ReactQuill
+            value={this.state.innerValue || ""}
+            onChange={(content, delta, source, editor) => this.onChange(editor.getHTML())} />
     }
 
     renderView() {
-
-           /* let style = {overflowY:"hidden"} as any;
-            if (!this.state.expanded) {
-                style.maxHeight = "2em";
-            } */
-
-
-                /* <Button
-                    icon={this.state.expanded ? "chevron up" : "chevron down"}
-                    size="mini"
-                    basic circular compact
-                    style={{float:"right"}}
-                    onClick={this.toggleExpand}/> */
         return    <div dangerouslySetInnerHTML={{__html: this.state.innerValue }} />
-
     }
 }
 
