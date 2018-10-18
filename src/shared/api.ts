@@ -8,16 +8,16 @@ import {DefaultMessages} from "./i18n/messages";
 export const BASE_DB_PATH = "/db/";
 export const CREATE_DB_PATH = "/create-db";
 export const RECORDS_PATH = BASE_DB_PATH + ":db_name";
+export const RECORDS_ADMIN_PATH = RECORDS_PATH + "@:db_pass";
 export const SINGLE_RECORD_PATH = BASE_DB_PATH + ":db_name/:id";
 
 
-export const LANG_COOKIE_NAME = "lang";
-
+// Cookies
 export const COOKIE_DURATION = 31 * 24 * 3600 * 1000 // one month;
 
-export function dbPassCookieName(dbName:string) {
-    return `_db_pass_${dbName}`;
-}
+export const COOKIE_PREFIX = "wl_";
+export const LANG_COOKIE = COOKIE_PREFIX + "lang";
+export const SECRET_COOKIE = (dbName:string) => {return COOKIE_PREFIX + `secret_${dbName}`};
 
 export function recordsLink(dbName: string) {
     return RECORDS_PATH.replace(':db_name', dbName);

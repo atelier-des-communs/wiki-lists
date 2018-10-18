@@ -10,7 +10,7 @@ export const HomePageInternal : React.SFC<GlobalContextProps & RouteComponentPro
     let _ = props.messages;
 
 
-    return <MainLayout messages={props.messages} lang={props.lang} >
+    return <MainLayout {...props} >
         <Container>
             <Button
                 as={Link}

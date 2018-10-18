@@ -299,6 +299,7 @@ function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>)
         return props.dataFetcher
             .getRecords(props.match.params.db_name)
             .then((records) => {
+                // FIXME "items" is not updated to {} when nothing is fetched
                 for (let record of records) {
                     // Dispatch to redux
                     props.store.dispatch(createAddItemAction(record));

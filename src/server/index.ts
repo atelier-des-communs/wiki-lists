@@ -7,7 +7,7 @@ import {setUp as setUpRest} from "./rest";
 import {setUp as setUpHtml} from "./html";
 import {setUp as setUpExport} from "./export";
 import {supportedLanguages} from "../shared/i18n/messages";
-import {LANG_COOKIE_NAME} from "../shared/api";
+import {LANG_COOKIE} from "../shared/api";
 
 
 
@@ -20,7 +20,7 @@ export default function initServer(dist_paths:string[]) {
 
     let langSettings =  {
         languages : supportedLanguages.map(lang => lang.key),
-        cookie: {name: LANG_COOKIE_NAME}};
+        cookie: {name: LANG_COOKIE}};
 
     server.use(language(langSettings));
 

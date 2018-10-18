@@ -10,8 +10,8 @@ import {toImmutable} from "../shared/utils";
 import {Express} from "express";
 import {returnPromise} from "./utils";
 import {Request, Response} from "express-serve-static-core"
-import {COOKIE_DURATION, dbPassCookieName, IMarshalledContext} from "../shared/api";
-import {GlobalContextProps, HeadSetter} from "../shared/jsx/context/global-context";
+import {COOKIE_DURATION, SECRET_COOKIE, IMarshalledContext, RECORDS_ADMIN_PATH} from "../shared/api";
+import {GlobalContextProps, HeadSetter, ICookies} from "../shared/jsx/context/global-context";
 import {selectLanguage} from "../shared/i18n/messages";
 
 const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '' : 'http://localhost:8081';
@@ -23,17 +23,26 @@ const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '' : 'http://loca
 const MAX_RENDER_DEPTH = 4;
 class ServerSideHeaderHandler implements HeadSetter {
     title = "";
+    description = "";
+
     setTitle(newTitle:string){
         this.title=newTitle
     }
+
+    setDescription(description: string) {
+        this.description = description;
+    }
+
+
 }
 
-function renderHtml(title:string, html:string, context:any=null) {
+function renderHtml(head:ServerSideHeaderHandler, html:string, context:any=null) {
     return `<!DOCTYPE html>
 		<html>
 			<head>
 				<meta charset="UTF-8">
-				<title>${title}</title>
+				<title>${head.title}</title>
+				<description>${head.description}</description>
 				<meta name="referrer" content="no-referrer">
 				<link rel="shortcut icon" type="image/png" href="/img/favicon.png"/>
 				<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.css" />
@@ -65,6 +74,17 @@ async function renderApp(req:Request) : Promise<string> {
         reducers,
         toImmutable(state));
 
+
+    let serverCookies : ICookies = {
+        get : (name:string) => {
+            return req.cookies[name];
+        },
+
+        set : () => {
+            // Ignore : we should not set cookies on server side
+        }
+    };
+
     // Render HTML several time, until all async promises have been resolved
     // This is the way we do async data fetching on SS
     // The Redux Store will accumulate state and eventually make the component to render synchronously
@@ -77,6 +97,7 @@ async function renderApp(req:Request) : Promise<string> {
             dataFetcher: new DbDataFetcher(req),
             lang:lang.key,
             messages:lang.messages,
+            cookies:serverCookies,
             promises: [],
             head: new ServerSideHeaderHandler()
         };
@@ -109,7 +130,7 @@ async function renderApp(req:Request) : Promise<string> {
         lang:lang.key};
 
     return renderHtml(
-        head.title,
+        head,
         appHTML,
         context)
 }
@@ -118,8 +139,8 @@ async function renderApp(req:Request) : Promise<string> {
 export function setUp(server : Express) {
 
     // Admin URL => set cookie and redirect
-    server.get("/db/:db_name@:db_pass", function(req:Request, res:Response) {
-        res.cookie(dbPassCookieName(req.params.db_name), req.params.db_pass, {
+    server.get(RECORDS_ADMIN_PATH, function(req:Request, res:Response) {
+        res.cookie(SECRET_COOKIE(req.params.db_name), req.params.db_pass, {
             maxAge : COOKIE_DURATION
         });
         res.redirect(`/db/${req.params.db_name}`);

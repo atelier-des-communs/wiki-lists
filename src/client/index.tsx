@@ -6,10 +6,13 @@ import {createStore} from "redux";
 import {reducers} from "../shared/redux";
 import {toImmutable} from "../shared/utils";
 import "./index.css";
-import {GlobalContextProps, HeadSetter} from "../shared/jsx/context/global-context";
+import {GlobalContextProps, HeadSetter, ICookies} from "../shared/jsx/context/global-context";
 import {IMarshalledContext} from "../shared/api";
 import {restDataFetcher} from "../shared/rest/client";
+import * as cookies from "browser-cookies";
 
+
+import { hot } from 'react-hot-loader';
 
 /** Initial state of the store has been serialized for us by server side rendering */
 let marshalledContext = (window as any).__MARSHALLED_CONTEXT__ as IMarshalledContext;
@@ -27,9 +30,24 @@ let store = marshalledContext.env == "development" ?
         reducers,
         toImmutable(marshalledContext.state));
 
+// Head handler on client side : update document.title
 let head : HeadSetter = {
     setTitle : (newTitle:string) => {
         document.title = newTitle;
+    },
+
+    // We don't care about updating description on client side
+    setDescription : (desc:string) => {}
+
+};
+
+let clientCookies : ICookies = {
+    get : (name:string) => {
+        return cookies.get(name);
+    },
+
+    set : (name:string, value:string) => {
+        cookies.set(name, value)
     }
 };
 
@@ -39,10 +57,15 @@ let context : GlobalContextProps = {
     lang: marshalledContext.lang,
     messages:marshalledContext.messages,
     promises:[],
+    cookies : clientCookies,
     dataFetcher:restDataFetcher};
 
-render((
-    <BrowserRouter>
-        <App {...context} />
-    </BrowserRouter>
-), document.getElementById("app"));
+let app = <BrowserRouter>
+    <App {...context} />
+</BrowserRouter>;
+
+
+
+render(
+    hot(module)(app),
+    document.getElementById("app"));

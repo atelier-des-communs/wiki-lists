@@ -2,15 +2,15 @@ import * as React from "react";
 import "../../../img/logo.png";
 import {MessagesProps, supportedLanguages} from "../../../i18n/messages";
 import {Button, Flag} from "semantic-ui-react";
-import * as cookies from "browser-cookies";
-import {LANG_COOKIE_NAME} from "../../../api";
+import {LANG_COOKIE} from "../../../api";
+import {GlobalContextProps} from "../../context/global-context";
 
-export const Header : React.SFC<MessagesProps> = (props) => {
+export const Header : React.SFC<GlobalContextProps> = (props) => {
 
     let _ = props.messages;
 
     function changeLang(langKey: string) {
-        cookies.set(LANG_COOKIE_NAME, langKey);
+        props.cookies.set(LANG_COOKIE, langKey);
         window.location.reload();
     }
 

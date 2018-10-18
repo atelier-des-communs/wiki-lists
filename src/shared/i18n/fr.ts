@@ -120,7 +120,15 @@ export let frMessages : DefaultMessages = {
     slug_regexp_no_match: "Doit être composé uniquement de 0-9 a-z '-' et '_'",
     db_not_available : "Ce nom est déjà pris",
 
-    powered_by : "propulsé par"
+    powered_by : "propulsé par",
+
+    db_created : "Collection créée",
+    private_link : "Lien d'administration. À conserver. Ne le partagez pas !",
+    public_link : "Lien public : à partager",
+
+    hide : "Cacher",
+    back_to_list : "Retour à la liste"
+
 
 };
 

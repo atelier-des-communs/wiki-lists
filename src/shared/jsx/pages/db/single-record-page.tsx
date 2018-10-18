@@ -1,7 +1,7 @@
 import * as React from "react";
 import {RouteComponentProps} from "react-router";
+import {Link} from "react-router-dom";
 import {
-    DbProps,
     ReduxEventsProps,
     SingleRecordPathParams,
     SingleRecordProps,
@@ -16,7 +16,7 @@ import {EditButtons} from "../../components/edit-button";
 import {GlobalContextProps} from "../../context/global-context";
 import {connectComponent} from "../../context/redux-helpers";
 import {createAddItemAction, createUpdateDbAction} from "../../../redux";
-import {withSystemAttributes} from "../../../model/instances";
+import {recordsLink} from "../../../api";
 
 type SingleRecordPageProps =
     GlobalContextProps &
@@ -28,11 +28,13 @@ type SingleRecordPageProps =
 export const SingleRecordPageInternal : React.SFC<SingleRecordPageProps>  = (props) => {
 
     let {schema, record, head} = props;
+    let _ = props.messages;
 
     // Set html HEAD
     head.setTitle(recordNameStr(schema, record));
 
     return <Container>
+        <Link to={recordsLink(props.name)} > « {_.back_to_list}</Link>
         <Segment className="hoverable" >
             <Header as="h2">{ recordName(schema, record)}
                 <div style={{float:"right"}} className="super-shy" >

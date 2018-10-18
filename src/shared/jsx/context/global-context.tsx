@@ -9,6 +9,12 @@ import {DefaultMessages} from "../../i18n/messages";
 // Generic definition of hanlder to set title and metas
 export interface HeadSetter {
     setTitle : (title:string) => void;
+    setDescription : (description:string) => void;
+}
+
+export interface ICookies {
+    get(name:string) : string;
+    set(name:string, value:string) : void;
 }
 
 // Global props, passed down to all pages & components, via React "context" mecanism
@@ -28,6 +34,9 @@ export interface GlobalContextProps  {
 
     /* Promises getting accumulated by AsyncComponents, for SSR to wait for their completion */
     promises : Promise<any>[];
+
+    /** Generic cookies interfaces served differently on SSR and client */
+    cookies : ICookies;
 
     lang : string;
 }

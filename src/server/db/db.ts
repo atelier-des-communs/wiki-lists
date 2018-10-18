@@ -5,16 +5,17 @@ import {Record} from "../../shared/model/instances";
 import {validateSchemaAttributes} from "../../shared/validators/schema-validators";
 import {raiseExceptionIfErrors} from "../../shared/validators/validators";
 import {validateRecord} from "../../shared/validators/record-validator";
-import {DataFetcher, dbPassCookieName} from "../../shared/api";
+import {DataFetcher, SECRET_COOKIE} from "../../shared/api";
 import {deepClone, isIn} from "../../shared/utils";
 import {DefaultMessages} from "../../shared/i18n/messages";
 import {AccessRight} from "../../shared/access";
 import {getAccessRights} from "../utils";
 import {Request} from "express-serve-static-core"
-import {v4  as uuid} from "uuid";
+import * as shortid from "shortid";
 
 const DATABASES_COL = "schemas";
-const DATABASE_COL_TEMPLATE ="db.{name}";
+const DATABASE_COL_TEMPLATE = (name:string) => {return `db.${name}`};
+const UID_SIZE = 8;
 
 /* Singleton instance */
 class  Connection {
@@ -26,9 +27,10 @@ class  Connection {
         return this.client.db(DB_NAME);
     }
 
+    // Returns collection of items for a given database
     static async getDbCol(dbName : string) {
         let db = await Connection.getDb();
-        return db.collection(dbName);
+        return db.collection(DATABASE_COL_TEMPLATE(dbName));
     }
 }
 
@@ -49,7 +51,7 @@ export interface DbSettings {
 
 // Entire description, with read only fields
 export interface DbDefinition extends DbSettings {
-    // Slug
+    /** Shortname of the db */
     name : string;
     label : string;
     schema: StructType;
@@ -90,8 +92,7 @@ export async function createDb(def: DbDefinition, _:DefaultMessages) : Promise<D
     raiseExceptionIfErrors(validateSchemaAttributes(def.schema.attributes, _));
 
     // FIXME add server side validators of name, label etc
-
-    def.secret = uuid();
+    def.secret = shortid.generate();
 
     let result = await col.insertOne(def);
     if (result.insertedCount != 1) {
@@ -195,7 +196,7 @@ export class DbDataFetcher implements DataFetcher {
         let dbDef = await getDbDef(dbName);
 
         // Decorate Db with user rights
-        let pass = this.request.cookies[dbPassCookieName(dbName)];
+        let pass = this.request.cookies[SECRET_COOKIE(dbName)];
         dbDef.rights = await getAccessRights(dbName, pass);
 
         // Remove secret for non admins

@@ -118,6 +118,12 @@ export class DefaultMessages {
     db_not_available = "Name is already taken";
     powered_by = "powered by";
 
+    db_created = "Collection successfully created";
+    private_link = "Admin link : save it, don't share it !";
+    public_link = "Public link : share it with contributors";
+    hide = "Hide";
+    back_to_list =  "Back to the list";
+
 }
 
 export interface MessagesProps {

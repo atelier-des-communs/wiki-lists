@@ -150,7 +150,7 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
             });
         };
 
-        return <MainLayout messages={props.messages} lang={props.lang} >
+        return <MainLayout {...props} >
 
         <Container>
             <h1>{_.creating_db}</h1>

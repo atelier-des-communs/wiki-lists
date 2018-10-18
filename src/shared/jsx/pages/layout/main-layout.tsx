@@ -2,8 +2,9 @@ import * as React from "react";
 import "../../../img/logo.png";
 import {MessagesProps, supportedLanguages} from "../../../i18n/messages";
 import {Header} from "./header";
+import {GlobalContextProps} from "../../context/global-context";
 
-export const MainLayout : React.SFC<MessagesProps> = (props) => {
+export const MainLayout : React.SFC<GlobalContextProps> = (props) => {
 
     let _ = props.messages;
 

@@ -9,16 +9,22 @@ import {Map, mapMap, parseParams} from "../../../utils";
 import {createAddItemAction, createUpdateDbAction, IState} from "../../../redux";
 import {withSystemAttributes} from "../../../model/instances";
 import {connectComponent} from "../../context/redux-helpers";
-import {applySearchAndFilters} from "../../../views/filters";
 import {DispatchProp} from "react-redux";
 import {Route, Switch} from 'react-router';
-import {RECORDS_PATH, recordsLink, SINGLE_RECORD_PATH} from "../../../api";
+import {
+    COOKIE_PREFIX,
+    RECORDS_ADMIN_PATH,
+    RECORDS_PATH,
+    recordsLink,
+    SINGLE_RECORD_PATH
+} from "../../../api";
 import {RecordsPage} from "./records-page";
 import {SingleRecordPage} from "./single-record-page";
 import {Header} from "../layout/header";
 import {Link} from 'react-router-dom';
 import "../../../img/logo.png";
-
+import {Label, Message, Input, Button} from "semantic-ui-react";
+import {AccessRight, hasRight} from "../../../access";
 
 type DbPageProps =
     GlobalContextProps &
@@ -27,7 +33,15 @@ type DbPageProps =
     ReduxEventsProps &
     DispatchProp<any>;
 
+const HIDE_LINKS_COOKIE = COOKIE_PREFIX + "hide_links";
+
 export class DbPageSwitchInternal extends React.Component<DbPageProps>{
+
+    hideLinks() {
+        this.props.cookies.set(HIDE_LINKS_COOKIE, "true");
+        // force redraw
+        this.setState({});
+    }
 
     render() {
         let props = this.props;
@@ -42,14 +56,27 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
         };
 
 
+        let base_url = location.protocol + '//' + location.host;
+
+        let private_link = base_url +
+            RECORDS_ADMIN_PATH.
+                replace(":db_name", props.match.params.db_name).
+                replace(":db_pass", props.secret)
+
+        let public_link = base_url +
+            RECORDS_PATH.
+                replace(":db_name", props.match.params.db_name);
+
+        let hideLinks = props.cookies.get(HIDE_LINKS_COOKIE);
+
         return <>
             <Header {...props} >
                 <h1>
-                    <Link to={recordsLink(props.match.params.db_name)}>
-                        {props.dbLabel}
+                    <Link to={recordsLink(props.name)}>
+                        {props.label}
                     </Link>
                 </h1>
-                <div dangerouslySetInnerHTML={{__html: props.dbDescription}}/>
+                <div dangerouslySetInnerHTML={{__html: props.description}}/>
                 <div style={{textAlign: "right"}}>
                     {_.powered_by}
                     <img
@@ -61,6 +88,32 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
             </Header>
             <div style={{margin: "1em"}}>
 
+
+                {hasRight(props, AccessRight.ADMIN) && !hideLinks &&
+                <Message info>
+                    <Button
+                        basic compact size="small"
+                        icon="close" floated="right" title={_.hide}
+                        onClick={() => this.hideLinks() }/>
+                    <Message.Header>
+                        {_.db_created}
+                    </Message.Header>
+
+                    <Message error>
+                        <Message.Header>
+                            {_.private_link}
+                        </Message.Header>
+                        <a href={private_link}>{private_link}</a>
+                    </Message>
+
+                    <Message positive>
+                        <Message.Header>
+                            {_.public_link}
+                        </Message.Header>
+                        <a href={public_link}>{public_link}</a>
+                    </Message>
+
+                </Message>}
 
                 <Switch>
                     <Route path={SINGLE_RECORD_PATH} component={singleRecordPage}/>
@@ -74,15 +127,9 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
 
 // Filter data from Redux store and map it to props
 const mapStateToProps =(state : IState, props?: RouteComponentProps<{}> & GlobalContextProps) : DbProps => {
-
-    // Apply search and sorting
-    let params = parseParams(props.location.search);
-
     return {
-        schema:withSystemAttributes(state.dbDefinition.schema, props.messages),
-        rights:state.dbDefinition.rights,
-        dbLabel:state.dbDefinition.label,
-        dbDescription:state.dbDefinition.description}
+        ...state.dbDefinition,
+        schema:withSystemAttributes(state.dbDefinition.schema, props.messages)}
 };
 
 // Async fetch of data

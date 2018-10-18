@@ -8,7 +8,11 @@ import {empty, intToStr, strToInt} from "../../utils";
 import {AttributeDisplay} from "../../views/display";
 import {enumLabel} from "../utils/utils";
 import {MessagesProps} from "../../i18n/messages";
+import {format, parse} from "date-fns";
+//import DayPickerInput from "react-day-picker/DayPickerInput";
+//import "react-day-picker/lib/style.css";
 
+const DATE_FORMAT="D MMM YYYY HH:mm";
 
 interface ValueHandlerProps<T, TypeT extends Type<T>> extends MessagesProps {
 
@@ -98,32 +102,29 @@ class SimpleTextHandler extends ControlledValueHandler<string, TextType> {
 
 class DatetimeHandler extends ControlledValueHandler<Date, DatetimeType> {
 
-    extractValue(innerValue:string) {
-        if (empty(innerValue)) {
-            return null;
+    formatDate() {
+        if (empty(this.state.innerValue)) {
+            return "";
         } else {
-            return new Date(innerValue);
+            return format(this.state.innerValue, DATE_FORMAT)
         }
     }
-
-    toInnerValue(date:Date) {
-        if (date == null) {
-            return null;
-        } else if (typeof(date) == "string") {
-            // FIXME : For backward compatibility : should not happen
-            return date;
+    formatIso() {
+        if (empty(this.state.innerValue)) {
+            return "";
         } else {
-            return date.toISOString();
+            return this.state.innerValue.toISOString();
         }
     }
 
     renderView() {
-        return <span>{this.state.innerValue}</span>
+        return <span>{this.formatDate()}</span>
     }
     renderEdit() {
-        return <Input
-            value={this.state.innerValue}
-            onChange={(e, data) => this.onChange(data.value)} />;
+        return <input
+                type="date"
+                value={this.formatIso()}
+                onChange={(e: React.FormEvent<HTMLInputElement>) => this.onChange(parse(e.currentTarget.value))} />
     }
 }
 
@@ -131,10 +132,6 @@ class RichTextHandler extends ControlledValueHandler<string, TextType> {
     constructor(props: ValueHandlerProps<string, TextType>) {
         super(props);
         this.state.expanded = false;
-    }
-
-    toggleExpand =  () => {
-        this.setState({expanded: !this.state.expanded});
     }
 
     renderEdit() {
