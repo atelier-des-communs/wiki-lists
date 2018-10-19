@@ -1,6 +1,7 @@
 var webpack = require("webpack");
 var shared = require("./webpack.shared.js");
 var MiniCssExtractPlugin = require('mini-css-extract-plugin');
+var nodeExternals = require('webpack-node-externals');
 var server_loaders = shared.common_loaders();
 var client_loaders = shared.common_loaders();
 
@@ -12,11 +13,10 @@ server_loaders["css"] = {
     loader: 'css-loader'
 };
 
-// Server build needs a loader to handle external .css files
 server_loaders["css_external"] = {
     test: /\.css$/,
     include: /node_modules/,
-    loader: 'css-loader/locals'
+    use: ['css-loader/locals'],
 };
 
 // Client loader
@@ -63,6 +63,7 @@ var server = {
     target: "node",
     mode:"production",
     externals: [
+        nodeExternals({whitelist:[/\.css/]}),
         {
             "react-dom/server": true
         }

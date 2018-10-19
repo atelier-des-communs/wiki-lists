@@ -4,7 +4,7 @@ import {StaticRouter} from "react-router";
 import {createStore} from "redux";
 import {App} from "../shared/app";
 import "../shared/favicon.png";
-import {IState, reducers} from "../shared/redux";
+import {IState, reducers, TAction} from "../shared/redux";
 import {DbDataFetcher} from "./db/db";
 import {toImmutable} from "../shared/utils";
 import {Express} from "express";
@@ -32,7 +32,6 @@ class ServerSideHeaderHandler implements HeadSetter {
     setDescription(description: string) {
         this.description = description;
     }
-
 
 }
 
@@ -70,7 +69,7 @@ async function renderApp(req:Request) : Promise<string> {
         items: null,
         dbDefinition: null};
 
-    const store = createStore<IState>(
+    const store = createStore(
         reducers,
         toImmutable(state));
 

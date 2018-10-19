@@ -3,12 +3,12 @@ import {BooleanType, DatetimeType, EnumType, enumValuesMap, NumberType, TextType
 import {Checkbox, FormSelect, Icon, Input, Label} from "semantic-ui-react";
 import ReactQuill from 'react-quill';
 import {DropdownItemProps} from "semantic-ui-react/dist/commonjs/modules/Dropdown/DropdownItem"
-import 'react-quill/dist/quill.snow.css';
 import {empty, intToStr, strToInt} from "../../utils";
 import {AttributeDisplay} from "../../views/display";
 import {enumLabel} from "../utils/utils";
 import {MessagesProps} from "../../i18n/messages";
 import {format, parse} from "date-fns";
+import 'react-quill/dist/quill.snow.css';
 //import DayPickerInput from "react-day-picker/DayPickerInput";
 //import "react-day-picker/lib/style.css";
 

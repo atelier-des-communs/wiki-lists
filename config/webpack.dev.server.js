@@ -1,6 +1,6 @@
 var MiniCssExtractPlugin = require('mini-css-extract-plugin');
 var shared = require("./webpack.shared.js");
-
+var nodeExternals = require('webpack-node-externals');
 var loaders = shared.common_loaders();
 console.log("Dev Server loaders", loaders);
 
@@ -8,14 +8,16 @@ console.log("Dev Server loaders", loaders);
 loaders["css"] = {
     test: /\.css$/,
     exclude: /node_modules/,
-    loader: 'css-loader'
+    loader: 'css-loader',
 };
+
 
 loaders["css_external"] = {
     test: /\.css$/,
     include: /node_modules/,
-    loader: 'css-loader/locals'
+    use: ['css-loader/locals'],
 };
+
 
 
 
@@ -24,6 +26,7 @@ var server = {
     target: "node",
     mode:"development",
     externals: [
+        nodeExternals({whitelist:[/\.css/]}),
         {
             "react-dom/server": true
         }
