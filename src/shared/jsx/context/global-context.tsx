@@ -3,7 +3,7 @@ import {Store} from "react-redux";
 import {IState} from "../../redux";
 import * as PropTypes from "prop-types";
 import {DataFetcher} from "../../api";
-import {DefaultMessages} from "../../i18n/messages";
+import {IMessages, Language} from "../../i18n/messages";
 
 
 // Generic definition of hanlder to set title and metas
@@ -20,7 +20,7 @@ export interface ICookies {
 // Global props, passed down to all pages & components, via React "context" mecanism
 export interface GlobalContextProps  {
 
-    messages: DefaultMessages,
+    messages: IMessages,
 
     /** Simple interface for setting title and meta HTML tags */
     head: HeadSetter,
@@ -39,6 +39,8 @@ export interface GlobalContextProps  {
     cookies : ICookies;
 
     lang : string;
+
+    supportedLanguages: Language[];
 }
 
 export interface GlobalContextProviderProps {

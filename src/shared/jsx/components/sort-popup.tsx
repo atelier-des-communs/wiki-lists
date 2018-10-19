@@ -7,11 +7,11 @@ import {goTo, parseParams} from "../../utils";
 import {extractSort, ISort, serializeSort} from "../../views/sort";
 import {SafePopup} from "../utils/ssr-safe";
 import {attrLabel, ellipsis} from "../utils/utils";
-import {DefaultMessages} from "../../i18n/messages";
+import {IMessages} from "../../i18n/messages";
 
 interface SortProps extends RouteComponentProps<{}> {
     schema : StructType;
-    messages:DefaultMessages;
+    messages:IMessages;
 }
 
 export const SortPopup : React.SFC<SortProps> = (props) => {

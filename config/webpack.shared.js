@@ -5,7 +5,6 @@ exports.CLIENT_BUILD_DIR = path.resolve(__dirname, "..", "dist", "client");
 exports.SERVER_BUILD_DIR = path.resolve(__dirname, "..", "dist", "server");
 exports.APP_DIR = path.resolve(__dirname, "..", "src");
 
-
 var common_loaders = {
     "js" : {
         test: /\.(jsx)$/,
@@ -54,5 +53,10 @@ exports.common_loaders = function() {
     return Object.assign({}, common_loaders);
 };
 
+var langs = ["fr-FR", "en-GB"];
 
+exports.client_entry = {"client.bundle": exports.APP_DIR + "/client"};
+for (var key of langs) {
+    exports.client_entry["lang-" + key] = exports.APP_DIR + "/server/i18n/" + key + ".ts";
+}
 

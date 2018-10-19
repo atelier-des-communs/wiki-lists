@@ -22,7 +22,7 @@ import {StructType} from "../shared/model/types";
 import {Request, Response} from "express-serve-static-core"
 import {AccessRight} from "../shared/access";
 import * as xss from "xss";
-import {selectLanguage} from "../shared/i18n/messages";
+import {selectLanguage} from "./i18n/messages";
 
 async function addItemAsync(req:Request) : Promise<Record> {
     let record = sanitizeJson(req.body) as Record;

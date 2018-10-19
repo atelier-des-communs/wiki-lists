@@ -16,7 +16,7 @@ import {EditableText} from "../../components/editable-text";
 import {typeExtraSwitch} from "../parts/attribute-extra-components";
 import {Info} from "../../utils/utils";
 import {withoutSystemAttributes} from "../../../model/instances";
-import {DefaultMessages} from "../../../i18n/messages";
+import {IMessages} from "../../../i18n/messages";
 
 
 // Add some UI / Client only properties to the Attribute type
@@ -30,7 +30,7 @@ export enum AddButtonPosition {
     BOTTOM}
 
 interface AttributeListProps {
-    messages:DefaultMessages;
+    messages:IMessages;
     onUpdateAttributes : (attributes: UIAttribute[]) => void;
     schema : StructType;
     addButtonPosition: AddButtonPosition,

@@ -4,8 +4,7 @@ import {AccessRight} from "../shared/access";
 import {getDbDef} from "./db/db";
 import {isIn} from "../shared/utils";
 import {Request} from "express-serve-static-core"
-import {DefaultMessages} from "../shared/i18n/messages";
-import {frMessages} from "../shared/i18n/fr";
+
 
 // Handy function returing 200 and the payload result of the promise of returning 500 on error
 export function returnPromise(res: Express.Response, promise: Promise<{}>, code:number=200) {
@@ -73,3 +72,4 @@ export function traverse(o: any, fn: (obj: any, prop: string, value: any) => voi
         }
     }
 }
+

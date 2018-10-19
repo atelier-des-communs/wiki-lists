@@ -3,7 +3,7 @@ import {IState} from "./redux/index";
 import {AccessRight} from "./access";
 import {Record} from "./model/instances";
 import {DbDefinition} from "../server/db/db";
-import {DefaultMessages} from "./i18n/messages";
+import {IMessages, Language} from "./i18n/messages";
 
 export const BASE_DB_PATH = "/db/";
 export const CREATE_DB_PATH = "/create-db";
@@ -52,9 +52,9 @@ export const VALIDATION_STATUS_CODE = 444;
 // Marshalled JSN within the page
 export interface IMarshalledContext {
     state: IState,
-    messages : DefaultMessages,
     env:string,
-    lang:string}
+    lang:string,
+    supportedLanguages: Language[]}
 
 // Generic reader interface, implemented directly with DB access for SSR, or as rest client for Browser
 export interface DataFetcher {

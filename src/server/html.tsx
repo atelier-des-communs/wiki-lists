@@ -6,13 +6,13 @@ import {App} from "../shared/app";
 import "../shared/favicon.png";
 import {IState, reducers, TAction} from "../shared/redux";
 import {DbDataFetcher} from "./db/db";
-import {toImmutable} from "../shared/utils";
+import {deepClone, toImmutable} from "../shared/utils";
 import {Express} from "express";
 import {returnPromise} from "./utils";
 import {Request, Response} from "express-serve-static-core"
 import {COOKIE_DURATION, SECRET_COOKIE, IMarshalledContext, RECORDS_ADMIN_PATH} from "../shared/api";
 import {GlobalContextProps, HeadSetter, ICookies} from "../shared/jsx/context/global-context";
-import {selectLanguage} from "../shared/i18n/messages";
+import {selectLanguage, supportedLanguages} from "./i18n/messages";
 
 const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '' : 'http://localhost:8081';
 
@@ -35,7 +35,7 @@ class ServerSideHeaderHandler implements HeadSetter {
 
 }
 
-function renderHtml(head:ServerSideHeaderHandler, html:string, context:any=null) {
+function renderHtml(head:ServerSideHeaderHandler, html:string, context:IMarshalledContext=null) {
     return `<!DOCTYPE html>
 		<html>
 			<head>
@@ -53,6 +53,7 @@ function renderHtml(head:ServerSideHeaderHandler, html:string, context:any=null)
 				<script>
 					window.__MARSHALLED_CONTEXT__ = ${JSON.stringify(context)};
 				</script>
+				<script src="${BUNDLE_ROOT}/lang-${context.lang}.js"></script>
 				<script src="${BUNDLE_ROOT}/client.bundle.js"></script>
 			</body>
 		</html>`
@@ -64,6 +65,13 @@ async function renderApp(req:Request) : Promise<string> {
     let head = new ServerSideHeaderHandler();
 
     let lang = selectLanguage(req);
+
+    // Copy supported languages without the messages : they are retrieved from separate JS file
+    let supportedLang = supportedLanguages.map((lang) => {
+        let res = deepClone(lang);
+        delete res.messages;
+        return res;
+    });
 
     let state : IState= {
         items: null,
@@ -98,7 +106,8 @@ async function renderApp(req:Request) : Promise<string> {
             messages:lang.messages,
             cookies:serverCookies,
             promises: [],
-            head: new ServerSideHeaderHandler()
+            head: new ServerSideHeaderHandler(),
+            supportedLanguages:supportedLang
         };
 
         appHTML = renderToString(<StaticRouter
@@ -125,8 +134,8 @@ async function renderApp(req:Request) : Promise<string> {
     let context : IMarshalledContext = {
         state : store.getState(),
         env: process.env.NODE_ENV,
-        messages:lang.messages,
-        lang:lang.key};
+        lang:lang.key,
+        supportedLanguages:supportedLang};
 
     return renderHtml(
         head,

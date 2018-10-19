@@ -1,6 +1,6 @@
 // Single error message of validation
 import {empty, itToArray} from "../utils";
-import {DefaultMessages} from "../i18n/messages";
+import {IMessages} from "../i18n/messages";
 
 
 // Function returning either null (no error) or error message
@@ -44,7 +44,7 @@ export function AndCompose(val1 : Validator, val2: Validator) : Validator {
 }
 
 // Common validators
-export function notEmptyValidator(_:DefaultMessages) : Validator {
+export function notEmptyValidator(_:IMessages) : Validator {
     return (value:string) => {
         if (empty(value)) return _.should_not_be_empty;
         return null;

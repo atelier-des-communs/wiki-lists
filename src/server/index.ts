@@ -6,7 +6,7 @@ import * as language from "express-request-language";
 import {setUp as setUpRest} from "./rest";
 import {setUp as setUpHtml} from "./html";
 import {setUp as setUpExport} from "./export";
-import {supportedLanguages} from "../shared/i18n/messages";
+import {supportedLanguages} from "./i18n/messages";
 import {LANG_COOKIE} from "../shared/api";
 
 

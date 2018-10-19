@@ -1,149 +1,138 @@
-import {frMessages} from "./fr";
 import {FlagNameValues} from "semantic-ui-react/dist/commonjs/elements/Flag/Flag";
-import {Request}from "express-serve-static-core";
 
-export class DefaultMessages {
+export interface IMessages {
 
-    daadle_title = "Structured data, for human beings.";
+    daadle_title : string;
 
-    filters = "Filters";
-    filter = "Filter";
+    filters : string;
+    filter : string;
 
-    add_item = "Add item";
-    edit_item = "Edit item";
-    view_item = "View item";
-    delete_item = "Delete item";
-    columns = "Columns";
-    cancel = "Cancel";
-    save = "Save";
-    confirm_delete = "Are you sure you want to delete this item ?";
+    add_item : string;
+    edit_item : string;
+    view_item : string;
+    delete_item : string;
+    columns : string;
+    cancel : string;
+    save : string;
+    confirm_delete : string;
 
-    type_boolean = "Yes / no";
-    type_number =  "Number";
-    type_enum =  "Options";
-    type_text =  "Text";
-    type_datetime = "Date & time";
+    type_boolean : string;
+    type_number : string;
+    type_enum : string;
+    type_text : string;
+    type_datetime : string;
 
     // Boolean filter
-    all =  "all";
-    yes = "yes";
-    no="no";
+    all : string;
+    yes : string;
+    no: string;
 
-    group_by="group by";
-    sort_by="sort by";
-    sort_asc = "ascending";
-    sort_desc = "descending";
-    empty_group_by="group by : <none>";
+    group_by: string;
+    sort_by: string;
+    sort_asc : string;
+    sort_desc : string;
+    empty_group_by: string;
 
     // Schema dialog
-    edit_attributes = "Edit attributes";
-    empty = "empty";
-    add_attribute="Add attribute";
-    attribute_name = "Attribute name";
-    attribute_type = "Type";
-    rich_edit = "Rich edit";
-    enum_values = "Options";
+    edit_attributes : string;
+    empty : string;
+    add_attribute: string;
+    attribute_name : string;
+    attribute_type : string;
+    rich_edit : string;
+    enum_values : string;
 
     // Schema validation
-    attribute_name_mandatory = "Attribute name is mandatory";
-    attribute_name_format = "Attribute names should be made of : a-Z, 0-9, _";
-    missing_type = "Type is missing";
-    duplicate_attribute_name = "Duplicate attribute name";
-    missing_enum_values = "You should specify at least two options";
-    empty_enum_value = "Option should not by empty";
+    attribute_name_mandatory : string;
+    attribute_name_format : string;
+    missing_type : string;
+    duplicate_attribute_name : string;
+    missing_enum_values : string;
+    empty_enum_value : string;
 
-    validation_errors = "Validation errors";
-    clear_filter = "Clear filter";
-    clear_filters = "Clear filters";
+    validation_errors : string;
+    clear_filter : string;
+    clear_filters : string;
 
-    form_error = "This form contains errors";
-    toggle_filters = "Toggle filters sidebar";
+    form_error : string;
+    toggle_filters : string;
 
-    min = "Min";
-    max = "Max";
+    min : string;
+    max : string;
 
-    attribute_details = "details";
+    attribute_details : string;
 
-    show_attribute = "show attribute";
-    hide_attribute = "hide attribute";
+    show_attribute : string;
+    hide_attribute : string;
 
-    view_type = "View";
-    table_view = "table";
-    card_view = "card";
+    view_type : string;
+    table_view : string;
+    card_view : string;
 
-    select_columns = "Attributes";
-    edit_color = "Edit color";
+    select_columns : string;
+    edit_color : string;
 
-    confirm_attribute_delete = "Are you sure you want to delete this attribute ?\nYou will lose data you already entered for it.";
-    add_option = "Add option";
-    option_placeholder = "Option ";
-    delete_option = "Delete option";
-    is_name = "Part of the name";
-    is_mandatory = "Mandatory";
-    is_name_help = "Attributes marked as 'name' will be part of the name of each item.\nThere should be at least one attribute marked as a name";
-    missing_name = "There should be at least one text field marked as 'name'";
+    confirm_attribute_delete : string;
+    add_option : string;
+    option_placeholder : string;
+    delete_option : string;
+    is_name : string;
+    is_mandatory : string;
+    is_name_help : string;
+    missing_name : string;
 
-    no_element = "Nothing here";
-    unknown_attribute = "Unknown attribute";
-    mandatory_attribute = "Attribute is mandatory";
+    no_element : string;
+    unknown_attribute : string;
+    mandatory_attribute : string;
 
     // System attributes
-    creation_time_attr = "Creation time";
-    update_time_attr = "Update time";
-    pos_attr = "Position";
-    id_attr = "Unique ID";
-    system_attributes = "System attributes";
-    not_found = "Nothing found here";
-    download = "Download data";
-    create_db = "Create new collection";
-    creating_db = "New collection";
-    db_name = "Name of the collection";
-    db_description = "Description";
-    fields = "Attributes";
-    name = "Name";
-    description = "Description" ;
-    default_schema = "Basic";
-    schema_templates=  "Templates of fields";
-    create_db_name_description = "Name and description";
-    create_db_fields = "Fields";
-    create_db_access = "Access";
-    next = "Next";
-    previous = "Previous";
-    finish = "Finish";
-    db_url = "Link";
+    creation_time_attr : string;
+    update_time_attr : string;
+    pos_attr : string;
+    id_attr : string;
+    system_attributes : string;
+    not_found : string;
+    download : string;
+    create_db : string;
+    creating_db : string;
+    db_name : string;
+    db_description : string;
+    fields : string;
+    name : string;
+    description : string ;
+    default_schema : string;
+    schema_templates: string;
+    create_db_name_description : string;
+    create_db_fields : string;
+    create_db_access : string;
+    next : string;
+    previous : string;
+    finish : string;
+    db_url : string;
 
     //Validators
-    should_not_be_empty = "Should not be empty";
-    slug_regexp_no_match = "Slug should only be composed of 0-9, a-z, '-' and '_' ";
-    db_not_available = "Name is already taken";
-    powered_by = "powered by";
+    should_not_be_empty : string;
+    slug_regexp_no_match : string;
+    db_not_available : string;
+    powered_by : string;
 
-    db_created = "Collection successfully created";
-    private_link = "Admin link : save it, don't share it !";
-    public_link = "Public link : share it with contributors";
-    hide = "Hide";
-    back_to_list =  "Back to the list";
+    db_created : string;
+    private_link : string;
+    public_link : string;
+    hide : string;
+    back_to_list : string;
 
 }
 
 export interface MessagesProps {
-    messages:DefaultMessages;
+    messages:IMessages;
     lang:string;
 }
 
 
 export interface Language {
     key : string,
-    flag : FlagNameValues,
-    messages : DefaultMessages;
+    flag : FlagNameValues
 }
-// FIXME avoid packaging all languages to client bundle
-export const supportedLanguages : Language[] = [
-    {key: "en-GB", flag: "united kingdom", messages:new DefaultMessages()},
-    {key: "fr-FR", flag: "france", messages:frMessages}];
 
-export function selectLanguage(req: Request) : Language {
-    let key = (req as any).language
-    return supportedLanguages.filter(lang => lang.key == key)[0];
-}
 

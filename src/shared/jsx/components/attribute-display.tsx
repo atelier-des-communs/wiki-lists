@@ -6,11 +6,11 @@ import {Button, Header} from "semantic-ui-react"
 import {AttributeDisplay, extractDisplays, serializeDisplay} from "../../views/display";
 import {goTo, parseParams} from "../../utils";
 import {attrLabel, ellipsis} from "../utils/utils";
-import {DefaultMessages} from "../../i18n/messages";
+import {IMessages} from "../../i18n/messages";
 
 interface AttributeDisplayComponent extends RouteComponentProps<{}> {
     schema: StructType;
-    messages:DefaultMessages;
+    messages:IMessages;
 }
 
 

@@ -12,8 +12,6 @@ import {restDataFetcher} from "../shared/rest/client";
 import * as cookies from "browser-cookies";
 
 
-import { hot } from 'react-hot-loader';
-
 /** Initial state of the store has been serialized for us by server side rendering */
 let marshalledContext = (window as any).__MARSHALLED_CONTEXT__ as IMarshalledContext;
 let reduxDevTools =
@@ -55,7 +53,8 @@ let context : GlobalContextProps = {
     store,
     head,
     lang: marshalledContext.lang,
-    messages:marshalledContext.messages,
+    messages:(window as any).__MESSAGES__, // Set by lang-xx.js imported in html HEAD
+    supportedLanguages:marshalledContext.supportedLanguages,
     promises:[],
     cookies : clientCookies,
     dataFetcher:restDataFetcher};
@@ -66,6 +65,4 @@ let app = <BrowserRouter>
 
 
 
-render(
-    hot(module)(app),
-    document.getElementById("app"));
+render(app, document.getElementById("app"));

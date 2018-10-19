@@ -12,14 +12,14 @@ import {deepClone} from "../../utils";
 import {ValidationError} from "../../validators/validators";
 import {CloseableDialog, ValidatingDialog} from "./common-dialog";
 import {withoutSystemAttributes} from "../../model/instances";
-import {DefaultMessages} from "../../i18n/messages";
+import {IMessages} from "../../i18n/messages";
 import {AddButtonPosition, AttributeList, UIAttribute} from "./parts/attribute-list";
 
 
 
 
 interface SchemaDialogProps extends CloseableDialog {
-    messages:DefaultMessages;
+    messages:IMessages;
     onUpdateSchema : (schema: StructType) => Promise<void>;
     schema : StructType;
     close?: () => void;

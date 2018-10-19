@@ -33,9 +33,7 @@ var client = {
     name: "prod.client",
     target: "web",
     mode:"production",
-    entry: {
-        "client.bundle": shared.APP_DIR + "/client"
-    },
+    entry:shared.client_entry,
     output: {
         filename: "[name].js",
         path: shared.CLIENT_BUILD_DIR,

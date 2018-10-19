@@ -19,13 +19,7 @@ var client = {
     name: "dev.client",
     target: "web",
     mode:"development",
-    entry: {
-        "client.bundle": [
-            // "webpack/hot/only-dev-server",
-            // "webpack-dev-server/client?http://localhost:8081",
-            shared.APP_DIR + "/client"
-        ]
-    },
+    entry: shared.client_entry,
     output: {
         filename: "[name].js",
         path: shared.CLIENT_BUILD_DIR,

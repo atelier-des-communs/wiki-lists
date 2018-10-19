@@ -6,7 +6,7 @@ import ReactQuill from 'react-quill';
 import {BASE_DB_PATH, RECORDS_PATH} from "../../api";
 import {deepClone, Map, mapMap, slug} from "../../utils";
 import {Attribute, StructType, TextType, Type} from "../../model/types";
-import {DefaultMessages} from "../../i18n/messages";
+import {IMessages} from "../../i18n/messages";
 import {AddButtonPosition, AttributeList} from "../dialogs/parts/attribute-list";
 import {Wizard, WizardStep} from "../components/wizard";
 import {checkAvailability, createDb} from "../../rest/client";
@@ -242,7 +242,7 @@ function newAttr(name:string, label:string, type: Type<any>, isName:boolean = fa
 }
 
 // Generate list of templates for schemas
-function templates(_:DefaultMessages) : SchemaTemplate[] {
+function templates(_:IMessages) : SchemaTemplate[] {
 
     let nameAttr = newAttr("name", _.name, new TextType(), true);
     let descrAttr = newAttr("description", _.description, new TextType(true));

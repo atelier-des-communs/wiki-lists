@@ -1,6 +1,6 @@
 import * as React from "react";
 import "../../../img/logo.png";
-import {MessagesProps, supportedLanguages} from "../../../i18n/messages";
+import {MessagesProps} from "../../../i18n/messages";
 import {Button, Flag} from "semantic-ui-react";
 import {LANG_COOKIE} from "../../../api";
 import {GlobalContextProps} from "../../context/global-context";
@@ -15,7 +15,7 @@ export const Header : React.SFC<GlobalContextProps> = (props) => {
     }
 
     let langSelector = <Button.Group compact size="small" floated="right" style={{margin:"1em"}}>
-        {supportedLanguages.map(lang =>
+        {props.supportedLanguages.map(lang =>
             <Button
                 key={lang.key}
                 compact

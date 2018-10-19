@@ -8,14 +8,14 @@ import {Button, Form, Header, Label, Grid} from "semantic-ui-react";
 import {SafePopup} from "../../utils/ssr-safe";
 import {SketchPicker} from "react-color";
 import {EditableText} from "../../components/editable-text";
-import {DefaultMessages} from "../../../i18n/messages";
+import {IMessages} from "../../../i18n/messages";
 
 
 const DEFAULT_ENUM_COLOR="#e8e8e8";
 
 
 interface TypeExtraProps<T extends Type<any>> {
-    messages: DefaultMessages,
+    messages: IMessages,
     type: T;
     onUpdate: (newValue: T) => void;
     errorLabel : (key:string) => JSX.Element;

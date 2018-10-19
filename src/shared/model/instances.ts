@@ -1,6 +1,6 @@
 import {DatetimeType, NumberType, StructType, TextType} from "./types";
 import {deepClone} from "../utils";
-import {DefaultMessages} from "../i18n/messages";
+import {IMessages} from "../i18n/messages";
 
 
 export interface Record {
@@ -15,7 +15,7 @@ export interface Record {
 }
 
 // Definition of system attributes, as StrucType
-export function systemType(_: DefaultMessages) {
+export function systemType(_: IMessages) {
     let res = new StructType();
     res.attributes.push({
         name: "_id",
@@ -53,7 +53,7 @@ export function systemType(_: DefaultMessages) {
 }
 
 /** Prepend system attributes to a schema */
-export function withSystemAttributes(schema:StructType, _:DefaultMessages) {
+export function withSystemAttributes(schema:StructType, _:IMessages) {
     let res = deepClone(schema);
     res.attributes = [
         ...systemType(_).attributes.filter(attr => ! attr.hidden),

@@ -1,9 +1,9 @@
 import * as React from "react"
 import {Input} from "semantic-ui-react";
-import {DefaultMessages} from "../../i18n/messages";
+import {IMessages} from "../../i18n/messages";
 
 interface EditableTextProps {
-    messages:DefaultMessages;
+    messages:IMessages;
     forceEdit?:boolean;
     as?:React.ComponentClass<any>;
     value:string;

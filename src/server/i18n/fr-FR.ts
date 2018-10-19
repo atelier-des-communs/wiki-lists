@@ -1,6 +1,6 @@
-import {DefaultMessages} from "./messages";
+import {IMessages} from "../../shared/i18n/messages";
 
-export let frMessages : DefaultMessages = {
+export let messages : IMessages = {
 
     daadle_title : "Données structurées, pour des humains.",
 
@@ -129,8 +129,7 @@ export let frMessages : DefaultMessages = {
     hide : "Cacher",
     back_to_list : "Retour à la liste"
 
-
 };
 
-
-
+// Make messages globally available
+(window as any).__MESSAGES__ = messages;

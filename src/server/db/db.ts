@@ -7,7 +7,7 @@ import {raiseExceptionIfErrors} from "../../shared/validators/validators";
 import {validateRecord} from "../../shared/validators/record-validator";
 import {DataFetcher, SECRET_COOKIE} from "../../shared/api";
 import {deepClone, isIn} from "../../shared/utils";
-import {DefaultMessages} from "../../shared/i18n/messages";
+import {IMessages} from "../../shared/i18n/messages";
 import {AccessRight} from "../../shared/access";
 import {getAccessRights} from "../utils";
 import {Request} from "express-serve-static-core"
@@ -59,7 +59,7 @@ export interface DbDefinition extends DbSettings {
     rights? : AccessRight[];
 }
 
-export async function updateSchemaDb(dbName: string, schema:StructType, _:DefaultMessages) : Promise<StructType> {
+export async function updateSchemaDb(dbName: string, schema:StructType, _:IMessages) : Promise<StructType> {
     let db = await Connection.getDb();
     let col = db.collection<DbDefinition>(DATABASES_COL);
 
@@ -84,7 +84,7 @@ export async function updateSchemaDb(dbName: string, schema:StructType, _:Defaul
     return schema;
 }
 
-export async function createDb(def: DbDefinition, _:DefaultMessages) : Promise<DbDefinition> {
+export async function createDb(def: DbDefinition, _:IMessages) : Promise<DbDefinition> {
     let db = await Connection.getDb();
     let col = db.collection<DbDefinition>(DATABASES_COL);
 
@@ -102,7 +102,7 @@ export async function createDb(def: DbDefinition, _:DefaultMessages) : Promise<D
 }
 
 
-export async function updateRecordDb(dbName: string, record : Record, _:DefaultMessages) : Promise<Record> {
+export async function updateRecordDb(dbName: string, record : Record, _:IMessages) : Promise<Record> {
     let col = await Connection.getDbCol(dbName);
     let dbDef = await getDbDef(dbName);
 
@@ -124,7 +124,7 @@ export async function updateRecordDb(dbName: string, record : Record, _:DefaultM
 }
 
 
-export async function createRecordDb(dbName: string, record : Record, _:DefaultMessages) : Promise<Record> {
+export async function createRecordDb(dbName: string, record : Record, _:IMessages) : Promise<Record> {
     let col = await Connection.getDbCol(dbName);
     let dbDef = await getDbDef(dbName);
 
