@@ -2,7 +2,8 @@ import {IMessages} from "../../shared/i18n/messages";
 
 export let messages : IMessages = {
 
-    daadle_title : "Structured data, for human beings.",
+    site_name : "Wiki-list",
+    site_title : "Structured data, for human beings.",
 
     filters : "Filters",
     filter : "Filter",

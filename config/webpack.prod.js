@@ -37,7 +37,7 @@ var client = {
     output: {
         filename: "[name].js",
         path: shared.CLIENT_BUILD_DIR,
-        publicPath: "/"
+        publicPath: "/static"
     },
     module: {
         rules: shared.flatten_loaders(client_loaders)
@@ -72,7 +72,7 @@ var server = {
     output: {
         filename: "[name].js",
         path: shared.SERVER_BUILD_DIR,
-        publicPath: "/",
+        publicPath: "/static/",
         libraryTarget: "commonjs2"
     },
     module: {

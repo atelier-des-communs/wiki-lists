@@ -10,6 +10,7 @@ import {IMessages, Language} from "../../i18n/messages";
 export interface HeadSetter {
     setTitle : (title:string) => void;
     setDescription : (description:string) => void;
+    setStatusCode: (code:number) => void;
 }
 
 export interface ICookies {

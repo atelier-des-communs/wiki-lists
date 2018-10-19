@@ -35,7 +35,7 @@ var server = {
     output: {
         filename: "[name].js",
         path: shared.SERVER_BUILD_DIR,
-        publicPath: "http://localhost:8081/",
+        publicPath: "http://localhost:8081/static/",
         libraryTarget: "commonjs2"
     },
     module: {

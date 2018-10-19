@@ -28,7 +28,7 @@ export default function initServer(dist_paths:string[]) {
     server.set('json spaces', 2);
 
     for (let path of dist_paths) {
-        server.use(express.static(path));
+        server.use('/static', express.static(path));
     }
 
     setUpRest(server);

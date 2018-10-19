@@ -5,12 +5,21 @@ import {getDbDef} from "./db/db";
 import {isIn} from "../shared/utils";
 import {Request} from "express-serve-static-core"
 
+export interface ContentWithStatus {
+    statusCode:number,
+    content:any
+}
+
+// Same as #returnPromiseWithCode, code being known in advance
+export function returnPromise(res: Express.Response, promise: Promise<{}>, code=200) {
+    returnPromiseWithCode(res, promise.then(content => ({content, statusCode:code})));
+}
 
 // Handy function returing 200 and the payload result of the promise of returning 500 on error
-export function returnPromise(res: Express.Response, promise: Promise<{}>, code:number=200) {
+export function returnPromiseWithCode(res: Express.Response, promise: Promise<ContentWithStatus>) {
     promise.then(
-        content => {
-            res.status(code).send(content)
+        result => {
+            res.status(result.statusCode).send(result.content)
         }).
     catch(
         error => {

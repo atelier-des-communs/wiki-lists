@@ -8,22 +8,25 @@ import {IState, reducers, TAction} from "../shared/redux";
 import {DbDataFetcher} from "./db/db";
 import {deepClone, toImmutable} from "../shared/utils";
 import {Express} from "express";
-import {returnPromise} from "./utils";
+import {ContentWithStatus, returnPromise, returnPromiseWithCode} from "./utils";
 import {Request, Response} from "express-serve-static-core"
 import {COOKIE_DURATION, SECRET_COOKIE, IMarshalledContext, RECORDS_ADMIN_PATH} from "../shared/api";
 import {GlobalContextProps, HeadSetter, ICookies} from "../shared/jsx/context/global-context";
 import {selectLanguage, supportedLanguages} from "./i18n/messages";
 
-const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '' : 'http://localhost:8081';
+const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '/static' : 'http://localhost:8081/static';
 
 // We render HTML several time to fetch successive depth of Async load (promises)
 // This is the max depth we allow before forcing to return the result back to client :
 // This usually means that something is wrong (conditional data fetching not well written),
 // but we prefer to return this anyway
 const MAX_RENDER_DEPTH = 4;
+
+
 class ServerSideHeaderHandler implements HeadSetter {
     title = "";
     description = "";
+    statusCode = 200;
 
     setTitle(newTitle:string){
         this.title=newTitle
@@ -33,6 +36,9 @@ class ServerSideHeaderHandler implements HeadSetter {
         this.description = description;
     }
 
+    setStatusCode(code:number) {
+        this.statusCode = code;
+    }
 }
 
 function renderHtml(head:ServerSideHeaderHandler, html:string, context:IMarshalledContext=null) {
@@ -43,7 +49,7 @@ function renderHtml(head:ServerSideHeaderHandler, html:string, context:IMarshall
 				<title>${head.title}</title>
 				<description>${head.description}</description>
 				<meta name="referrer" content="no-referrer">
-				<link rel="shortcut icon" type="image/png" href="/img/favicon.png"/>
+				<link rel="shortcut icon" type="image/png" href="/static/img/favicon.png"/>
 				<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.css" />
 				<link rel="stylesheet" href="${BUNDLE_ROOT}/client.bundle.css" />
 			</head>
@@ -59,7 +65,7 @@ function renderHtml(head:ServerSideHeaderHandler, html:string, context:IMarshall
 		</html>`
 }
 
-async function renderApp(req:Request) : Promise<string> {
+async function renderApp(req:Request) : Promise<ContentWithStatus> {
 
 
     let head = new ServerSideHeaderHandler();
@@ -93,10 +99,10 @@ async function renderApp(req:Request) : Promise<string> {
     };
 
     // Render HTML several time, until all async promises have been resolved
-    // This is the way we do async data fetching on SS
+    // This is the way we do async data fetching on SSR
     // The Redux Store will accumulate state and eventually make the component to render synchronously
     // @BlackMagic
-    let appHTML = null;
+    let appHTML : string;
     let nbRender = 0;
     do {
         let globalContext: GlobalContextProps = {
@@ -106,7 +112,7 @@ async function renderApp(req:Request) : Promise<string> {
             messages:lang.messages,
             cookies:serverCookies,
             promises: [],
-            head: new ServerSideHeaderHandler(),
+            head,
             supportedLanguages:supportedLang
         };
 
@@ -137,10 +143,14 @@ async function renderApp(req:Request) : Promise<string> {
         lang:lang.key,
         supportedLanguages:supportedLang};
 
-    return renderHtml(
+    let html = renderHtml(
         head,
         appHTML,
-        context)
+        context);
+    return {
+        content:html,
+        statusCode:head.statusCode
+    }
 }
 
 
@@ -157,7 +167,7 @@ export function setUp(server : Express) {
 
     // Any other request => use React-Routing
     server.get("/*", function(req:Request, res:Response) {
-        returnPromise(res, renderApp(req));
+        returnPromiseWithCode(res, renderApp(req));
     });
 
 }

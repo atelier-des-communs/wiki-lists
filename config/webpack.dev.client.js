@@ -23,7 +23,7 @@ var client = {
     output: {
         filename: "[name].js",
         path: shared.CLIENT_BUILD_DIR,
-        publicPath: "http://localhost:8081/"
+        publicPath: "http://localhost:8081/static/"
     },
     module: {
         rules: shared.flatten_loaders(loaders)

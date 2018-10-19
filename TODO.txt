@@ -1,25 +1,16 @@
 [BUG] /db/Non-existing crashes, does not return proper 404
 [BUG] Deleting attribute used in sorting / grouping : be resilient
 [BUG] Attribut inconnu après suppresion d'attribut, puis sauvegarde d'ancien record : il faut supprimer les champs
-X [SECU] XSS in HTml rich content
-X [BUG] Error report : Dialog (or better, in place)
+[BUG] _creationTime becomes string
 [FEAT] text: simple, multi, rich
-x [UX] add light sort icons on columns
 [UX] edit on click line
-X [INFRA] global context
 [INFRA] prefix to db name in mongo
 [INFRA] test framework
-X [UX]: filter icon in search box
-x [UX] filters on headers
-X [UX] group-by button : add label
 [FEAT] window for new db
 [UX] Daddle header
-X [FEAT] View item
-X [FEAT] Rights management
 [FEAT] pos and drag / drop
 [UX] "Create another"
 [FEAT] Import CSV
-X [FEAT] Order columns
 [FEAT] Web sockets
 [FEAT] Field types :
    - Link
@@ -35,7 +26,5 @@ X [FEAT] Order columns
 [FEAT] Alerts
 [FEAT] History
 [FEATURE] Next / previous when editing
-X [UX] Add attribute => "dropup" of possiblities
-X [Feature] Added support for mandatory attributes
-[BUG] _creationTime becomes string
+
 

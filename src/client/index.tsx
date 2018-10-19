@@ -35,8 +35,10 @@ let head : HeadSetter = {
     },
 
     // We don't care about updating description on client side
-    setDescription : (desc:string) => {}
+    setDescription : (desc:string) => {},
 
+    // Unreleveant on client side
+    setStatusCode : (code:number) => {}
 };
 
 let clientCookies : ICookies = {

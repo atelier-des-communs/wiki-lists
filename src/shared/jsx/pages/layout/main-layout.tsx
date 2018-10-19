@@ -26,7 +26,7 @@ export const MainLayout : React.SFC<GlobalContextProps> = (props) => {
                 <span
                     onClick={() => goToHome()}
                     style={{...pointerCursor, fontSize:"large"}}>
-                    {_.daadle_title}</span>
+                    {_.site_title}</span>
             </div>
 
     </Header>

@@ -9,6 +9,7 @@ import {MainLayout} from "./layout/main-layout";
 export const HomePageInternal : React.SFC<GlobalContextProps & RouteComponentProps<{}>> = (props) => {
     let _ = props.messages;
 
+    props.head.setTitle(`${_.site_name} | ${_.site_title}`);
 
     return <MainLayout {...props} >
         <Container>

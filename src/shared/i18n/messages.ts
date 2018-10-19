@@ -2,7 +2,8 @@ import {FlagNameValues} from "semantic-ui-react/dist/commonjs/elements/Flag/Flag
 
 export interface IMessages {
 
-    daadle_title : string;
+    site_name : string;
+    site_title : string;
 
     filters : string;
     filter : string;
