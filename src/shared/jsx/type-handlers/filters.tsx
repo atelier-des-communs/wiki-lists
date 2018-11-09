@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, Checkbox, Grid, Header, Icon, Input, Popup, Divider, Segment} from "semantic-ui-react";
+import {Button, Checkbox, Divider, Grid, Header, Icon, Input, Popup, Segment} from "semantic-ui-react";
 import {
     BooleanFilter,
     clearFiltersOrSearch,

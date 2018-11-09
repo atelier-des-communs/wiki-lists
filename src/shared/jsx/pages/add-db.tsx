@@ -1,6 +1,6 @@
 import * as React from "react";
 import {GlobalContextProps, withGlobalContext} from "../context/global-context";
-import {Container, Form, Input, Divider, Button, Step, Segment, Label, Icon} from "semantic-ui-react";
+import {Button, Container, Form, Input, Label} from "semantic-ui-react";
 import {RouteComponentProps} from "react-router";
 import ReactQuill from 'react-quill';
 import {BASE_DB_PATH, RECORDS_PATH} from "../../api";

@@ -3,16 +3,16 @@ import * as React from 'react';
 import {Button, Dropdown, Header} from 'semantic-ui-react'
 import {EditDialog} from "../../dialogs/edit-dialog";
 import {attributesMap, Types} from "../../../model/types";
-import {deepClone, goTo, Map, mapMap, parseParams} from "../../../utils";
+import {goTo, mapMap, parseParams} from "../../../utils";
 import {SafeClickWrapper, SafePopup} from "../../utils/ssr-safe";
 import {DispatchProp} from "react-redux";
-import {createAddItemAction, createUpdateDbAction, IState} from "../../../redux/index";
+import {createAddItemAction, IState} from "../../../redux/index";
 
 import {RouteComponentProps} from "react-router"
-import {Record, systemType, withSystemAttributes} from "../../../model/instances";
+import {Record} from "../../../model/instances";
 import {FilterSidebar, FiltersPopup, SearchComponent} from "../../type-handlers/filters";
 import {applySearchAndFilters, clearFiltersOrSearch, hasFiltersOrSearch} from "../../../views/filters";
-import {DbPathParams, DbProps, RecordsProps, RecordsPropsOnly, ReduxEventsProps} from "../../common-props";
+import {DbPathParams, RecordsProps, RecordsPropsOnly, ReduxEventsProps} from "../../common-props";
 import {ConnectedTableComponent} from "../../components/table";
 import {extractGroupBy, groupBy, updatedGroupBy} from "../../../views/group";
 import {Collapsible} from "../../utils/collapsible";

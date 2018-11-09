@@ -4,7 +4,7 @@
 import {EnumType, EnumValue, TextType, Type, Types} from "../../../model/types";
 import {deepClone, slug} from "../../../utils";
 import * as React from "react";
-import {Button, Form, Header, Label, Grid} from "semantic-ui-react";
+import {Button, Form, Grid, Header, Label} from "semantic-ui-react";
 import {SafePopup} from "../../utils/ssr-safe";
 import {SketchPicker} from "react-color";
 import {EditableText} from "../../components/editable-text";

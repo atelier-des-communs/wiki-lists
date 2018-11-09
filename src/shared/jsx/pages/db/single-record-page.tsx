@@ -1,12 +1,7 @@
 import * as React from "react";
 import {RouteComponentProps} from "react-router";
 import {Link} from "react-router-dom";
-import {
-    ReduxEventsProps,
-    SingleRecordPathParams,
-    SingleRecordProps,
-    SingleRecordPropsOnly
-} from "../../common-props";
+import {ReduxEventsProps, SingleRecordPathParams, SingleRecordProps, SingleRecordPropsOnly} from "../../common-props";
 import {SingleRecordComponent} from "../../components/single-record-component";
 import {DispatchProp} from "react-redux";
 import {IState} from "../../../redux/index";
@@ -15,7 +10,7 @@ import {recordName, recordNameStr} from "../../utils/utils";
 import {EditButtons} from "../../components/edit-button";
 import {GlobalContextProps} from "../../context/global-context";
 import {connectComponent} from "../../context/redux-helpers";
-import {createAddItemAction, createUpdateDbAction} from "../../../redux";
+import {createAddItemAction} from "../../../redux";
 import {recordsLink} from "../../../api";
 
 type SingleRecordPageProps =

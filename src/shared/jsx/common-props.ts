@@ -5,7 +5,6 @@ import {StructType} from "../model/types";
 import {Record} from "../model/instances";
 import {GlobalContextProps} from "./context/global-context";
 import {RouteComponentProps} from "react-router";
-import {AccessRight} from "../access";
 import {DbDefinition} from "../../server/db/db";
 
 

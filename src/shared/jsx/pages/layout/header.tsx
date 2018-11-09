@@ -1,6 +1,5 @@
 import * as React from "react";
 import "../../../img/logo.png";
-import {MessagesProps} from "../../../i18n/messages";
 import {Button, Flag} from "semantic-ui-react";
 import {LANG_COOKIE} from "../../../api";
 import {GlobalContextProps} from "../../context/global-context";

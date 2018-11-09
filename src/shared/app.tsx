@@ -1,11 +1,8 @@
 import * as React from "react";
 import {Provider} from 'react-redux';
-import {RecordsPage} from "./jsx/pages/db/records-page";
 import {Route, Switch} from 'react-router';
-import {RECORDS_PATH, SINGLE_RECORD_PATH, CREATE_DB_PATH} from "./api";
-import {SingleRecordPage} from "./jsx/pages/db/single-record-page";
+import {CREATE_DB_PATH, RECORDS_PATH} from "./api";
 import {GlobalContextProps, GlobalContextProvider} from "./jsx/context/global-context";
-import {MainLayout} from "./jsx/pages/layout/main-layout";
 import {NotFoundPage} from "./jsx/pages/not-found";
 import {HomePage} from "./jsx/pages/home";
 import {AddDbPage} from "./jsx/pages/add-db";

@@ -18,7 +18,7 @@ export const MainLayout : React.SFC<GlobalContextProps> = (props) => {
 
             <div style={{textAlign:"center"}}>
                 <img
-                    src="/img/logo.png"
+                    src="/static/img/logo.png"
                     width="300"
                     style={pointerCursor}
                     onClick={() => goToHome()} />

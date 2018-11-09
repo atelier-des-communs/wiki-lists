@@ -6,7 +6,7 @@ import {validateSchemaAttributes} from "../../shared/validators/schema-validator
 import {raiseExceptionIfErrors} from "../../shared/validators/validators";
 import {validateRecord} from "../../shared/validators/record-validator";
 import {DataFetcher, SECRET_COOKIE} from "../../shared/api";
-import {deepClone, isIn} from "../../shared/utils";
+import {isIn} from "../../shared/utils";
 import {IMessages} from "../../shared/i18n/messages";
 import {AccessRight} from "../../shared/access";
 import {getAccessRights} from "../utils";

@@ -1,9 +1,8 @@
 // HTML
 import {IState} from "./redux/index";
-import {AccessRight} from "./access";
 import {Record} from "./model/instances";
 import {DbDefinition} from "../server/db/db";
-import {IMessages, Language} from "./i18n/messages";
+import {Language} from "./i18n/messages";
 
 export const BASE_DB_PATH = "/db/";
 export const CREATE_DB_PATH = "/create-db";

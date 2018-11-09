@@ -10,7 +10,6 @@ import {supportedLanguages} from "./i18n/messages";
 import {LANG_COOKIE} from "../shared/api";
 
 
-
 export default function initServer(dist_paths:string[]) {
 
     var server = express();

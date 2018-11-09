@@ -1,6 +1,6 @@
 /* Display several records with Type : table */
 import {extractSort, ISort, serializeSort} from "../../views/sort";
-import {goTo, goToUrl, parseParams} from "../../utils";
+import {goTo, parseParams} from "../../utils";
 import {Link} from 'react-router-dom'
 import {RouteComponentProps, withRouter} from "react-router"
 import {DbPathParams, RecordsProps, ReduxEventsProps} from "../common-props";
@@ -9,7 +9,6 @@ import {Button, Table} from 'semantic-ui-react'
 import {SafePopup} from "../utils/ssr-safe";
 import {ValueHandler} from "../type-handlers/editors";
 import {extractFilters} from "../../views/filters";
-import {singleFilter} from "../type-handlers/filters";
 import {AttributeDisplayComponent} from "./attribute-display";
 import {attrLabel, ellipsis, filterAttribute} from "../utils/utils";
 import {EditButtons} from "./edit-button";

@@ -1,16 +1,6 @@
 import * as React from "react";
 import {Attribute, newType, StructType, Type, Types} from "../../../model/types";
-import {
-    Button,
-    Checkbox,
-    Dropdown,
-    Grid,
-    Header,
-    Icon,
-    Label,
-    Segment,
-    SegmentGroup
-} from "semantic-ui-react";
+import {Button, Checkbox, Dropdown, Grid, Header, Icon, Label, Segment, SegmentGroup} from "semantic-ui-react";
 import {deepClone, slug} from "../../../utils";
 import {EditableText} from "../../components/editable-text";
 import {typeExtraSwitch} from "../parts/attribute-extra-components";

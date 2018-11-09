@@ -2,28 +2,20 @@
 // Displays a common header (title and description) and handle route switching to other pages
 
 import * as React from 'react';
-import {DbPathParams, DbProps, RecordsProps, ReduxEventsProps} from "../../common-props";
+import {DbPathParams, DbProps, ReduxEventsProps} from "../../common-props";
 import {GlobalContextProps} from "../../context/global-context";
-import {RouteComponentProps} from "react-router"
-import {Map, mapMap, parseParams} from "../../../utils";
-import {createAddItemAction, createUpdateDbAction, IState} from "../../../redux";
+import {Route, RouteComponentProps, Switch} from "react-router"
+import {createUpdateDbAction, IState} from "../../../redux";
 import {withSystemAttributes} from "../../../model/instances";
 import {connectComponent} from "../../context/redux-helpers";
 import {DispatchProp} from "react-redux";
-import {Route, Switch} from 'react-router';
-import {
-    COOKIE_PREFIX,
-    RECORDS_ADMIN_PATH,
-    RECORDS_PATH,
-    recordsLink,
-    SINGLE_RECORD_PATH
-} from "../../../api";
+import {COOKIE_PREFIX, RECORDS_ADMIN_PATH, RECORDS_PATH, recordsLink, SINGLE_RECORD_PATH} from "../../../api";
 import {RecordsPage} from "./records-page";
 import {SingleRecordPage} from "./single-record-page";
 import {Header} from "../layout/header";
 import {Link} from 'react-router-dom';
 import "../../../img/logo.png";
-import {Label, Message, Input, Button} from "semantic-ui-react";
+import {Button, Message} from "semantic-ui-react";
 import {AccessRight, hasRight} from "../../../access";
 
 type DbPageProps =

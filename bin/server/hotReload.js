@@ -14,6 +14,7 @@ var options = {
 new WebpackDevServer(webpack(configClient), {
 	hot: true,
 	historyApiFallback: true,
+	publicPath:"/static",
 	stats: options,
 	headers: {
 		"Access-Control-Allow-Origin": "*",

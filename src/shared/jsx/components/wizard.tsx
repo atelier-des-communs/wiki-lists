@@ -1,8 +1,6 @@
 import * as React from "react";
-import {enumLabel} from "../utils/utils";
 import {GlobalContextProps} from "../context/global-context";
-import {Segment, Button, Step} from "semantic-ui-react";
-import {ValidationError} from "../../validators/validators";
+import {Button, Segment, Step} from "semantic-ui-react";
 
 
 export interface WizardStepProps {

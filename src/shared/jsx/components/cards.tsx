@@ -1,7 +1,7 @@
 /* Display type : table */
 import {RouteComponentProps} from "react-router"
 import {Link} from 'react-router-dom'
-import {Card, Grid} from "semantic-ui-react";
+import {Card} from "semantic-ui-react";
 import {DbPathParams, RecordsProps, ReduxEventsProps} from "../common-props";
 import * as React from "react";
 import {EditButtons} from "./edit-button";
@@ -9,8 +9,6 @@ import {SingleRecordComponent} from "./single-record-component";
 import {singleRecordLink} from "../../api";
 import {GlobalContextProps} from "../context/global-context";
 import {recordName} from "../utils/utils";
-import {goToUrl} from "../../utils";
-import {FilterSidebar, FiltersPopup} from "../type-handlers/filters";
 
 type CardsProps = RecordsProps & ReduxEventsProps & RouteComponentProps<DbPathParams> & GlobalContextProps;
 

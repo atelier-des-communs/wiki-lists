@@ -1,7 +1,9 @@
 import Axios, {AxiosPromise} from "axios";
 import {Record} from "../model/instances";
 import {
-    ADD_ITEM_URL, CHECK_DB_NAME, CREATE_DB_URL,
+    ADD_ITEM_URL,
+    CHECK_DB_NAME,
+    CREATE_DB_URL,
     DataFetcher,
     DELETE_ITEM_URL,
     GET_DB_DEFINITION_URL,

@@ -6,7 +6,7 @@ import {Record, withoutSystemAttributes} from "../../model/instances";
 import {attrLabel, typeIsWide} from "../utils/utils";
 import {CloseableDialog, ValidatingDialog} from "./common-dialog";
 import {ValidationError} from "../../validators/validators";
-import {IMessages, MessagesProps} from "../../i18n/messages";
+import {MessagesProps} from "../../i18n/messages";
 
 
 interface EditDialogProps extends CloseableDialog, MessagesProps{
