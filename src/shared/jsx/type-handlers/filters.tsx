@@ -21,6 +21,7 @@ import {SafePopup} from "../utils/ssr-safe";
 import {attrLabel, ellipsis} from "../utils/utils";
 import {ValueHandler} from "./editors";
 import {MessagesProps} from "../../i18n/messages";
+import {ResponsiveButton} from "../components/responsive";
 
 
 const DEBOUNCE_DELAY= 1000;
@@ -293,11 +294,10 @@ export const FiltersPopup : React.SFC<IFiltersComponentProps & RouteComponentPro
 
     return <Button.Group>
     <SafePopup position="bottom center" className="big-popup" style={bigPopupStyle} trigger={
-            <Button icon labelPosition="left" {...hasFilters && {attached:"left"}}>
-                <Icon name="filter" />
-                {_.filters}
-            </Button>
-
+            <ResponsiveButton
+                icon="filter"
+                content={_.filters}
+                {...hasFilters && {attached:"left"}} />
         }>
         <Popup.Content>
             <Header as={"h3"}>{_.filters}</Header>

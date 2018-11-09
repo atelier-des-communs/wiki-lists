@@ -68,6 +68,7 @@ export let messages : IMessages = {
     show_attribute : "Afficher l'attribut",
     hide_attribute : "Cacher l'attribut",
 
+    selection: "Sélection",
     view_type : "Vue",
     table_view : "tableau",
     card_view : "grille",

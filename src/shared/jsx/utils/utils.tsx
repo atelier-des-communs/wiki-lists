@@ -82,3 +82,14 @@ export function recordName(schema:StructType, record:Record) {
 export function recordNameStr(schema:StructType, record:Record) {
     return recordNames(schema, record).join(" ");
 }
+
+export function anyToBool(val: any) {
+    if (val == null) {
+        return false;
+    }
+    if (typeof val == "boolean") {
+        return val;
+    }
+    if (val == "false" || val == 0) return false;
+    return true;
+}

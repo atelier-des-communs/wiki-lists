@@ -72,7 +72,7 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
                 <div style={{textAlign: "right"}}>
                     {_.powered_by}
                     <img
-                        src="/img/logo.png"
+                        src="/static/img/logo.png"
                         width="100"
                         style={{cursor: 'pointer', verticalAlign: "middle"}}
                         onClick={() => goToHome()}/>

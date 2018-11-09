@@ -1,12 +1,11 @@
 /* Main page displaying a single collection, with sorting, filtering, grouping */
 import * as React from 'react';
-import {Button, Dropdown, Header} from 'semantic-ui-react'
+import {Button, Dropdown, Header, Responsive} from 'semantic-ui-react'
 import {EditDialog} from "../../dialogs/edit-dialog";
 import {attributesMap, Types} from "../../../model/types";
 import {goTo, mapMap, parseParams} from "../../../utils";
 import {SafeClickWrapper, SafePopup} from "../../utils/ssr-safe";
 import {DispatchProp} from "react-redux";
-import {createAddItemAction, IState} from "../../../redux/index";
 
 import {RouteComponentProps} from "react-router"
 import {Record} from "../../../model/instances";
@@ -27,7 +26,10 @@ import {AttributeDisplayComponent} from "../../components/attribute-display";
 import {GlobalContextProps} from "../../context/global-context";
 import {AccessRight, hasRight} from "../../../access";
 import {attrLabel} from "../../utils/utils";
+import {createAddItemAction, IState} from "../../../redux";
 import {connectComponent} from "../../context/redux-helpers";
+import {ResponsiveButton} from "../../components/responsive";
+import {safeStorage} from "../../utils/storage";
 
 
 type RecordsPageProps =
@@ -74,14 +76,15 @@ function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: Vie
         </div>
     };
 
+    // Grouping activated ? => display sections
     if (groupAttr) {
 
         let attr = attrMap[groupAttr];
         let groups = groupBy(props.records, attr);
         let sections = groups.map(group =>
-            <div style={{marginTop:"1em", cursor:"pointer"}}>
+            <div style={{marginTop:"1em"}}>
                 <Collapsible trigger={open =>
-                    <div style={{marginTop:"1em"}} >
+                    <div style={{marginTop:"1em", display:"table-cell", cursor:"pointer"}} >
                     <Button circular compact size="small" icon={open ? "chevron down" : "chevron right"} />
                     <Header
                         as="span"
@@ -122,6 +125,7 @@ function addItemButton(props: RecordsPageProps) {
     </SafeClickWrapper>
 }
 
+const SIDEBAR_LS_KEY = "filtersSidebar";
 
 class RecordsPageInternal extends React.Component<RecordsPageProps> {
 
@@ -131,11 +135,13 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
 
     constructor(props:RecordsPageProps) {
         super(props);
-        this.state = {filtersSidebar:true};
+        this.state = {filtersSidebar:safeStorage.getBool(SIDEBAR_LS_KEY, true)};
     }
 
     toggleFilterSidebar() {
-       this.setState({filtersSidebar:!this.state.filtersSidebar});
+        let newVal = !this.state.filtersSidebar;
+        safeStorage.set(SIDEBAR_LS_KEY, newVal);
+        this.setState({filtersSidebar:newVal});
     }
 
     groupByButton(groupAttr:string) {
@@ -158,7 +164,8 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
         return <Dropdown
             inline title={_.group_by}
             button className="icon" icon="plus square outline"
-            labeled placeholder={_.group_by}
+            labeled
+            placeholder={_.group_by}
             options={groupOptions}
             value={groupAttr}
             onChange={(e, update) => goTo(props, updatedGroupBy(update.value as string))} />
@@ -190,9 +197,9 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
 
         let sortByDropdown = <SortPopup {...props} />
 
-        let UpdateSchemaButton = hasRight(props, AccessRight.ADMIN) &&
+        let updateSchemaButton = hasRight(props, AccessRight.ADMIN) &&
             <SafeClickWrapper trigger={
-            <Button icon="configure"
+            <ResponsiveButton icon="configure"
                     color="teal"
                     content={_.edit_attributes} />} >
                 <SchemaDialog
@@ -219,7 +226,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
 
 
         let attributeDisplayButton = <SafePopup position="bottom left" trigger={
-            <Button
+            <ResponsiveButton
                 icon="unhide"
                 title={_.select_columns}
                 content={_.select_columns} />} >
@@ -233,6 +240,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
         props.head.setTitle(props.match.params.db_name);
 
         let sideBarButton = (floated:"left" | "right" | null) =><Button
+            className="large-screen-only"
             compact
             size="mini"
             floated={floated}
@@ -242,38 +250,54 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
 
         return <>
 
-            <div style={{float:"right"}} className="no-print" >
+            <div style={{float: "right"}} className="no-print">
                 <SearchComponent {...props} />
-                { DownloadButton }
+                {DownloadButton}
             </div>
 
             <div className="no-print">
-                { addItemButton(this.props) }
-                { UpdateSchemaButton }
+                {updateSchemaButton}
             </div>
 
-            <div className="no-print">
-                { viewTypeButtons } &nbsp;
-                { sortByDropdown }
-                { this.groupByButton(groupAttr) }
-                { <FiltersPopup {...props} schema={this.props.schema} /> }
-                &nbsp;
-                { attributeDisplayButton }
+            <div className="no-print" style={{marginBottom: "0.2em", marginTop: "0.2em"}}>
+                <span className="inline-label mobile hidden">
+                    {_.view_type}
+                </span>
+                {viewTypeButtons}
             </div>
-
             <div>
+                <span className="inline-label mobile hidden">
+                    {_.selection}
+                </span>
+                {sortByDropdown}
+                {this.groupByButton(groupAttr)}
+                {<FiltersPopup {...props} schema={this.props.schema}/>}
+                &nbsp;
+                {attributeDisplayButton}
+            </div>
+
+            <div style={{display:"flex"}}>
                 {this.state.filtersSidebar &&
-                    <div className="no-print" style={{display: "table-cell", paddingTop: "1em", paddingRight:"1em"}}>
-                        {sideBarButton("right")}
-                        <FilterSidebar {...props} />
-                    </div>
+                <div className="no-print large-screen-only"
+                     style={{
+                         paddingTop: "1em",
+                         paddingRight: "1em"}}>
+                    {sideBarButton("right")}
+                    <FilterSidebar {...props} />
+                </div>
                 }
-                <div style={{display:"table-cell", paddingTop: "1em"}} >
-                    {!this.state.filtersSidebar && sideBarButton(null)}
-                    { groupedRecords(groupAttr, props, viewType) }
+                <div style={{
+                    flexGrow:1,
+                    paddingTop: "1em"}}>
+
+                    <div className="no-print">
+                        {!this.state.filtersSidebar && sideBarButton(null)}
+                        {addItemButton(this.props)}
+                    </div>
+                    {groupedRecords(groupAttr, props, viewType)}
                 </div>
             </div>
-        </>
+        </>;
 
     }
 }

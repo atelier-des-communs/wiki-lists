@@ -3,12 +3,13 @@
 [BUG] Deleting attribute used in sorting / grouping : be resilient
 [BUG] Attribut inconnu après suppresion d'attribut, puis sauvegarde d'ancien record : il faut supprimer les champs
 [BUG] _creationTime becomes string
+[BUG] Ensure unicity for new records
+[BUG] Sort should maintain sorting of "groups"
+[BUG] At time of creation of DB, when no nmae if provided, error is not shown properly
 [FEAT] text: simple, multi, rich
 [UX] edit on click line
 [INFRA] prefix to db name in mongo
 [INFRA] test framework
-[FEAT] window for new db
-[UX] Daddle header
 [FEAT] pos and drag / drop
 [UX] "Create another"
 [FEAT] Import CSV

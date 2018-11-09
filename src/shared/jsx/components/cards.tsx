@@ -1,7 +1,7 @@
 /* Display type : table */
 import {RouteComponentProps} from "react-router"
 import {Link} from 'react-router-dom'
-import {Card} from "semantic-ui-react";
+import {Card, Grid} from "semantic-ui-react";
 import {DbPathParams, RecordsProps, ReduxEventsProps} from "../common-props";
 import * as React from "react";
 import {EditButtons} from "./edit-button";
@@ -18,11 +18,11 @@ export const CardsComponent : React.SFC<CardsProps> = (props) => {
         return singleRecordLink(props.match.params.db_name, id);
     };
 
-    return <Card.Group >
+    return <Grid fluid stackable >
 
         {props.records.map(record =>
-            <Card className="hoverable">
-
+            <Grid.Column mobile={16} tablet={8} computer={4}>
+                <Card fluid className="hoverable">
                     <Card.Content  >
                         <Card.Header >
 
@@ -39,7 +39,7 @@ export const CardsComponent : React.SFC<CardsProps> = (props) => {
                             {...props}
                             record={record} />
                     </Card.Content>
-
-            </Card>)}
-    </Card.Group>
+                </Card>
+            </Grid.Column>)}
+    </Grid>
 };
