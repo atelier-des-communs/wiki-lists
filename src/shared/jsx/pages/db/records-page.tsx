@@ -42,7 +42,8 @@ type RecordsPageProps =
 
 function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: ViewType) {
 
-    let attrMap = attributesMap(props.schema);
+    let db = props.db;
+    let attrMap = attributesMap(db.schema);
     let _ = props.messages;
 
     // Switch on type of view
@@ -62,9 +63,9 @@ function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: Vie
     let nothingHere = <div style={{textAlign:"center"}}>
         <Header>{_.no_element}</Header>
         {addItemButton(props)}
-        {hasFiltersOrSearch(props.schema, props) &&
+        {hasFiltersOrSearch(db.schema, props) &&
         <Button icon="delete"
-                onClick={() => clearFiltersOrSearch(props.schema, props)} >
+                onClick={() => clearFiltersOrSearch(db.schema, props)} >
             {_.clear_filters}
         </Button>}
     </div>
@@ -119,7 +120,7 @@ function addItemButton(props: RecordsPageProps) {
         <EditDialog
             {...props}
             record={{}}
-            schema={props.schema}
+            schema={props.db.schema}
             create={true}
             onUpdate={props.onCreate}  />
     </SafeClickWrapper>
@@ -146,9 +147,10 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
 
     groupByButton(groupAttr:string) {
         let props = this.props;
+        let db = props.db;
         let _ = props.messages;
 
-        let groupOptions = props.schema.attributes
+        let groupOptions = db.schema.attributes
 
         // FIXME find declarative way to handle types that can support grouping
             .filter(attr => attr.type.tag == Types.ENUM  || attr.type.tag ==  Types.BOOLEAN)
@@ -173,6 +175,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
 
     render() {
         let props = this.props;
+        let db = props.db;
         let dbName = props.match.params.db_name;
         let _ = props.messages;
 
@@ -195,7 +198,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
             </SafePopup>;
 
 
-        let sortByDropdown = <SortPopup {...props} />
+        let sortByDropdown = <SortPopup {...props} schema={db.schema} />
 
         let updateSchemaButton = hasRight(props, AccessRight.ADMIN) &&
             <SafeClickWrapper trigger={
@@ -205,7 +208,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
                 <SchemaDialog
                     {...props}
                     onUpdateSchema={props.onUpdateSchema}
-                    schema={props.schema}
+                    schema={db.schema}
             />
         </SafeClickWrapper>;
 
@@ -232,12 +235,13 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
                 content={_.select_columns} />} >
             <AttributeDisplayComponent
                 {...props}
-                schema = {props.schema}
+                schema = {db.schema}
             />
         </SafePopup>
 
         // Set html HEAD
-        props.head.setTitle(props.match.params.db_name);
+        props.head.setTitle(db.label);
+        props.head.setDescription(db.description);
 
         let sideBarButton = (floated:"left" | "right" | null) =><Button
             className="large-screen-only"
@@ -251,7 +255,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
         return <>
 
             <div style={{float: "right"}} className="no-print">
-                <SearchComponent {...props} />
+                <SearchComponent {...props} schema={db.schema} />
                 {DownloadButton}
             </div>
 
@@ -271,7 +275,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
                 </span>
                 {sortByDropdown}
                 {this.groupByButton(groupAttr)}
-                {<FiltersPopup {...props} schema={this.props.schema}/>}
+                {<FiltersPopup {...props} schema={db.schema}/>}
                 &nbsp;
                 {attributeDisplayButton}
             </div>
@@ -283,7 +287,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
                          paddingTop: "1em",
                          paddingRight: "1em"}}>
                     {sideBarButton("right")}
-                    <FilterSidebar {...props} />
+                    <FilterSidebar {...props} schema={db.schema} />
                 </div>
                 }
                 <div style={{

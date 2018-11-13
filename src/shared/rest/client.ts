@@ -14,8 +14,9 @@ import {
     VALIDATION_STATUS_CODE
 } from "../api";
 import {StructType} from "../model/types";
-import {ValidationException} from "../validators/validators";
+import {ValidationError, ValidationException} from "../validators/validators";
 import {DbDefinition} from "../../server/db/db";
+import {empty} from "../utils";
 
 let axios = Axios.create();
 
@@ -26,10 +27,11 @@ function unwrapAxiosResponse<T>(promise : AxiosPromise<T>) : Promise<T> {
     return promise.then((response: any) => {
         return response.data;
     }).catch(error => {
-       console.log("Sever error happened", error);
+       console.info("Server error happened", error);
 
        // In case of validation error, wrap the errors into proper ValidationException
        if (error.response && error.response.status == VALIDATION_STATUS_CODE) {
+           console.info("Transformed to validation exception", error.response.data);
            throw new ValidationException(error.response.data);
        } else {
            alert("A network error happened : " + error);
@@ -78,6 +80,7 @@ export async function deleteItem(dbName: string, id : string) : Promise<boolean>
 }
 
 export async function checkAvailability(dbName: string) : Promise<boolean> {
+    if (empty(dbName)) return true;
     return await unwrapAxiosResponse(axios.get(
         CHECK_DB_NAME.replace(":db_name", dbName)));
 }
@@ -102,6 +105,19 @@ export let restDataFetcher : DataFetcher = {
             GET_ITEMS_URL
                 .replace(":db_name", dbName)));
     }
+}
+
+// For simple action transform the promise into a Promise of either null (success) or list of validation errors
+export function toPromiseWithErrors(promise : Promise<{}>) : Promise<null | ValidationError[]> {
+    return promise
+        .then(res => null)
+        .catch(e => {
+            if (e.validationErrors) {
+                return e.validationErrors;
+            } else {
+                // Rethrow
+                throw e;
+            }});
 }
 
 

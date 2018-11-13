@@ -7,6 +7,7 @@ import {typeExtraSwitch} from "../parts/attribute-extra-components";
 import {Info} from "../../utils/utils";
 import {withoutSystemAttributes} from "../../../model/instances";
 import {IMessages} from "../../../i18n/messages";
+import {ErrorPO} from "../../utils/validation-errors";
 
 
 // Add some UI / Client only properties to the Attribute type
@@ -23,11 +24,7 @@ interface AttributeListProps {
     messages:IMessages;
     onUpdateAttributes : (attributes: UIAttribute[]) => void;
     schema : StructType;
-    addButtonPosition: AddButtonPosition,
-
-    // Should extract validation errors and format it properly
-    errorLabel : (ket : string) => JSX.Element;
-
+    addButtonPosition: AddButtonPosition
 }
 
 export class AttributeList extends React.Component<AttributeListProps> {
@@ -141,15 +138,12 @@ export class AttributeList extends React.Component<AttributeListProps> {
         // Loop on schema attributes
         let attributes = this.state.attributes.map((attr, index) => {
 
-            // Specific error label generator, for this attribute
-            let errorLabel = (key:string) =>  this.props.errorLabel(`${index}.${key}`);
-
             // Extra parameters for this type
             let typeExtra = typeExtraSwitch({
                 messages:this.props.messages,
                 type: attr.type,
-                onUpdate: (type) => this.updateType(index, type),
-                errorLabel : (key) => errorLabel(`type.${key}`)});
+                errorPrefix: `${index}.type.`,
+                onUpdate: (type) => this.updateType(index, type)});
 
 
 
@@ -202,8 +196,9 @@ export class AttributeList extends React.Component<AttributeListProps> {
                                 {attr.isName &&
                                     <Label
                                         basic size={"tiny"} style={{float:"right"}} >{_.name}</Label>}
-                                {errorLabel("name")}
-                                {errorLabel("label")}
+
+                                        <ErrorPO attributeKey={`${index}.name`}  />
+                                        <ErrorPO attributeKey={`${index}.label`} />
 
                             </Header>
                         </Grid.Column>

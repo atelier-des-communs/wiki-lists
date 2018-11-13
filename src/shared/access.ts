@@ -7,7 +7,7 @@ export enum AccessRight {
 
 
 export function hasRight(props: DbProps, right:AccessRight) {
-    return isIn(props.rights, right);
+    return isIn(props.db.rights, right);
 }
 
 

@@ -39,7 +39,7 @@ export const EditButtons: React.SFC<EditButtonsProps> = (props) => {
             <EditDialog
                 {...props}
                 record={props.record}
-                schema={props.schema}
+                schema={props.db.schema}
                 create={false}
                 onUpdate={props.onUpdate}/>
         </SafeClickWrapper>}

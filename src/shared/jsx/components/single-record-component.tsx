@@ -12,11 +12,11 @@ const NAME_ELLIPSIS = 20;
 
 export const SingleRecordComponent : React.SFC<SingleRecordComponentProps> = (props) => {
 
-    // filter out attributes that are part of the name (already shown)
-    let filterAttributeFunc = (attr:Attribute) => filterAttribute(props, props.schema)(attr) && !attr.isName;
+    // Filter out attributes that are part of the name (already shown)
+    let filterAttributeFunc = (attr:Attribute) => filterAttribute(props, props.db.schema)(attr) && !attr.isName;
 
     return <>
-        {props.schema.attributes
+        {props.db.schema.attributes
             .filter(filterAttributeFunc).map((attr : Attribute) =>
                 <div style={{marginBottom: "0.5em"}}>
                     <b>{

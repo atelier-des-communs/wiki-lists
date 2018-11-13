@@ -1,11 +1,19 @@
+/** Generic Wizard component */
 import * as React from "react";
 import {GlobalContextProps} from "../context/global-context";
 import {Button, Segment, Step} from "semantic-ui-react";
+import {fireValidators, RemainingErrorsPO, replaceErrorsPO} from "../utils/validation-errors";
+import {ValidationError, ValidationException} from "../../validators/validators";
+import {Map} from "../../utils";
 
 
 export interface WizardStepProps {
     title: string;
-    validator : () => Promise<boolean>;
+    validator? : () => Promise<ValidationError[] | null>;
+}
+
+export interface WizardProps {
+    onValidate : () => void; // Called upon sucessfull validation of last step
 }
 
 export const WizardStep : React.SFC<WizardStepProps> = (props) => {
@@ -14,15 +22,23 @@ export const WizardStep : React.SFC<WizardStepProps> = (props) => {
         </>;
 }
 
-export class Wizard extends React.Component<GlobalContextProps> {
+export class Wizard extends React.Component<GlobalContextProps & WizardProps> {
 
-    state : {step: number};
+    state : {
+        step: number,
+        errors:  Map<ValidationError[]> // We separate validation errors per step
+    };
     wizardSteps : React.Component<WizardStepProps>[];
 
-    constructor(props:GlobalContextProps) {
+    constructor(props:GlobalContextProps & WizardProps) {
         super(props);
-        this.state = {step: 0};
+        this.state = {step: 0, errors:{}};
         this.wizardSteps = React.Children.toArray(this.props.children) as any;
+
+        // Init map of errors
+        for (var i=0; i < this.wizardSteps.length; i++) {
+            this.state.errors[i] = [];
+        }
     }
 
     previousStep() {
@@ -30,10 +46,45 @@ export class Wizard extends React.Component<GlobalContextProps> {
     }
 
     nextStep() {
-        let validator = this.wizardSteps[this.state.step].props.validator();
+
+        // Empty errors for this step
+        this.state.errors[this.state.step] = [];
+
+        // Gather validators on error placeholders
+        let stepEl = this.wizardSteps[this.state.step];
+        let errors =  this.state.errors[this.state.step];
+        let validator = fireValidators(stepEl as any, errors);
+
         validator.then((res:boolean) => {
-            if (res && this.state.step < this.wizardSteps.length - 1) {
-                this.setState({step:this.state.step+1});
+
+            if (!res) return false;
+
+            // Chain main validator on the step itself
+            if (stepEl.props.validator) {
+                return stepEl.props.validator().then(res => {
+                    if (res == null) {
+                        return true;
+                    } else {
+                        errors.push(...res);
+                        return false;
+                    }
+                });
+            } else {
+                return true;
+            }
+
+        }).then((res:boolean) => {
+
+            // Force redraw / update of errors
+            this.setState({errors:this.state.errors});
+
+            // Show next step or call onValidate
+            if (res) {
+                if (this.state.step < this.wizardSteps.length - 1) {
+                    this.setState({step: this.state.step + 1});
+                } else {
+                    this.props.onValidate();
+                }
             }
         });
     }
@@ -41,7 +92,7 @@ export class Wizard extends React.Component<GlobalContextProps> {
     render() {
         let _ = this.props.messages;
 
-        // Shold be WizardStep
+        // Loop on steps, build the header
         let steps = React.Children.map(this.props.children, (child, index) =>
             <Step active={this.state.step == index} >
             <Step.Content >
@@ -49,17 +100,19 @@ export class Wizard extends React.Component<GlobalContextProps> {
             </Step.Content>
         </Step>);
 
-        let content = React.Children.map(this.props.children, (child, index) => index== this.state.step ? child : null);
+        let currentStep = React.Children.map(this.props.children, (child, index) => index== this.state.step ? child : null);
 
 
         let lastStep = this.state.step == this.wizardSteps.length  - 1;
 
-        return <div>
+        let res = <div>
             <Step.Group attached="top" ordered>
                 {steps}
             </Step.Group>
             <Segment attached="bottom">
-                {content}
+                {currentStep}
+
+                <RemainingErrorsPO />
 
                 <div style={{textAlign:"right"}}>
 
@@ -81,6 +134,8 @@ export class Wizard extends React.Component<GlobalContextProps> {
             </Segment>
 
         </div>;
+
+        return replaceErrorsPO(res, this.state.errors[this.state.step], _);
     }
 
 }

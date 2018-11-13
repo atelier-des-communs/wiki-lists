@@ -13,6 +13,7 @@ import {Request, Response} from "express-serve-static-core"
 import {COOKIE_DURATION, IMarshalledContext, RECORDS_ADMIN_PATH, SECRET_COOKIE} from "../shared/api";
 import {GlobalContextProps, HeadSetter, ICookies} from "../shared/jsx/context/global-context";
 import {selectLanguage, supportedLanguages} from "./i18n/messages";
+import * as escapeHtml from "escape-html";
 
 const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '/static' : 'http://localhost:8081/static';
 
@@ -42,12 +43,20 @@ class ServerSideHeaderHandler implements HeadSetter {
 }
 
 function renderHtml(head:ServerSideHeaderHandler, html:string, context:IMarshalledContext=null) {
+
+    let title = escapeHtml(head.title);
+    let description = escapeHtml(head.description);
+
+    console.log(`Title : ${head.title} ${title} decr: ${description}`);
+
     return `<!DOCTYPE html>
 		<html>
 			<head>
 				<meta charset="UTF-8">
-				<title>${head.title}</title>
-				<description>${head.description}</description>
+				
+				<title>${title}</title>
+				<meta name="description" content="${description}" />
+				
 				<meta name="referrer" content="no-referrer">
 				<link rel="shortcut icon" type="image/png" href="/static/img/favicon.png"/>
 				<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.css" />

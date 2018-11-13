@@ -9,6 +9,7 @@ import {SafePopup} from "../../utils/ssr-safe";
 import {SketchPicker} from "react-color";
 import {EditableText} from "../../components/editable-text";
 import {IMessages} from "../../../i18n/messages";
+import {ErrorPO} from "../../utils/validation-errors";
 
 
 const DEFAULT_ENUM_COLOR="#e8e8e8";
@@ -18,7 +19,7 @@ interface TypeExtraProps<T extends Type<any>> {
     messages: IMessages,
     type: T;
     onUpdate: (newValue: T) => void;
-    errorLabel : (key:string) => JSX.Element;
+    errorPrefix ?: string;
 }
 
 // Generic type for an extra attribute component
@@ -41,6 +42,7 @@ const TextExtra: TypeExtraComponent<TextType> = (props) => {
 const EnumExtra: TypeExtraComponent<EnumType> = (props) => {
 
     let _ = props.messages;
+    let errorPrefix = props.errorPrefix || "";
 
     // Local copy of type
     let type = deepClone(props.type);
@@ -77,7 +79,7 @@ const EnumExtra: TypeExtraComponent<EnumType> = (props) => {
 
         <Header as="h4" >
             {_.enum_values}
-            {props.errorLabel("values")}
+            <ErrorPO attributeKey={`${errorPrefix}values`} />
         </Header>
 
         { /* Loop on enum values */
@@ -115,8 +117,9 @@ const EnumExtra: TypeExtraComponent<EnumType> = (props) => {
                 className="super-shy"
                 title={_.delete_option}
                 onClick={() => deleteOption(index)}/>
-            {props.errorLabel(`values.${index}.value`)}
-            {props.errorLabel(`values.${index}.label`)}
+
+            <ErrorPO attributeKey={`${errorPrefix}values.${index}.value`} />
+            <ErrorPO attributeKey={`${errorPrefix}values.${index}.label`} />
             <br/>
         </div>
     })}

@@ -17,6 +17,7 @@ import {Link} from 'react-router-dom';
 import "../../../img/logo.png";
 import {Button, Message} from "semantic-ui-react";
 import {AccessRight, hasRight} from "../../../access";
+import {deepClone} from "../../../utils";
 
 type DbPageProps =
     GlobalContextProps &
@@ -38,6 +39,7 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
     render() {
         let props = this.props;
         let _ = props.messages;
+        let db = props.db
 
         // Pass down schema and rights to sub components
         let singleRecordPage = (otherProps: any) => <SingleRecordPage {...props} {...otherProps} />
@@ -53,7 +55,7 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
         let private_link = base_url +
             RECORDS_ADMIN_PATH.
                 replace(":db_name", props.match.params.db_name).
-                replace(":db_pass", props.secret)
+                replace(":db_pass", db.secret)
 
         let public_link = base_url +
             RECORDS_PATH.
@@ -64,11 +66,12 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
         return <>
             <Header {...props} >
                 <h1>
-                    <Link to={recordsLink(props.name)}>
-                        {props.label}
+                    <Link to={recordsLink(db.name)}>
+                        {db.label}
                     </Link>
                 </h1>
-                <div dangerouslySetInnerHTML={{__html: props.description}}/>
+                <div>{db.description}</div>
+
                 <div style={{textAlign: "right"}}>
                     {_.powered_by}
                     <img
@@ -119,9 +122,11 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
 
 // Filter data from Redux store and map it to props
 const mapStateToProps =(state : IState, props?: RouteComponentProps<{}> & GlobalContextProps) : DbProps => {
-    return {
-        ...state.dbDefinition,
-        schema:withSystemAttributes(state.dbDefinition.schema, props.messages)}
+    let db = deepClone(state.dbDefinition);
+
+    // FIXME : Might not be the right palce to add system properties to schema
+    db.schema = withSystemAttributes(state.dbDefinition.schema, props.messages);
+    return {db}
 };
 
 // Async fetch of data

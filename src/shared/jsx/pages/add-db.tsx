@@ -1,25 +1,20 @@
 import * as React from "react";
 import {GlobalContextProps, withGlobalContext} from "../context/global-context";
-import {Button, Container, Form, Input, Label} from "semantic-ui-react";
+import {Button, Container, Form, Input, Label, TextArea} from "semantic-ui-react";
 import {RouteComponentProps} from "react-router";
-import ReactQuill from 'react-quill';
 import {BASE_DB_PATH, RECORDS_PATH} from "../../api";
 import {deepClone, Map, mapMap, slug} from "../../utils";
 import {Attribute, StructType, TextType, Type} from "../../model/types";
 import {IMessages} from "../../i18n/messages";
 import {AddButtonPosition, AttributeList} from "../dialogs/parts/attribute-list";
 import {Wizard, WizardStep} from "../components/wizard";
-import {checkAvailability, createDb} from "../../rest/client";
+import {checkAvailability, createDb, toPromiseWithErrors} from "../../rest/client";
 import {AndCompose, notEmptyValidator, regExpValidator, ValidationError, Validator} from "../../validators/validators";
 import {DbDefinition} from "../../../server/db/db";
 import {MainLayout} from "./layout/main-layout";
+import {ErrorPO} from "../utils/validation-errors";
 
 const SLUG_REG = new RegExp(/^[1-9a-zA-Z\-_]*$/)
-
-enum SlugState{
-    LOADING, OK, ERROR
-}
-
 
 type AddDbPageProps = GlobalContextProps & RouteComponentProps<{}>;
 export class AddDbPageInternal extends React.Component<AddDbPageProps> {
@@ -29,10 +24,6 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
         slug: string,
         description : string,
         schema: StructType,
-        errors : {
-            nameDesc : ValidationError[],
-            attributes : ValidationError[]
-        },
         selectedTemplate: number,
         [index:string]:any};
 
@@ -46,7 +37,6 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
             slug:"",
             name:"",
             schema : deepClone(this.templates[0].schema),
-            errors: {attributes: [], nameDesc: []},
             selectedTemplate: 0};
     }
 
@@ -59,31 +49,12 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
         if (this.state.slug == slug(this.state.name)) {
             this.updateSlug(slug(name));
         }
-
-
     }
 
     updateSlug(slug:string) {
         this.setState({slug});
     }
 
-    // Transform error to red label if it exists
-    // Mark the error as shown
-    // TODO factorize with commonDialog
-    showError(allErrors: ValidationError[], key: string) : JSX.Element {
-        let errors = allErrors
-            .filter(error => error.attribute == key)
-            .map(error => {
-                error.shown = true;
-                return error.message
-            });
-        let error = errors.join(",\n");
-
-        if (error) {
-            return <Label color="red" pointing="left" >{error}</Label>;
-        }
-        return null;
-    }
 
     selectTemplate(idx:number) {
         this.setState({
@@ -91,22 +62,8 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
             schema:deepClone(this.templates[idx].schema)});
     }
 
-
-    // Build a validator function, checking this.state.[key], filling this.state.errors[key] and returning a status
-    buildValidator(allErrors: ValidationError[], validators: Map<Validator> , ) : Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            let isOk = true;
-            allErrors.splice(0, allErrors.length);
-            mapMap(validators, (key, validator) => {
-                let message = validator(this.state[key]);
-                if (message != null) {
-                    isOk = false;
-                    allErrors.push(new ValidationError(key, message));
-                }
-            });
-            this.setState({errors:this.state.errors});
-            resolve(isOk);
-        });
+    goToNewDb() {
+        this.props.history.push(RECORDS_PATH.replace(":db_name", this.state.slug));
     }
 
     render() {
@@ -115,26 +72,13 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
         let _ = this.props.messages;
         let base_url = location.protocol + '//' + location.host + BASE_DB_PATH;
 
-        // Function returning an async validator
-        // FIXME : quite ugly
-        let nameDescValidator = () =>
-            this.buildValidator(this.state.errors.nameDesc, {
-            "slug": AndCompose(
-                notEmptyValidator(_),
-                regExpValidator(SLUG_REG, _.slug_regexp_no_match)),
-            "name":notEmptyValidator(_)
 
-                // Add async check of db availability
-            }).then((res) => {
-                if (!res) return false;
-                return checkAvailability(this.state.slug).then((available : boolean) => {
-                    if (!available) {
-                        this.state.errors.nameDesc.push(new ValidationError("slug", _.db_not_available));
-                    }
-                    this.setState({errors: this.state.errors});
-                    return available;
-                });
-            });
+        let nameValidator = () => {return notEmptyValidator(_)(this.state.name)};
+
+        let slugValidators = [() => AndCompose(
+            notEmptyValidator(_),
+            regExpValidator(SLUG_REG, _.slug_regexp_no_match))(this.state.slug),
+            () => checkAvailability(this.state.slug).then(res => res ? null : _.db_not_available)];
 
         let addDbValidator = () => {
             let dbDef : DbDefinition = {
@@ -143,11 +87,7 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
                 label : this.state.name,
                 description : this.state.description
             };
-            return createDb(dbDef).then((res) => {
-                if (!res) return false;
-                this.props.history.push(RECORDS_PATH.replace(":db_name", this.state.slug));
-                return true;
-            });
+            return toPromiseWithErrors(createDb(dbDef));
         };
 
         return <MainLayout {...props} >
@@ -156,10 +96,10 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
             <h1>{_.creating_db}</h1>
 
             <Form>
-                <Wizard {...this.props} >
+                <Wizard {...this.props} onValidate={() => this.goToNewDb()}>
 
-                    <WizardStep title={_.create_db_name_description}
-                                validator={nameDescValidator} >
+                    <WizardStep title={_.create_db_name_description} >
+
                         <Form.Field inline required>
                             <label>{_.db_name}</label>
                             <Input
@@ -167,7 +107,7 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
                                 value={this.state.name}
                                 onChange={(event, data) => this.updateName(data.value)}/>
 
-                            { this.showError(this.state.errors.nameDesc,"name") }
+                            <ErrorPO attributeKey="name" validators={nameValidator} />
 
                         </Form.Field>
 
@@ -179,20 +119,22 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
                                 onChange={(event, data) => this.updateSlug(data.value)} >
                             </Input>
 
-                            { this.showError(this.state.errors.nameDesc, "slug") }
+                            <ErrorPO attributeKey="slug" validators={slugValidators}/>
 
 
                         </Form.Field>
 
                         <Form.Field>
                             <label>{_.db_description}</label>
-                            <ReactQuill
+                            <TextArea
+                                rows={3}
                                 value={this.state.description}
-                                onChange={(content, delta, source, editor) => this.setState({description: editor.getHTML()})} />
+                                onChange={(event, data) => this.setState({description: data.value})} />
                         </Form.Field>
+
                     </WizardStep>
 
-                    <WizardStep title={_.fields} validator={addDbValidator}>
+                    <WizardStep title={_.fields} validator={() => addDbValidator()}>
                         <div>
                             {_.schema_templates} :
                         </div>
@@ -207,7 +149,6 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
 
                         <AttributeList
                             addButtonPosition={AddButtonPosition.BOTTOM}
-                            errorLabel={() => null}
                             schema={this.state.schema}
                             onUpdateAttributes={(attributes: Attribute[]) => {
                                 this.state.schema.attributes = attributes;

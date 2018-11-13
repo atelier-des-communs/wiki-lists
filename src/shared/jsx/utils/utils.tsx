@@ -93,3 +93,20 @@ export function anyToBool(val: any) {
     if (val == "false" || val == 0) return false;
     return true;
 }
+
+export function recursiveChildrenMap<T>(children:React.ReactChild, fn: (children: React.ReactChild, index:number) => T) : any[] {
+    return React.Children.map(children, (child, index) => {
+        if (!React.isValidElement(child)) {
+            return child;
+        }
+
+        if ((child.props as any).children) {
+            let childWithChildren = child as React.ReactElement<{children:any}>;
+            child = React.cloneElement(childWithChildren, {
+                children: recursiveChildrenMap(childWithChildren.props.children, fn)
+            });
+        }
+
+        return fn(child, index);
+    });
+}

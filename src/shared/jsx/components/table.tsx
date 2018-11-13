@@ -35,13 +35,13 @@ function onHeaderClick(props: RouteComponentProps<{}>, attr:string) {
 
 const TableComponent: React.SFC<TableProps> = (props) => {
 
-    let attrs = props.schema.attributes;
+    let attrs = props.db.schema.attributes;
     let queryParams = parseParams(props.location.search);
     let sort = extractSort(queryParams);
-    let filters = extractFilters(props.schema, queryParams);
+    let filters = extractFilters(props.db.schema, queryParams);
     let _ = props.messages;
 
-    let filterAttributeFunc = filterAttribute(props, props.schema);
+    let filterAttributeFunc = filterAttribute(props, props.db.schema);
 
     // First header cell : the menu toolbox
     let columnsHeader = hasRight(props, AccessRight.EDIT) && <Table.HeaderCell className="no-print" collapsing key="menu" >
@@ -53,7 +53,7 @@ const TableComponent: React.SFC<TableProps> = (props) => {
                 basic compact />} >
            <AttributeDisplayComponent
                {...props}
-                schema = {props.schema}
+                schema = {props.db.schema}
            />
         </SafePopup>
     </Table.HeaderCell>;

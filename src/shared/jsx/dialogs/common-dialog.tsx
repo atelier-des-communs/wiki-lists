@@ -44,30 +44,4 @@ export abstract class ValidatingDialog<T extends CloseableDialog> extends React.
         }
     }
 
-    /** Return label with potential validation errors.
-     * Mark the error that have been shown in the UI as "shown" */
-    errorLabel(key: string) : JSX.Element {
-        let errors = this.state.errors
-            .filter(error => error.attribute == key)
-            .map(error => {
-                error.shown = true;
-                return error.message
-            });
-        let error = errors.join(",\n");
-
-        if (error) {
-            return <Label color="red">{error}</Label>;
-        } else {
-            return <span style={{display:"none"}}>Placeholder for errors {key} </span>;
-        }
-    }
-
-    /** List of remaining error messages */
-    remainingErrors() {
-        let errors = this.state.errors
-            .filter(error => !error.shown)
-            .map(error => `${error.attribute} : ${error.message}`)
-        return errors.join(",\n");
-    }
-
 }

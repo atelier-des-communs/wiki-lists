@@ -15,7 +15,8 @@ export function returnPromise(res: Express.Response, promise: Promise<{}>, code=
     returnPromiseWithCode(res, promise.then(content => ({content, statusCode:code})));
 }
 
-// Handy function returing 200 and the payload result of the promise of returning 500 on error
+// Handy function returing 200 and the payload result of the promise, or returning 500 on error
+// It wraps the Promise API around Express API
 export function returnPromiseWithCode(res: Express.Response, promise: Promise<ContentWithStatus>) {
     promise.then(
         result => {
@@ -23,14 +24,14 @@ export function returnPromiseWithCode(res: Express.Response, promise: Promise<Co
         }).
     catch(
         error => {
-            console.log("Error occured", error);
+            console.error("Error occured in promise : ", error);
             if (error.validationErrors) {
                 // Send list of errors back to client, with custom error codes
                 res.status(VALIDATION_STATUS_CODE).send(error.validationErrors);
             } else if (error.code) {
                 res.status(error.code).send(error.message);
             } else {
-                res.status(500).send(error);
+                res.status(501).send(error);
             }
         });
 }

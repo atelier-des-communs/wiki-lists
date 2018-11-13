@@ -164,3 +164,16 @@ export function intToStr(value:number) {
 export function slug(input:string) {
     return slugify(input, {remove: /[*+~.()'"!:@\\?]/g, lower: true})
 }
+
+// Tranform synchronouse function to Promise
+// also takes Promise => returns it as is
+export function resolveFuncOrPromise<T>(funcOrPromise : (() => Promise<T>) | (() => T)) : Promise<T> {
+    // Not Promise ? => make one
+    let res = funcOrPromise();
+    if (res == null || !(res as any).then) {
+        return new Promise((resolve, reject) => {resolve(res)});
+    } else {
+        return res as Promise<T>;
+    }
+}
+

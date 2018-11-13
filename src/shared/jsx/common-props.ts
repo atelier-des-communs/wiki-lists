@@ -23,8 +23,8 @@ export type DbPageProps = RouteComponentProps<DbPathParams> & GlobalContextProps
 
 
 /** Props for components acting on a specific DB */
-export interface DbProps extends DbDefinition {
-
+export interface DbProps {
+    db: DbDefinition;
 }
 
 /** Props for components displaying a list of records */
@@ -36,6 +36,7 @@ export type RecordsProps = RecordsPropsOnly & DbProps;
 export interface SingleRecordPropsOnly {
     record: Record,
     large?:boolean}
+
 export type SingleRecordProps = SingleRecordPropsOnly & DbProps;
 
 /** Event handler props injected by react redux */

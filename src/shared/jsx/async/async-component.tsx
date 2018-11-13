@@ -23,8 +23,6 @@ export abstract class AsyncComponent<T extends GlobalContextProps> extends React
         let promise = this.fetchData();
         if (promise) {
 
-            console.log("Added promise", promise, this);
-
             if (promise instanceof Array) {
                 if (promise.length == 0) {
                     return;

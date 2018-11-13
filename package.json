@@ -85,6 +85,7 @@
 		"webpack-node-externals": "^1.7.2"
 	},
 	"dependencies": {
+		"@types/escape-html": "0.0.20",
 		"axios": "^0.18.0",
 		"body-parser": "^1.18.3",
 		"browser-cookies": "^1.2.0",
@@ -94,6 +95,7 @@
 		"debounce": "^1.2.0",
 		"dotenv": "^6.0.0",
 		"es6-promise": "^4.2.5",
+		"escape-html": "^1.0.3",
 		"exceljs": "^1.6.0",
 		"express": "^4.14.0",
 		"express-request-language": "^1.1.15",

@@ -9,7 +9,7 @@ import {DataFetcher, SECRET_COOKIE} from "../../shared/api";
 import {isIn} from "../../shared/utils";
 import {IMessages} from "../../shared/i18n/messages";
 import {AccessRight} from "../../shared/access";
-import {getAccessRights} from "../utils";
+import {getAccessRights, HttpError} from "../utils";
 import {Request} from "express-serve-static-core"
 import * as shortid from "shortid";
 
@@ -44,6 +44,7 @@ async function init() : Promise<void> {
         { unique: true });
 }
 
+// Part of Db Settings that can be overriden
 export interface DbSettings {
     label:string;
     description:string;
@@ -53,7 +54,6 @@ export interface DbSettings {
 export interface DbDefinition extends DbSettings {
     /** Shortname of the db */
     name : string;
-    label : string;
     schema: StructType;
     secret?:string;
     rights? : AccessRight[];
@@ -168,7 +168,7 @@ export async function getDbDef(dbName: string) : Promise<DbDefinition> {
     let db = await Connection.getDb();
     let col = db.collection<DbDefinition>(DATABASES_COL);
     let database = await col.findOne({name: dbName});
-    if (!database) throw new Error(`Missing db: ${dbName}`);
+    if (!database) throw new HttpError(404, `Missing db: ${dbName}`);
     return database
 }
 

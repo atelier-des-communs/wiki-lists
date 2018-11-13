@@ -27,7 +27,7 @@ export const CardsComponent : React.SFC<CardsProps> = (props) => {
                         <Card.Header >
 
                             <Link to={recordURL(record._id)}>
-                            {recordName(props.schema, record)}
+                            {recordName(props.db.schema, record)}
                             </Link>
                             <div style={{float:"right"}} className="super-shy" >
                                 <EditButtons {...props} record={record} />

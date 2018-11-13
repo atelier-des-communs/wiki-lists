@@ -3,14 +3,13 @@ import {empty, itToArray} from "../utils";
 import {IMessages} from "../i18n/messages";
 
 
-// Function returning either null (no error) or error message
+// Function returning either null (no error) or a localized error message
 export type Validator = (value:any) => string | null;
 
 
 export class ValidationError {
     attribute: string;
     message:string;
-    shown:boolean = false;
     constructor(field:string, message:string) {
         this.attribute = field;
         this.message = message;

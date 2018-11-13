@@ -22,16 +22,16 @@ type SingleRecordPageProps =
 
 export const SingleRecordPageInternal : React.SFC<SingleRecordPageProps>  = (props) => {
 
-    let {schema, record, head} = props;
+    let {db, record, head} = props;
     let _ = props.messages;
 
     // Set html HEAD
-    head.setTitle(recordNameStr(schema, record));
+    head.setTitle(recordNameStr(db.schema, record));
 
     return <Container>
-        <Link to={recordsLink(props.name)} > « {_.back_to_list}</Link>
+        <Link to={recordsLink(db.name)} > « {_.back_to_list}</Link>
         <Segment className="hoverable" >
-            <Header as="h2">{ recordName(schema, record)}
+            <Header as="h2">{ recordName(db.schema, record)}
                 <div style={{float:"right"}} className="super-shy" >
                     <EditButtons {...props} hideViewButton={true} />
                 </div>

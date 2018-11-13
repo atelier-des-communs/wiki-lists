@@ -7,6 +7,7 @@ import {attrLabel, typeIsWide} from "../utils/utils";
 import {CloseableDialog, ValidatingDialog} from "./common-dialog";
 import {ValidationError} from "../../validators/validators";
 import {MessagesProps} from "../../i18n/messages";
+import {ErrorPO, RemainingErrorsPO, replaceErrorsPO} from "../utils/validation-errors";
 
 
 interface EditDialogProps extends CloseableDialog, MessagesProps{
@@ -82,13 +83,13 @@ export class EditDialog extends ValidatingDialog<EditDialogProps> {
                     type={attr.type}
                     onValueChange={callback}
                 />
-                {this.errorLabel(`${attr.name}`)}
+                <ErrorPO attributeKey={attr.name} />
             </Form.Field>
             </Grid.Column>
 
         });
 
-        return <Modal
+        let res = <Modal
             open={true}
             onClose={()=> this.props.close && this.props.close() } >
 
@@ -104,11 +105,7 @@ export class EditDialog extends ValidatingDialog<EditDialogProps> {
 
             <Modal.Actions>
 
-                {this.state.errors.length > 0 ?
-                    <Message
-                        error
-                        header={_.form_error}
-                        content={this.remainingErrors()} /> : null }
+                <RemainingErrorsPO />
 
                 <Button color='red' onClick={this.props.close}>
                     <Icon name='remove'/> {_.cancel}
@@ -120,6 +117,7 @@ export class EditDialog extends ValidatingDialog<EditDialogProps> {
 
         </Modal>;
 
+        return replaceErrorsPO(res, this.state.errors, _);
     }
 
 
