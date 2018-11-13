@@ -72,7 +72,6 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
         let _ = this.props.messages;
         let base_url = location.protocol + '//' + location.host + BASE_DB_PATH;
 
-
         let nameValidator = () => {return notEmptyValidator(_)(this.state.name)};
 
         let slugValidators = [() => AndCompose(

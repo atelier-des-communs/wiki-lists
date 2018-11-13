@@ -10,6 +10,7 @@ import {SketchPicker} from "react-color";
 import {EditableText} from "../../components/editable-text";
 import {IMessages} from "../../../i18n/messages";
 import {ErrorPO} from "../../utils/validation-errors";
+import {ValidationError} from "../../../validators/validators";
 
 
 const DEFAULT_ENUM_COLOR="#e8e8e8";
@@ -17,9 +18,9 @@ const DEFAULT_ENUM_COLOR="#e8e8e8";
 
 interface TypeExtraProps<T extends Type<any>> {
     messages: IMessages,
-    type: T;
-    onUpdate: (newValue: T) => void;
-    errorPrefix ?: string;
+    type: T,
+    onUpdate: (newValue: T) => void,
+    errorPrefix ?: string
 }
 
 // Generic type for an extra attribute component
@@ -118,8 +119,8 @@ const EnumExtra: TypeExtraComponent<EnumType> = (props) => {
                 title={_.delete_option}
                 onClick={() => deleteOption(index)}/>
 
-            <ErrorPO attributeKey={`${errorPrefix}values.${index}.value`} />
-            <ErrorPO attributeKey={`${errorPrefix}values.${index}.label`} />
+            <ErrorPO attributeKey={`${errorPrefix}values.${index}.value`}  />
+            <ErrorPO attributeKey={`${errorPrefix}values.${index}.label`}  />
             <br/>
         </div>
     })}

@@ -7,7 +7,7 @@ import {CloseableDialog, ValidatingDialog} from "./common-dialog";
 import {withoutSystemAttributes} from "../../model/instances";
 import {IMessages} from "../../i18n/messages";
 import {AddButtonPosition, AttributeList, UIAttribute} from "./parts/attribute-list";
-import {RemainingErrorsPO, replaceErrorsPO} from "../utils/validation-errors";
+import {RemainingErrorsPO, ErrorsContext} from "../utils/validation-errors";
 
 
 interface SchemaDialogProps extends CloseableDialog {
@@ -67,14 +67,18 @@ export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
     render()  {
         let _ = this.props.messages;
 
-        let result = <Modal
+        return <ErrorsContext.Provider value={this.state.errors}>
+        <Modal
             closeIcon
             open={true}
             onClose={()=> this.props.close() }>
             <Header icon='edit' >
                 {_.edit_attributes}
             </Header>
+
+
             <Modal.Content >
+
                 <Form>
                     <AttributeList
                         addButtonPosition={AddButtonPosition.TOP}
@@ -88,8 +92,7 @@ export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
                 </Form>
             </Modal.Content>
             <Modal.Actions>
-
-                <RemainingErrorsPO />
+                <RemainingErrorsPO messages={_} />
 
                 <Button color='red' onClick={this.props.close}>
                     <Icon name='remove'/> {_.cancel}
@@ -98,9 +101,9 @@ export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
                     <Icon name='checkmark'/> {_.save}
                 </Button>
             </Modal.Actions>
-        </Modal>;
+        </Modal>
+        </ErrorsContext.Provider>
 
-        return replaceErrorsPO(result, this.state.errors, _);
     }
 
 

@@ -15,89 +15,78 @@ type SynchronousValidator = () => string | null;
 type AsyncronousValidator = () => Promise<string | null>;
 type Validator = SynchronousValidator | AsyncronousValidator;
 
-interface ValidationErrorProps {
+
+
+// Context holding current validation errors, passed to nested children
+export const ErrorsContext : React.Context<ValidationError[]> = React.createContext([]);
+
+interface ValidationErrorProps  {
     attributeKey:string,
     validators?: Validator[] | Validator;
 }
 
+interface ValidationErrorWithDisplay extends ValidationError {
+    displayed: boolean;
+}
+
+
+
 /** Placeholder for errors that will be replaced by actual errors for the corresponding key by #replaceErrors */
-export const ErrorPO : React.SFC<ValidationErrorProps> = (props) => {
-    console.warn(`placeholder for validation of ${props.attributeKey}. Should have been replaced by using replaceErrors()`);
-    return null;
-};
-
-/** Placeholder general error, not catched by any ValidationError.
- * It will be replaced by remaining errors by #replaceErrors */
-export const RemainingErrorsPO : React.SFC<{}> = (props) => {
-    console.warn(`placeholder for default validation error. Should have been replaced by using replaceErrors()`);
-    return null;
-};
-
-
-export function replaceErrorsPO(element:React.ReactElement<{children:any}>, errors: ValidationError[], _:IMessages) : React.ReactElement<{}> {
-
-    let keys: string[] = [];
-    errors = errors || [];
-
-    let children = recursiveChildrenMap(element, (child, index) => {
-
-        if (!React.isValidElement(child)) {
-            return child;
-        }
-
-        // Replace single error placeholder
-        if (child.type == ErrorPO) {
-            let key =(child.props as ValidationErrorProps).attributeKey;
-            keys.push(key);
-
+export const ErrorPO : React.SFC<ValidationErrorProps> = (props) =>
+     <ErrorsContext.Consumer>
+        {(errors) => {
             let errorsMsg = errors
-                .filter(error => error.attribute == key)
-                .map(error => <><span>{error.message}</span><br/></>);
+                .filter(error => error.attribute == props.attributeKey)
+                .map(error => {
+                    (error as ValidationErrorWithDisplay).displayed = true;
+                    return <><span>{error.message}</span><br/></>});
+
             if (errorsMsg.length > 0) {
                 return <Label color="red">{errorsMsg}</Label>;
             } else {
                 return null;
             }
-        }
+        }}
+    </ErrorsContext.Consumer>;
 
-        // Replace remaining placeholder => returns a function for deferring evaluation at the end
-        if (child.type == RemainingErrorsPO) {
-
-            let Res : React.SFC = () => {
-
-                let remainingMessages = errors
-                    .filter(error => !(error.attribute in keys))
-                    .map(error => {
-                        let message = error.message;
-                        if (!empty(error.attribute)) {
-                            console.warn("Error had an attribute name but was not displayed", error.attribute);
-                            message = error.attribute + ":" + message;
-                        }
-
-                        return <>
-                            <span>{message}</span><br/>
-                        </>
-                    });
-
-                if (remainingMessages.length > 0) {
-                    return  <Message
-                        visible
-                        error
-                        header={_.form_error}
-                        content={remainingMessages} />
-                } else {
-                    return null;
-                }
-            };
-
-            return <Res/>;
-        }
-
-        return child;
-
-    });
-    return React.cloneElement(element, {children});
+interface ErrorsProps {
+    messages: IMessages
 }
+
+/** Placeholder general error, not catched by any ValidationError.
+ * It will be replaced by remaining errors by #replaceErrors */
+export const RemainingErrorsPO : React.SFC<ErrorsProps> = (props) =>
+    <ErrorsContext.Consumer>
+        {(errors) => {
+
+    let _ = props.messages;
+
+    let remainingMessages = errors
+        .filter(error => !((error as ValidationErrorWithDisplay).displayed))
+        .map(error => {
+            let message = error.message;
+            if (!empty(error.attribute)) {
+                console.warn("Error had an attribute name but was not displayed", error.attribute);
+                message = error.attribute + ":" + message;
+            }
+
+            return <>
+                <span>{message}</span><br/>
+            </>
+        });
+
+    if (remainingMessages.length > 0) {
+        return  <Message
+            visible
+            error
+            header={_.form_error}
+            content={remainingMessages} />
+    } else {
+        return null;
+    }}}
+
+    </ErrorsContext.Consumer>
+
 
 
 /**

@@ -8,6 +8,7 @@ import {Info} from "../../utils/utils";
 import {withoutSystemAttributes} from "../../../model/instances";
 import {IMessages} from "../../../i18n/messages";
 import {ErrorPO} from "../../utils/validation-errors";
+import {ValidationError} from "../../../validators/validators";
 
 
 // Add some UI / Client only properties to the Attribute type
@@ -129,7 +130,6 @@ export class AttributeList extends React.Component<AttributeListProps> {
             {value: Types.TEXT, text:_.type_text, icon:"font"}];
 
 
-
         // Get type text from options for a given tag
         function typeDescr(tag:string) {
             return TYPE_OPTIONS.filter(option => option.value == tag)[0]
@@ -138,13 +138,12 @@ export class AttributeList extends React.Component<AttributeListProps> {
         // Loop on schema attributes
         let attributes = this.state.attributes.map((attr, index) => {
 
-            // Extra parameters for this type
+            // Extra parameters for this specific type
             let typeExtra = typeExtraSwitch({
                 messages:this.props.messages,
                 type: attr.type,
-                errorPrefix: `${index}.type.`,
+                errorPrefix: `${index}.type.`, // FIXME  : put it in ErrorContext
                 onUpdate: (type) => this.updateType(index, type)});
-
 
 
             // Extra parameters, common to all attributes
@@ -197,7 +196,7 @@ export class AttributeList extends React.Component<AttributeListProps> {
                                     <Label
                                         basic size={"tiny"} style={{float:"right"}} >{_.name}</Label>}
 
-                                        <ErrorPO attributeKey={`${index}.name`}  />
+                                        <ErrorPO attributeKey={`${index}.name`} />
                                         <ErrorPO attributeKey={`${index}.label`} />
 
                             </Header>

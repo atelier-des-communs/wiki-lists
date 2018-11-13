@@ -2,10 +2,9 @@
 import * as React from "react";
 import {GlobalContextProps} from "../context/global-context";
 import {Button, Segment, Step} from "semantic-ui-react";
-import {fireValidators, RemainingErrorsPO, replaceErrorsPO} from "../utils/validation-errors";
+import {fireValidators, RemainingErrorsPO, ErrorsContext} from "../utils/validation-errors";
 import {ValidationError, ValidationException} from "../../validators/validators";
 import {Map} from "../../utils";
-
 
 export interface WizardStepProps {
     title: string;
@@ -102,40 +101,40 @@ export class Wizard extends React.Component<GlobalContextProps & WizardProps> {
 
         let currentStep = React.Children.map(this.props.children, (child, index) => index== this.state.step ? child : null);
 
-
+        let errors =  this.state.errors[this.state.step];
         let lastStep = this.state.step == this.wizardSteps.length  - 1;
 
-        let res = <div>
+        return <div>
             <Step.Group attached="top" ordered>
                 {steps}
             </Step.Group>
             <Segment attached="bottom">
-                {currentStep}
+                <ErrorsContext.Provider value={errors}>
+                    {currentStep}
 
-                <RemainingErrorsPO />
+                    <RemainingErrorsPO messages={_} />
 
-                <div style={{textAlign:"right"}}>
+                    <div style={{textAlign:"right"}}>
 
-                    {this.state.step > 0 &&
-                    <Button content={_.previous} icon="angle left"
-                            onClick={() => this.previousStep()}
-                    />}
+                        {this.state.step > 0 &&
+                        <Button content={_.previous} icon="angle left"
+                                onClick={() => this.previousStep()}
+                        />}
 
-                    {this.state.step < this.wizardSteps.length &&
-                    <Button
-                        primary={!lastStep}
-                        color={ lastStep ? "green" : null}
-                        content={lastStep ? _.finish : _.next}
-                        icon={lastStep ? "angle right" : null}
-                        onClick={() => this.nextStep()}
-                    />}
+                        {this.state.step < this.wizardSteps.length &&
+                        <Button
+                            primary={!lastStep}
+                            color={ lastStep ? "green" : null}
+                            content={lastStep ? _.finish : _.next}
+                            icon={lastStep ? "angle right" : null}
+                            onClick={() => this.nextStep()}
+                        />}
 
-                </div>
+                    </div>
+                </ErrorsContext.Provider>
             </Segment>
 
         </div>;
-
-        return replaceErrorsPO(res, this.state.errors[this.state.step], _);
     }
 
 }
