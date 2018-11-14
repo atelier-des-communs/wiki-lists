@@ -1,9 +1,7 @@
 var path = require("path");
 var MiniCssExtractPlugin = require('mini-css-extract-plugin');
 var nodeExternals = require('webpack-node-externals');
-
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-
+const { StatsWriterPlugin } = require("webpack-stats-plugin");
 
 exports.CLIENT_BUILD_DIR = path.resolve(__dirname, "..", "dist", "client");
 exports.SERVER_BUILD_DIR = path.resolve(__dirname, "..", "dist", "server");
@@ -74,9 +72,9 @@ var common_config = (loaders, name) => ({
     },
     plugins: [
         new MiniCssExtractPlugin("[name].css"),
-        new BundleAnalyzerPlugin({
-            analyzerMode:"static",
-            reportFilename: name + "-report.html"})
+        new StatsWriterPlugin({
+            fields : null,
+            filename: "./reports/" + name + "-stats.json"})
     ],
     node : {
         __dirname : true
@@ -105,15 +103,13 @@ exports.client_config = (loaders, name) => {
     var res = common_config(loaders, name);
     res.target = "web";
     res.entry = {"client.bundle": exports.APP_DIR + "/client"};
-    res.optimization = {splitChunks: {chunks: 'all'}};
-
     // Add languages as separate entries
     for (var key of langs) {
         res.entry["lang-" + key] = exports.APP_DIR + "/server/i18n/" + key + ".ts";
     }
 
     res.output.path = exports.CLIENT_BUILD_DIR;
-    res.output.chunkFilename = '[name].js';
+    res.output.chunkFilename = '[name].chunk.js';
 
     return res;
 }

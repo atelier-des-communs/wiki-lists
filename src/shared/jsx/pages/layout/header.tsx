@@ -4,6 +4,7 @@ import {Button, Flag} from "semantic-ui-react";
 import {LANG_COOKIE} from "../../../api";
 import {GlobalContextProps} from "../../context/global-context";
 
+/** Common header : showing language switch and login */
 export const Header : React.SFC<GlobalContextProps> = (props) => {
 
     let _ = props.messages;
@@ -13,12 +14,11 @@ export const Header : React.SFC<GlobalContextProps> = (props) => {
         window.location.reload();
     }
 
-    let langSelector = <Button.Group compact size="small" floated="right" style={{margin:"1em"}}>
+    let langSelector = <Button.Group compact size="mini" floated="right" style={{margin:"5px"}}>
         {props.supportedLanguages.map(lang =>
             <Button
                 key={lang.key}
-                compact
-                size="small"
+                compact size="mini"
                 active={props.lang == lang.key}
                 onClick={() => changeLang(lang.key)}>
 
@@ -34,9 +34,9 @@ export const Header : React.SFC<GlobalContextProps> = (props) => {
 
         <div style={{
             padding:"3em",
-            marginBottom:"1em",
+            marginBottom:"3em",
             backgroundColor:"white",
-            borderBottom:"2px dashed #ddd"
+            boxShadow: "0px 0px 10px 2px rgba(0,0,0,0.58)"
         }}>
             {props.children}
         </div>

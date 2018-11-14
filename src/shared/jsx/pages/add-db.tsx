@@ -1,18 +1,18 @@
 import * as React from "react";
-import {GlobalContextProps, withGlobalContext} from "../../context/global-context";
+import {GlobalContextProps, withGlobalContext} from "../context/global-context";
 import {Button, Container, Form, Input, Label, TextArea} from "semantic-ui-react";
 import {RouteComponentProps} from "react-router";
-import {BASE_DB_PATH, RECORDS_PATH} from "../../../api";
-import {deepClone, Map, mapMap, slug} from "../../../utils";
-import {Attribute, StructType, TextType, Type} from "../../../model/types";
-import {IMessages} from "../../../i18n/messages";
-import {AddButtonPosition, AttributeList} from "../../dialogs/parts/attribute-list";
-import {Wizard, WizardStep} from "../../components/wizard";
-import {checkAvailability, createDb, toPromiseWithErrors} from "../../../rest/client";
-import {AndCompose, notEmptyValidator, regExpValidator, ValidationError, Validator} from "../../../validators/validators";
-import {DbDefinition} from "../../../../server/db/db";
-import {MainLayout} from "../layout/main-layout";
-import {ErrorPO} from "../../utils/validation-errors";
+import {BASE_DB_PATH, RECORDS_PATH} from "../../api";
+import {deepClone, Map, mapMap, slug} from "../../utils";
+import {Attribute, StructType, TextType, Type} from "../../model/types";
+import {IMessages} from "../../i18n/messages";
+import {AddButtonPosition, AttributeList} from "../dialogs/parts/attribute-list";
+import {Wizard, WizardStep} from "../components/wizard";
+import {checkAvailability, createDb, toPromiseWithErrors} from "../../rest/client";
+import {AndCompose, notEmptyValidator, regExpValidator, ValidationError, Validator} from "../../validators/validators";
+import {DbDefinition} from "../../../server/db/db";
+import {MainLayout} from "./layout/main-layout";
+import {ErrorPO} from "../utils/validation-errors";
 
 const SLUG_REG = new RegExp(/^[1-9a-zA-Z\-_]*$/)
 
@@ -198,4 +198,4 @@ function templates(_:IMessages) : SchemaTemplate[] {
             label:_.default_schema}]
 }
 
-export const AddDbPage = withGlobalContext(AddDbPageInternal);
+export default withGlobalContext(AddDbPageInternal);

@@ -83,7 +83,8 @@
 		"webpack": "^4.16.5",
 		"webpack-bundle-analyzer": "^3.0.3",
 		"webpack-dev-server": "^2.5.0",
-		"webpack-node-externals": "^1.7.2"
+		"webpack-node-externals": "^1.7.2",
+		"webpack-stats-plugin": "^0.2.1"
 	},
 	"dependencies": {
 		"@types/escape-html": "0.0.20",

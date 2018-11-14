@@ -6,7 +6,13 @@ import {GlobalContextProps, GlobalContextProvider} from "./jsx/context/global-co
 import {NotFoundPage} from "./jsx/pages/not-found";
 import {HomePage} from "./jsx/pages/home";
 import {DbPageSwitch} from "./jsx/pages/db/db-page-switch";
-import {AddDbPageAsync} from "./jsx/pages/add-db";
+import {withAsyncImport} from "./jsx/async/async-import-component";
+
+
+// Async components
+const AddDbPageAsync = withAsyncImport(() => {
+    return import(/* webpackChunkName: "add-db" */ "./jsx/pages/add-db").then((module) => module.default);
+});
 
 /** Global app for single db  */
 export const App : React.SFC<GlobalContextProps> = (props) => {

@@ -9,8 +9,6 @@ import {enumLabel} from "../utils/utils";
 import {MessagesProps} from "../../i18n/messages";
 import {format, parse} from "date-fns";
 import 'react-quill/dist/quill.snow.css';
-//import DayPickerInput from "react-day-picker/DayPickerInput";
-//import "react-day-picker/lib/style.css";
 
 const DATE_FORMAT="D MMM YYYY HH:mm";
 

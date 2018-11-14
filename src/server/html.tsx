@@ -69,7 +69,7 @@ function renderHtml(head:ServerSideHeaderHandler, html:string, context:IMarshall
 					window.__MARSHALLED_CONTEXT__ = ${JSON.stringify(context)};
 				</script>
 				<script src="${BUNDLE_ROOT}/lang-${context.lang}.js"></script>
-				<script src="${BUNDLE_ROOT}/vendors~client.bundle.js"></script>
+				<script src="${BUNDLE_ROOT}/client.bundle.js"></script>
 			</body>
 		</html>`
 }

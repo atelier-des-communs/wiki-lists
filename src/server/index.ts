@@ -9,6 +9,7 @@ import {setUp as setUpExport} from "./export";
 import {supportedLanguages} from "./i18n/messages";
 import {LANG_COOKIE} from "../shared/api";
 
+const MAX_AGE  = 30 * 24 * 3600 * 1000; // One month
 
 export default function initServer(dist_paths:string[]) {
 
@@ -27,7 +28,7 @@ export default function initServer(dist_paths:string[]) {
     server.set('json spaces', 2);
 
     for (let path of dist_paths) {
-        server.use('/static', express.static(path));
+        server.use('/static', express.static(path, {maxAge: MAX_AGE}));
     }
 
     setUpRest(server);
