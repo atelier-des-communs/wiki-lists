@@ -26,12 +26,12 @@ type DbPageProps =
     ReduxEventsProps &
     DispatchProp<any>;
 
-const HIDE_LINKS_COOKIE = COOKIE_PREFIX + "hide_links";
+const HIDE_LINKS_COOKIE = (db_name:string) => {return `${COOKIE_PREFIX}${db_name}_hide_links`};
 
 export class DbPageSwitchInternal extends React.Component<DbPageProps>{
 
     hideLinks() {
-        this.props.cookies.set(HIDE_LINKS_COOKIE, "true");
+        this.props.cookies.set(HIDE_LINKS_COOKIE(this.props.db.name), "true");
         // force redraw
         this.setState({});
     }
@@ -61,7 +61,7 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
             RECORDS_PATH.
                 replace(":db_name", props.match.params.db_name);
 
-        let hideLinks = props.cookies.get(HIDE_LINKS_COOKIE);
+        let hideLinks = props.cookies.get(HIDE_LINKS_COOKIE(this.props.db.name));
 
         return <>
             <Header {...props} >

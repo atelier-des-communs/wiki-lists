@@ -1,7 +1,6 @@
 import * as React from "react";
 import {Store} from "react-redux";
 import {IState} from "../../redux";
-import * as PropTypes from "prop-types";
 import {DataFetcher} from "../../api";
 import {IMessages, Language} from "../../i18n/messages";
 
@@ -17,6 +16,8 @@ export interface ICookies {
     get(name:string) : string;
     set(name:string, value:string) : void;
 }
+
+
 
 // Global props, passed down to all pages & components, via React "context" mecanism
 export interface GlobalContextProps  {
@@ -44,29 +45,20 @@ export interface GlobalContextProps  {
     supportedLanguages: Language[];
 }
 
-export interface GlobalContextProviderProps {
-    global:GlobalContextProps;
-}
+const GlobalContext: React.Context<GlobalContextProps> = React.createContext(null);
+
 
 /** Global provider */
-export class GlobalContextProvider extends React.Component<GlobalContextProviderProps>{
+export class GlobalContextProvider extends React.Component<GlobalContextProps>{
 
-    constructor(props:GlobalContextProviderProps) {
+    constructor(props:GlobalContextProps) {
         super(props);
     }
 
-    static  childContextTypes = {
-        global: PropTypes.object
-    };
-
-    getChildContext() : GlobalContextProviderProps  {
-        return {global:this.props.global}
-    }
-
     render() {
-        return <>
+        return <GlobalContext.Provider value={this.props}>
             {this.props.children}
-        </>
+        </GlobalContext.Provider>
     }
 
 }
@@ -76,15 +68,10 @@ export function withGlobalContext <P> (
     WrappedComponent: React.ComponentType<P & GlobalContextProps>,
 ): React.ComponentClass<P> {
     return class extends React.Component<P> {
-
-        context: GlobalContextProviderProps;
-
-        static  contextTypes = {
-            global: PropTypes.object
-        };
-
         public render() {
-            return <WrappedComponent {...this.context.global} {...this.props}  />;
+            return <GlobalContext.Consumer>
+                {(context) => <WrappedComponent {...context} {...this.props}  />}
+            </GlobalContext.Consumer>
         }
     };
 }

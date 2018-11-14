@@ -5,6 +5,7 @@
 [BUG] Ensure unicity for new records
 [BUG] Sort should maintain sorting of "groups"
 [BUG] At time of creation of DB, when no name attribute is provided, error is not shown properly
+[BUG] Update time should be updated on creation
 [FEAT] text: simple, multi, rich
 [UX] edit on click line
 [INFRA] prefix to db name in mongo

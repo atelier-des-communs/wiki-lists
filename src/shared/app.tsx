@@ -15,7 +15,7 @@ export const App : React.SFC<GlobalContextProps> = (props) => {
 
     return <Provider store={props.store} >
 
-            <GlobalContextProvider global={props}>
+            <GlobalContextProvider {...props}>
 
                     <Switch>
 
