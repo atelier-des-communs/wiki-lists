@@ -4,10 +4,10 @@
  * all of them to resolve and re-rendering.
  */
 import * as React from "react";
-import {GlobalContextProps} from "../context/global-context";
+import {GlobalContextProps, withGlobalContext} from "../context/global-context";
 import {Loader} from "semantic-ui-react";
 
-export abstract class AsyncComponent<T extends GlobalContextProps> extends React.Component<T> {
+export abstract class AsyncDataComponent<T extends GlobalContextProps> extends React.Component<T> {
 
     state : {loading:boolean};
 
@@ -17,28 +17,30 @@ export abstract class AsyncComponent<T extends GlobalContextProps> extends React
     }
 
     /** Should look at props / state, and return null if no loading is required */
-    abstract fetchData() : null | Promise<any> | Promise<any>[];
+    abstract fetchData() : null | Promise<{}> |  Promise<{}>[];
 
     componentWillMount() {
-        let promise = this.fetchData();
-        if (promise) {
+        let promises  = this.fetchData();
+        let singlePromise : Promise<{}>;
+        if (promises) {
 
-            if (promise instanceof Array) {
-                if (promise.length == 0) {
+            // Reduce multiple promises into single one
+            if (promises instanceof Array) {
+                if (promises.length == 0) {
                     return;
                 } else {
-                    promise = Promise.all(promise);
+                    singlePromise = Promise.all(promises);
                 }
+            } else {
+                singlePromise = promises;
             }
 
             this.setState({loading:true});
 
-            this.props.promises.push(promise);
-            promise.then(() => {
-
-                console.log("Promise finished !", promise, this);
-                this.setState({loading:false});
-            });
+            this.props.promises.push(
+                singlePromise.then(() => {
+                    this.setState({loading:false});
+                }));
         }
     }
 
@@ -55,11 +57,12 @@ export abstract class AsyncComponent<T extends GlobalContextProps> extends React
 
 
 // Higher order function wrapping a component with async data fetching
-export function withAsync<P extends GlobalContextProps>(
-    fetchData:(props: P) => null | Promise<any> | Promise<any>[])
+export function withAsyncData<P>(
+    fetchData:(props: Readonly<P & GlobalContextProps>) => null | Promise<any> | Promise<any>[])
 {
     return (WrappedComponent: React.ComponentType<P>): React.ComponentClass<P> => {
-        return class extends AsyncComponent<P> {
+
+        let resClass = class extends AsyncDataComponent<P & GlobalContextProps> {
 
             fetchData() {
                 return fetchData(this.props);
@@ -68,8 +71,8 @@ export function withAsync<P extends GlobalContextProps>(
             public renderLoaded() {
                 return <WrappedComponent {...this.props} />;
             }
-        };
+        }
+
+        return withGlobalContext(resClass);
     }
-
-
 }

@@ -64,7 +64,7 @@ export class GlobalContextProvider extends React.Component<GlobalContextProps>{
 }
 
 /** Higher order component, injecting the global context as root props in any component */
-export function withGlobalContext <P> (
+export function withGlobalContext<P> (
     WrappedComponent: React.ComponentType<P & GlobalContextProps>,
 ): React.ComponentClass<P> {
     return class extends React.Component<P> {

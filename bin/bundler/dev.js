@@ -1,5 +1,5 @@
 var webpack = require("webpack");
-var config = require("../../config/webpack.dev.server.js");
+var config = require("../../config/webpack.dev.js");
 
 var options = {
 	chunk: false,
@@ -9,7 +9,7 @@ var options = {
 	chunkOrigins: false
 };
 
-var compiler = webpack(config);
+var compiler = webpack(config[1]);
 
 compiler.run(function(err, stats) {
 	if(err)

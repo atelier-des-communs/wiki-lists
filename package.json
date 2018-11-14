@@ -81,6 +81,7 @@
 		"ts-loader": "^4.4.2",
 		"typescript": "^2.4.0",
 		"webpack": "^4.16.5",
+		"webpack-bundle-analyzer": "^3.0.3",
 		"webpack-dev-server": "^2.5.0",
 		"webpack-node-externals": "^1.7.2"
 	},

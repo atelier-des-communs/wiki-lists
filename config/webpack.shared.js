@@ -1,5 +1,9 @@
 var path = require("path");
 var MiniCssExtractPlugin = require('mini-css-extract-plugin');
+var nodeExternals = require('webpack-node-externals');
+
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
 
 exports.CLIENT_BUILD_DIR = path.resolve(__dirname, "..", "dist", "client");
 exports.SERVER_BUILD_DIR = path.resolve(__dirname, "..", "dist", "server");
@@ -55,8 +59,62 @@ exports.common_loaders = function() {
 
 var langs = ["fr-FR", "en-GB"];
 
-exports.client_entry = {"client.bundle": exports.APP_DIR + "/client"};
-for (var key of langs) {
-    exports.client_entry["lang-" + key] = exports.APP_DIR + "/server/i18n/" + key + ".ts";
+
+var common_config = (loaders, name) => ({
+    output: {
+        filename: "[name].js",
+        publicPath: "/static/"
+    },
+    name:name,
+    module: {
+        rules: exports.flatten_loaders(loaders)
+    },
+    resolve: {
+        extensions: [".rt", ".js", ".jsx", ".ts", ".tsx"]
+    },
+    plugins: [
+        new MiniCssExtractPlugin("[name].css"),
+        new BundleAnalyzerPlugin({
+            analyzerMode:"static",
+            reportFilename: name + "-report.html"})
+    ],
+    node : {
+        __dirname : true
+    }
+});
+
+exports.server_config= (loaders, name) => {
+    var res = common_config(loaders, name);
+    res.externals = [
+        nodeExternals({whitelist:[/\.css/]}),
+        {
+            "react-dom/server": true
+        }
+    ],
+    res.target = "node";
+    res.entry = {
+        "server.bundle": exports.APP_DIR + "/server"
+    };
+    res.output.libraryTarget = "commonjs2";
+    res.output.path = exports.SERVER_BUILD_DIR;
+
+    return res;
+}
+
+exports.client_config = (loaders, name) => {
+    var res = common_config(loaders, name);
+    res.target = "web";
+    res.entry = {"client.bundle": exports.APP_DIR + "/client"};
+    res.optimization = {splitChunks: {chunks: 'all'}};
+
+    // Add languages as separate entries
+    for (var key of langs) {
+        res.entry["lang-" + key] = exports.APP_DIR + "/server/i18n/" + key + ".ts";
+    }
+
+    res.output.path = exports.CLIENT_BUILD_DIR;
+    res.output.chunkFilename = '[name].js';
+
+    return res;
 }
 

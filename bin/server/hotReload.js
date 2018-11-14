@@ -1,7 +1,6 @@
 var webpack = require("webpack");
 var WebpackDevServer = require("webpack-dev-server");
-var configClient = require("../../config/webpack.dev.client.js");
-var configServer = require("../../config/webpack.dev.server.js");
+var [configClient, configServer]= require("../../config/webpack.dev.js");
 
 var options = {
 	chunk: false,

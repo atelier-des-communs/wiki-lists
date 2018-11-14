@@ -1,9 +1,8 @@
 var webpack = require("webpack");
 var shared = require("./webpack.shared.js");
-var MiniCssExtractPlugin = require('mini-css-extract-plugin');
-var nodeExternals = require('webpack-node-externals');
 var server_loaders = shared.common_loaders();
 var client_loaders = shared.common_loaders();
+var MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 
 // For SSR we need different CSS loader
@@ -26,68 +25,11 @@ client_loaders["css_external"] = {
     use: [MiniCssExtractPlugin.loader, 'css-loader'],
 };
 
-console.log("client loaders", client_loaders)
-console.log("server loaders", server_loaders)
+var client = shared.client_config(client_loaders, "prod.client");
+client.mode = "production";
 
-var client = {
-    name: "prod.client",
-    target: "web",
-    mode:"production",
-    entry:shared.client_entry,
-    output: {
-        filename: "[name].js",
-        path: shared.CLIENT_BUILD_DIR,
-        publicPath: "/static"
-    },
-    module: {
-        rules: shared.flatten_loaders(client_loaders)
-    },
-    resolve: {
-        extensions: [".rt", ".js", ".jsx", ".ts", ".tsx"]
-    },
-    plugins: [
-        new webpack.DefinePlugin({
-            "process.env": {
-                NODE_ENV: JSON.stringify("production")
-            }
-        }),
-        new webpack.optimize.OccurrenceOrderPlugin(),
-        new MiniCssExtractPlugin("[name].css")
-    ]
-};
+var server = shared.server_config(server_loaders, "prod.server");
+server.mode = "production";
 
-var server = {
-    name: "prod.server",
-    target: "node",
-    mode:"production",
-    externals: [
-        nodeExternals({whitelist:[/\.css/]}),
-        {
-            "react-dom/server": true
-        }
-    ],
-    entry: {
-        "server.bundle": shared.APP_DIR + "/server"
-    },
-    output: {
-        filename: "[name].js",
-        path: shared.SERVER_BUILD_DIR,
-        publicPath: "/static/",
-        libraryTarget: "commonjs2"
-    },
-    module: {
-        rules: shared.flatten_loaders(server_loaders)
-    },
-    resolve: {
-        extensions: [".rt", ".js", ".jsx", ".ts", ".tsx"]
-    },
-    plugins: [
-        new webpack.optimize.OccurrenceOrderPlugin(),
-        new MiniCssExtractPlugin("[name].css")
-    ],
-    node : {
-        __dirname : true
-    }
-};
 
 module.exports = [client, server];

@@ -7,7 +7,7 @@ import {connect, Dispatch} from "react-redux";
 import {createAddItemAction, createDeleteAction, createUpdateItemAction, createUpdateSchema} from "../../redux";
 import {StructType} from "../../model/types";
 import {RouteComponentProps} from "react-router";
-import {withAsync} from "../async/async-component";
+import {withAsyncData} from "../async/async-data-component";
 
 const matchDispatchToProps = (dispatch: Dispatch<{}>, props?: RouteComponentProps<DbPathParams> & GlobalContextProps) : ReduxEventsProps => {
 
@@ -66,7 +66,6 @@ export function connectComponent<PathParams extends DbPathParams, TStateProps>(
         React.ComponentClass<RouteComponentProps<PathParams>> | React.SFC<RouteComponentProps<PathParams>> =>
     {
         let withRedux =  connect<TStateProps, ReduxEventsProps, TOwnProps>(stateMapper, matchDispatchToProps)(component);
-        let withPromise = withAsync(fetchData)(withRedux);
-        return withGlobalContext<RouteComponentProps<PathParams>>(withPromise);
+        return withAsyncData<RouteComponentProps<PathParams>>(fetchData)(withRedux);
     }
 }
