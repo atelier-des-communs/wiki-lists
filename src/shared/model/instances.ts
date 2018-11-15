@@ -19,7 +19,6 @@ export function systemType(_: IMessages) {
     let res = new StructType();
     res.attributes.push({
         name: "_id",
-        saved: true,
         system: true,
         type: new TextType(),
         label: _.id_attr
@@ -27,7 +26,6 @@ export function systemType(_: IMessages) {
 
     res.attributes.push({
         name: "_creationTime",
-        saved: true,
         system: true,
         type: new DatetimeType(),
         label: _.creation_time_attr
@@ -35,7 +33,6 @@ export function systemType(_: IMessages) {
 
     res.attributes.push({
         name: "_updateTime",
-        saved: true,
         system: true,
         type: new DatetimeType(),
         label: _.update_time_attr
@@ -43,7 +40,6 @@ export function systemType(_: IMessages) {
 
     res.attributes.push({
         name: "_pos",
-        saved: true,
         system: true,
         hidden: true,
         type: new NumberType(),

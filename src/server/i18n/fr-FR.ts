@@ -46,6 +46,7 @@ export let messages : IMessages = {
 
 
     // Schema validation
+    missing_attribute: "Attribut manquant",
     attribute_name_mandatory : "Le nom d'attribut est requis",
     attribute_name_format : "Les noms d'attribut doivent être composés de : a-Z, 0-9, _",
     missing_type : "Type manquant",

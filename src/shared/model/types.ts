@@ -1,5 +1,6 @@
 /** Base type abstraction */
 import {arrayToMap, Map} from "../utils";
+import {registerClass} from "../serializer";
 
 
 export interface Type<T> {
@@ -14,17 +15,22 @@ export enum Types {
     ENUM = "enum",
     DATETIME = "datetime",
 }
+
+
 export class BooleanType implements Type<boolean> {
     tag = Types.BOOLEAN;
 }
+registerClass(BooleanType, Types.BOOLEAN);
 
 export class NumberType implements Type<number> {
     tag =  Types.NUMBER;
 }
+registerClass(NumberType, Types.NUMBER);
 
 export class DatetimeType implements Type<Date> {
     tag =  Types.DATETIME;
 }
+registerClass(DatetimeType, Types.DATETIME);
 
 export class TextType implements Type<string> {
     tag = Types.TEXT;
@@ -33,6 +39,7 @@ export class TextType implements Type<string> {
         this.rich = rich;
     }
 }
+registerClass(TextType, Types.TEXT);
 
 export interface EnumValue {
     value: string;
@@ -46,6 +53,7 @@ export class EnumType implements Type<string> {
     tag = Types.ENUM;
     values : EnumValue[] = [];
 }
+registerClass(EnumType, Types.ENUM);
 
 export function newType(typeTag:string) {
     switch(typeTag) {
@@ -60,7 +68,7 @@ export function newType(typeTag:string) {
         case Types.ENUM:
             let res = new EnumType();
             // Two empty values for the UI
-            // Fixme : should be on UI side, not here
+            // FIXME : should be on UI side, not here
             res.values.push({value:null});
             res.values.push({value:null});
             return res;
@@ -75,12 +83,10 @@ export class Attribute {
     type: Type<any>;
     isName?: boolean = false;
     isMandatory?: boolean = false;
-    saved ?:boolean = false;
     system ?:boolean = false;
     hidden ?:boolean = false;
-
-
 }
+registerClass(Attribute, "attribute");
 
 
 export class StructType implements Type<Map<any>> {
@@ -90,6 +96,7 @@ export class StructType implements Type<Map<any>> {
         this.attributes = attributes;
     }
 }
+registerClass(StructType, Types.STRUCT);
 
 export function attributesMap(schema:StructType) : Map<Attribute> {
     return arrayToMap(schema.attributes, attr => attr.name);

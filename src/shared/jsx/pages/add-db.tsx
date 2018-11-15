@@ -3,18 +3,18 @@ import {GlobalContextProps, withGlobalContext} from "../context/global-context";
 import {Button, Container, Form, Input, Label, TextArea} from "semantic-ui-react";
 import {RouteComponentProps} from "react-router";
 import {BASE_DB_PATH, RECORDS_PATH} from "../../api";
-import {deepClone, Map, mapMap, slug} from "../../utils";
+import {deepClone, slug} from "../../utils";
 import {Attribute, StructType, TextType, Type} from "../../model/types";
 import {IMessages} from "../../i18n/messages";
 import {AddButtonPosition, AttributeList} from "../dialogs/parts/attribute-list";
 import {Wizard, WizardStep} from "../components/wizard";
-import {checkAvailability, createDb, toPromiseWithErrors} from "../../rest/client";
-import {AndCompose, notEmptyValidator, regExpValidator, ValidationError, Validator} from "../../validators/validators";
+import {checkAvailability, createDb, toPromiseWithErrors} from "../../../client/rest/client";
+import {AndCompose, notEmptyValidator, regExpValidator} from "../../validators/validators";
 import {DbDefinition} from "../../../server/db/db";
 import {MainLayout} from "./layout/main-layout";
 import {ErrorPO} from "../utils/validation-errors";
 
-const SLUG_REG = new RegExp(/^[1-9a-zA-Z\-_]*$/)
+const SLUG_REG = new RegExp(/^[1-9a-zA-Z\-_]*$/);
 
 type AddDbPageProps = GlobalContextProps & RouteComponentProps<{}>;
 export class AddDbPageInternal extends React.Component<AddDbPageProps> {
@@ -161,7 +161,7 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
         </Container>
         </MainLayout>
     }
-};
+}
 
 interface SchemaTemplate {
     label : string;
@@ -173,7 +173,6 @@ function newAttr(name:string, label:string, type: Type<any>, isName:boolean = fa
     res.name = name;
     res.label = label;
     res.type = type;
-    res.saved = true;
     if (isName) {
         res.isName = true;
         res.isMandatory = true;

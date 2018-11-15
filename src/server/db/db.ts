@@ -50,7 +50,7 @@ export interface DbSettings {
     description:string;
 }
 
-// Entire description, with read only fields
+// Entire Db description, with read only fields
 export interface DbDefinition extends DbSettings {
     /** Shortname of the db */
     name : string;
@@ -69,7 +69,6 @@ export async function updateSchemaDb(dbName: string, schema:StructType, _:IMessa
     // Mark attributes as saved
     // FIXME : do otherwize - mark new types and atributes as new and don't save it
     for (let attr of schema.attributes) {
-        attr.saved = true;
 
         // Mark each enum record as saved
         if (attr.type.tag == Types.ENUM) {
@@ -107,20 +106,21 @@ export async function updateRecordDb(dbName: string, record : Record, _:IMessage
     let dbDef = await getDbDef(dbName);
 
     // Validate record
-    raiseExceptionIfErrors(validateRecord(record, dbDef.schema, _));
+    raiseExceptionIfErrors(validateRecord(record, dbDef.schema, _, false));
 
     // Transform string ID to BSON ObjectID
-    let copy = { ...record} as any;
-    copy._id = new ObjectId(record._id);
+    let id = new ObjectId(record._id);
+    delete record._id;
 
     // Update time
-    copy._updateTime = new Date();
+    record._updateTime = new Date();
 
-    let res = await col.replaceOne({_id: copy._id}, copy);
+    let res = await col.updateOne({_id: id}, { $set : record});
     if (res.matchedCount != 1) {
         throw Error(`No item matched for id : ${record._id}`);
     }
-    return transformRecord(copy);
+    let updated = await col.findOne({_id: id});
+    return transformRecord(updated);
 }
 
 
@@ -129,7 +129,7 @@ export async function createRecordDb(dbName: string, record : Record, _:IMessage
     let dbDef = await getDbDef(dbName);
 
     // Validate record
-    raiseExceptionIfErrors(validateRecord(record, dbDef.schema, _));
+    raiseExceptionIfErrors(validateRecord(record, dbDef.schema, _, true));
 
 
     if (record._id) {
@@ -173,7 +173,7 @@ export async function getDbDef(dbName: string) : Promise<DbDefinition> {
 }
 
 
-
+/** Transform record as plain JSON */
 function transformRecord(record: Record) : Record {
     let res = {...record};
     if ((res._id as any) instanceof ObjectId) {
@@ -211,18 +211,14 @@ export class DbDataFetcher implements DataFetcher {
         let col = await Connection.getDbCol(dbName);
         let record = await col.findOne({_id: new ObjectId(id)});
         if (!record) throw new Error(`Missing db: ${dbName}`);
-        let res = transformRecord(record);
-        console.log("getRecord result", res);
-        return res;
+        return transformRecord(record);
     }
 
     async getRecords(dbName: string) : Promise<Record[]> {
         let col = await Connection.getDbCol(dbName);
         let cursor = await col.find();
         let records = await cursor.toArray();
-        let res = records.map(transformRecord);
-        console.log("getRecords result", res);
-        return res;
+        return records.map(transformRecord);
     }
 
 }

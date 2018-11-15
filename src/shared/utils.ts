@@ -3,21 +3,21 @@ import "es6-promise";
 import * as QueryString from "querystring";
 import {RouteComponentProps} from "react-router";
 import slugify from "slugify";
+import {cloneDeep} from "lodash";
 
 
 /** Helper for mapping key => values to f(key, record)*/
 type Callback<T,O> = (key: string, value:T) => O;
 
-/** Loop over key, vlues of a map or object, and apply the function */
+/** Loop over key, values of a map or object, and apply the function, return an array of values */
 export function  mapMap<T, O>(map: {[key:string] : T}, callback: Callback<T, O>) : Array<O> {
     return Object.keys(map).map(key => callback(key, map[key]));
 }
+
+
 export function  mapToArray<T>(map: {[key:string] : T}) : Array<T> {
     return Object.keys(map).map(key => map[key]);
 }
-
-
-
 
 /** Handy map definition */
 export interface Map<T = {}> {
@@ -61,7 +61,7 @@ export function arrayToMap<T>(arr : T[], keyFunc : (item:T) => string): Map<T> {
 }
 
 export function deepClone<T>(value: T) : T {
-    return JSON.parse(JSON.stringify(value));
+    return cloneDeep(value);
 }
 
 export function isIn(arr: string[], el:string) {
@@ -165,7 +165,7 @@ export function slug(input:string) {
     return slugify(input, {remove: /[*+~.()'"!:@\\?]/g, lower: true})
 }
 
-// Tranform synchronouse function to Promise
+// Tranform synchronous function to Promise
 // also takes Promise => returns it as is
 export function resolveFuncOrPromise<T>(funcOrPromise : (() => Promise<T>) | (() => T)) : Promise<T> {
     // Not Promise ? => make one

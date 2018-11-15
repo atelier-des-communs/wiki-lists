@@ -55,6 +55,7 @@ export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
            let res = deepClone(attr) as any;
            delete res.expanded;
            delete res.uid;
+           delete res.new;
            return res;
         });
 

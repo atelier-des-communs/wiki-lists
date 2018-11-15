@@ -44,6 +44,7 @@ export let messages : IMessages = {
     enum_values : "Options",
 
     // Schema validation
+    missing_attribute: "Attribute is missing",
     attribute_name_mandatory : "Attribute name is mandatory",
     attribute_name_format : "Attribute names should be made of : a-Z, 0-9, _",
     missing_type : "Type is missing",

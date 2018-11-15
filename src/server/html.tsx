@@ -14,6 +14,7 @@ import {COOKIE_DURATION, IMarshalledContext, RECORDS_ADMIN_PATH, SECRET_COOKIE} 
 import {GlobalContextProps, HeadSetter, ICookies} from "../shared/jsx/context/global-context";
 import {selectLanguage, supportedLanguages} from "./i18n/messages";
 import * as escapeHtml from "escape-html";
+import {toJsonWithTypes} from "../shared/serializer";
 
 const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '/static' : 'http://localhost:8081/static';
 
@@ -66,7 +67,7 @@ function renderHtml(head:ServerSideHeaderHandler, html:string, context:IMarshall
 			<body>
 				<div id="app">${html}</div>
 				<script>
-					window.__MARSHALLED_CONTEXT__ = ${JSON.stringify(context)};
+					window.__MARSHALLED_CONTEXT__ = ${JSON.stringify(toJsonWithTypes(context))};
 				</script>
 				<script src="${BUNDLE_ROOT}/lang-${context.lang}.js"></script>
 				<script src="${BUNDLE_ROOT}/client.bundle.js"></script>

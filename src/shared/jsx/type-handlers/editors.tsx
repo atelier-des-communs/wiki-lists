@@ -24,8 +24,7 @@ interface ValueHandlerProps<T, TypeT extends Type<T>> extends MessagesProps {
     [index:string] : any;
 }
 
-
-/** Generic wrapper hanlding transformation of internal state */
+/** Generic wrapper handling transformation of internal state */
 abstract class ControlledValueHandler<T, TypeT extends Type<T>> extends React.Component<ValueHandlerProps<T, TypeT>> {
     state : {
         innerValue:any,
@@ -84,8 +83,6 @@ class BooleanHandler extends ControlledValueHandler<boolean, BooleanType>{
             color={this.state.innerValue ? "green" : "red"}/>
     }
 }
-
-
 
 class SimpleTextHandler extends ControlledValueHandler<string, TextType> {
     renderView() {
@@ -181,10 +178,9 @@ class EnumHandler extends ControlledValueHandler<string, EnumType> {
                 {...otherProps}
                 style={style} >
                 {text}
-            </Label> :
-            <Label ><i>
-                {_.empty}
-            </i></Label>;
+            </Label>
+            :
+            <Label ><i>{_.empty}</i></Label>;
     }
     renderEdit() {
         let valuesWithEmpty = [ {value:null}, ...this.props.type.values];

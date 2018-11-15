@@ -4,6 +4,7 @@ import {AccessRight} from "../shared/access";
 import {getDbDef} from "./db/db";
 import {isIn} from "../shared/utils";
 import {Request} from "express-serve-static-core"
+import {toJsonWithTypes} from "../shared/serializer";
 
 export interface ContentWithStatus {
     statusCode:number,
@@ -20,6 +21,10 @@ export function returnPromise(res: Express.Response, promise: Promise<{}>, code=
 export function returnPromiseWithCode(res: Express.Response, promise: Promise<ContentWithStatus>) {
     promise.then(
         result => {
+
+            // Add type information to JSON
+            let json = toJsonWithTypes(result.content);
+
             res.status(result.statusCode).send(result.content)
         }).
     catch(

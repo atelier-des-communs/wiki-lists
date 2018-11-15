@@ -14,6 +14,7 @@ import {ValidationError} from "../../../validators/validators";
 // Add some UI / Client only properties to the Attribute type
 export class UIAttribute extends Attribute {
     expanded ?:boolean;
+    new? : boolean;
     uid?: number; // Used as React unique "key", since attrirbute name is not yet filled
 }
 
@@ -57,8 +58,8 @@ export class AttributeList extends React.Component<AttributeListProps> {
     changeLabel(index:number, label:string) {
         this.state.attributes[index].label = label;
 
-        // Sync attribute name
-        if (!this.state.attributes[index].saved) {
+        // Sync attribute name (or new ones only)
+        if (this.state.attributes[index].new) {
             this.state.attributes[index].name = slug(label);
         }
         this.forceRedraw();
@@ -70,6 +71,7 @@ export class AttributeList extends React.Component<AttributeListProps> {
         attr.type = type;
         attr.uid = this.uid++;
         attr.expanded = true;
+        attr.new = true;
         if (this.props.addButtonPosition == AddButtonPosition.TOP) {
             this.state.attributes.unshift(attr);
         } else {
@@ -87,7 +89,7 @@ export class AttributeList extends React.Component<AttributeListProps> {
     remove(index:number) {
         let _ = this.props.messages;
         let attr = this.state.attributes[index];
-        if (attr.saved) {
+        if (!attr.new) {
             if (!confirm(_.confirm_attribute_delete)) {
                 return;
             }
@@ -178,7 +180,8 @@ export class AttributeList extends React.Component<AttributeListProps> {
 
             </Grid>
 
-            return <Segment key={attr.saved ? attr.name : attr.uid} >
+            // Before this attribute is saved, the local uid is the key
+            return <Segment key={attr.new ? attr.uid : attr.name} >
 
 
                 <Grid divided="vertically" >
@@ -188,7 +191,7 @@ export class AttributeList extends React.Component<AttributeListProps> {
                             <Header >
                                 <EditableText
                                     {...this.props}
-                                    forceEdit={!attr.saved}
+                                    forceEdit={attr.new}
                                     value={attr.label}
                                     placeholder={ _.attribute_name}
                                     onChange={ (value) => this.changeLabel(index, value)} />

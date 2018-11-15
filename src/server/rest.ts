@@ -29,6 +29,7 @@ import {Request, Response} from "express-serve-static-core"
 import {AccessRight} from "../shared/access";
 import * as xss from "xss";
 import {selectLanguage} from "./i18n/messages";
+import {toJsonWithTypes, toObjWithTypes} from "../shared/serializer";
 
 async function addItemAsync(req:Request) : Promise<Record> {
     let record = sanitizeJson(req.body) as Record;
@@ -128,5 +129,9 @@ function sanitizeJson(input:any) {
         }
     };
     traverse(input, xssFunc);
+
+    // Add type information
+    toObjWithTypes(input);
+
     return input;
 }

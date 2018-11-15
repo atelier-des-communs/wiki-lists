@@ -1,5 +1,5 @@
 import Axios, {AxiosPromise} from "axios";
-import {Record} from "../model/instances";
+import {Record} from "../../shared/model/instances";
 import {
     ADD_ITEM_URL,
     CHECK_DB_NAME,
@@ -12,11 +12,12 @@ import {
     UPDATE_ITEM_URL,
     UPDATE_SCHEMA_URL,
     VALIDATION_STATUS_CODE
-} from "../api";
-import {StructType} from "../model/types";
-import {ValidationError, ValidationException} from "../validators/validators";
+} from "../../shared/api";
+import {StructType} from "../../shared/model/types";
+import {ValidationError, ValidationException} from "../../shared/validators/validators";
 import {DbDefinition} from "../../server/db/db";
-import {empty} from "../utils";
+import {empty} from "../../shared/utils";
+import {toJsonWithTypes, toObjWithTypes} from "../../shared/serializer";
 
 let axios = Axios.create();
 
@@ -25,7 +26,10 @@ let axios = Axios.create();
 // Catch sepcific status code and unwrap it as a validation exception
 function unwrapAxiosResponse<T>(promise : AxiosPromise<T>) : Promise<T> {
     return promise.then((response: any) => {
-        return response.data;
+
+        // Parse type annotation and add prototypes
+        return toObjWithTypes(response.data);
+
     }).catch(error => {
        console.info("Server error happened", error);
 
@@ -41,42 +45,48 @@ function unwrapAxiosResponse<T>(promise : AxiosPromise<T>) : Promise<T> {
     });
 }
 
+
+/** Add type information before sending */
+async function post<T>(url:string, data:any=null) : Promise<T> {
+    let json = toJsonWithTypes(data);
+    return unwrapAxiosResponse<T>(axios.post(url, json));
+}
+
+async function get<T>(url:string) : Promise<T> {
+    return unwrapAxiosResponse<T>(axios.get(url));
+}
+
 /** Return the full item with new _id */
 export async function createItem(dbName: string, item : Record) : Promise<Record> {
-    return await unwrapAxiosResponse(
-        axios.post(
-            ADD_ITEM_URL.replace(":db_name", dbName),
-            item));
+    return await post(
+        ADD_ITEM_URL.replace(":db_name", dbName),
+        item);
 }
 
 /** Return the image of the update item, as saved in DB */
 export async function updateItem(dbName: string, item : Record) : Promise<Record> {
-    return await unwrapAxiosResponse(
-        axios.post(
-            UPDATE_ITEM_URL.replace(":db_name", dbName),
-            item));
+    return await post(
+        UPDATE_ITEM_URL.replace(":db_name", dbName),
+        item);
 }
 
 /** Return the image of the update item, as saved in DB */
 export async function updateSchema(dbName: string, schema:StructType) : Promise<StructType> {
-    return await unwrapAxiosResponse(
-        axios.post(
-            UPDATE_SCHEMA_URL.replace(":db_name", dbName),
-            schema));
+    return await post<StructType>(
+        UPDATE_SCHEMA_URL.replace(":db_name", dbName),
+        schema);
 }
 
 /** Return the image of the update item, as saved in DB */
 export async function createDb(dbDef:DbDefinition) : Promise<boolean> {
-    return await unwrapAxiosResponse(
-        axios.post(CREATE_DB_URL, dbDef));
+    return await post<boolean>(CREATE_DB_URL, dbDef);
 }
 
 /** Return the image of the update item, as saved in DB */
 export async function deleteItem(dbName: string, id : string) : Promise<boolean> {
-    return await unwrapAxiosResponse(axios.post(
-            DELETE_ITEM_URL
+    return await post<boolean>(DELETE_ITEM_URL
             .replace(":db_name", dbName)
-            .replace(":id", id)));
+            .replace(":id", id));
 }
 
 export async function checkAvailability(dbName: string) : Promise<boolean> {
@@ -88,24 +98,22 @@ export async function checkAvailability(dbName: string) : Promise<boolean> {
 export let restDataFetcher : DataFetcher = {
 
     async getDbDefinition(dbName:string) : Promise<DbDefinition>{
-        return await unwrapAxiosResponse(axios.get(
+        return await get<DbDefinition>(
                 GET_DB_DEFINITION_URL
-                    .replace(":db_name", dbName)));
+                    .replace(":db_name", dbName));
     },
 
     async getRecord(dbName:string, id:string) : Promise<Record> {
-        return await unwrapAxiosResponse(axios.get(
-            GET_ITEM_URL
+        return await get(GET_ITEM_URL
                 .replace(":db_name", dbName)
-                .replace(":id", id)));
+                .replace(":id", id));
     },
 
     async getRecords(dbName:string) : Promise<Record[]> {
-        return await unwrapAxiosResponse(axios.get(
-            GET_ITEMS_URL
-                .replace(":db_name", dbName)));
+        return await get<Record[]>(GET_ITEMS_URL
+                .replace(":db_name", dbName));
     }
-}
+};
 
 // For simple action transform the promise into a Promise of either null (success) or list of validation errors
 export function toPromiseWithErrors(promise : Promise<{}>) : Promise<null | ValidationError[]> {

@@ -8,12 +8,15 @@ import {toImmutable} from "../shared/utils";
 import "./index.css";
 import {GlobalContextProps, HeadSetter, ICookies} from "../shared/jsx/context/global-context";
 import {IMarshalledContext} from "../shared/api";
-import {restDataFetcher} from "../shared/rest/client";
+import {restDataFetcher} from "./rest/client";
 import * as cookies from "browser-cookies";
+import {toObjWithTypes} from "../shared/serializer";
 
 
 /** Initial state of the store has been serialized for us by server side rendering */
-let marshalledContext = (window as any).__MARSHALLED_CONTEXT__ as IMarshalledContext;
+let marshalledContext = toObjWithTypes(
+    (window as any).__MARSHALLED_CONTEXT__ as IMarshalledContext);
+
 let reduxDevTools =
     (window as any).__REDUX_DEVTOOLS_EXTENSION__ &&
     (window as any).__REDUX_DEVTOOLS_EXTENSION__();

@@ -1,19 +1,27 @@
 var shared = require("./webpack.shared.js");
 var server_loaders = shared.common_loaders();
 var client_loaders = shared.common_loaders();
+var MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 
+// For SSR we need different CSS loader
 server_loaders["css"] = {
     test: /\.css$/,
     exclude: /node_modules/,
-    loader: 'css-loader',
+    loader: 'css-loader'
 };
 
-
-client_loaders["css_external"] = server_loaders["css_external"] = {
+server_loaders["css_external"] = {
     test: /\.css$/,
     include: /node_modules/,
     use: ['css-loader/locals'],
+};
+
+// Client loader
+client_loaders["css_external"] = {
+    test: /\.css$/,
+    include: /node_modules/,
+    use: [MiniCssExtractPlugin.loader, 'css-loader'],
 };
 
 
