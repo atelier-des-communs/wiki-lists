@@ -11,10 +11,10 @@ import {LANG_COOKIE} from "../shared/api";
 
 const MAX_AGE  = 30 * 24 * 3600 * 1000; // One month
 
-export default function initServer(dist_paths:string[]) {
+export default function initServer(dist_paths:string[]) : express.Express {
 
     var server = express();
-    server.use(compression({ threshold: 0 }));
+    server.use(compression());
     server.use(bodyParser.json());
     server.use(cookieParser());
 

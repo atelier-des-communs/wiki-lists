@@ -8,7 +8,7 @@ import {Info} from "../../utils/utils";
 import {withoutSystemAttributes} from "../../../model/instances";
 import {IMessages} from "../../../i18n/messages";
 import {ErrorPO} from "../../utils/validation-errors";
-import {ValidationError} from "../../../validators/validators";
+import {extend} from "lodash";
 
 
 // Add some UI / Client only properties to the Attribute type
@@ -16,6 +16,12 @@ export class UIAttribute extends Attribute {
     expanded ?:boolean;
     new? : boolean;
     uid?: number; // Used as React unique "key", since attrirbute name is not yet filled
+
+    constructor(init:UIAttribute) {
+        super(init);
+        extend(this, init);
+    }
+
 }
 
 export enum AddButtonPosition {
@@ -67,11 +73,13 @@ export class AttributeList extends React.Component<AttributeListProps> {
 
     addAttribute(typeTag: string) {
         let type = newType(typeTag);
-        let attr = new UIAttribute();
-        attr.type = type;
-        attr.uid = this.uid++;
+        let attr = new UIAttribute({type, name:null});
+
+        // Speicifc to
         attr.expanded = true;
         attr.new = true;
+        attr.uid = this.uid++;
+
         if (this.props.addButtonPosition == AddButtonPosition.TOP) {
             this.state.attributes.unshift(attr);
         } else {
@@ -124,6 +132,7 @@ export class AttributeList extends React.Component<AttributeListProps> {
     render()  {
         let _ = this.props.messages;
 
+        // FIXME : Replace it by properties on the types themselves
         let TYPE_OPTIONS = [
             {value: Types.BOOLEAN, text:_.type_boolean, icon: "check square outline"},
             {value: Types.NUMBER, text:_.type_number, icon:"number"},

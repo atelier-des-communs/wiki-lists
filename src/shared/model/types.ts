@@ -1,7 +1,6 @@
-/** Base type abstraction */
 import {arrayToMap, Map} from "../utils";
 import {registerClass} from "../serializer";
-
+import {extend} from "lodash";
 
 export interface Type<T> {
     tag: string;
@@ -41,12 +40,20 @@ export class TextType implements Type<string> {
 }
 registerClass(TextType, Types.TEXT);
 
-export interface EnumValue {
+export class EnumValue {
     value: string;
-    label?: string,
-    icon?: string,
-    color?:string
+    label?: string;
+    icon?: string;
+    color?:string;
     saved?:boolean;
+
+    constructor(value ?: string, label ?: string, icon ?: string, color ?: string, saved ?: boolean) {
+        this.value = value;
+        this.label = label;
+        this.icon = icon;
+        this.color = color;
+        this.saved = saved;
+    }
 }
 
 export class EnumType implements Type<string> {
@@ -69,8 +76,8 @@ export function newType(typeTag:string) {
             let res = new EnumType();
             // Two empty values for the UI
             // FIXME : should be on UI side, not here
-            res.values.push({value:null});
-            res.values.push({value:null});
+            res.values.push(new EnumValue(null));
+            res.values.push(new EnumValue(null));
             return res;
         default:
             throw new Error(`Type not supported : ${typeTag}`);
@@ -85,6 +92,9 @@ export class Attribute {
     isMandatory?: boolean = false;
     system ?:boolean = false;
     hidden ?:boolean = false;
+    constructor(init:Attribute) {
+        extend(this, init);
+    }
 }
 registerClass(Attribute, "attribute");
 

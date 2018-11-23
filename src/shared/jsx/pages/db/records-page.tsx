@@ -3,7 +3,7 @@ import * as React from 'react';
 import {Button, Dropdown, Header, Responsive} from 'semantic-ui-react'
 import {EditDialog} from "../../dialogs/edit-dialog";
 import {attributesMap, Types} from "../../../model/types";
-import {goTo, mapMap, parseParams} from "../../../utils";
+import {goTo, mapMap, mapValues, parseParams} from "../../../utils";
 import {SafeClickWrapper, SafePopup} from "../../utils/ssr-safe";
 import {DispatchProp} from "react-redux";
 
@@ -30,6 +30,7 @@ import {createAddItemAction, IState} from "../../../redux";
 import {connectComponent} from "../../context/redux-helpers";
 import {ResponsiveButton} from "../../components/responsive";
 import {safeStorage} from "../../utils/storage";
+import {toJsonWithTypes} from "../../../serializer";
 
 
 type RecordsPageProps =
@@ -311,7 +312,9 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
 const mapStateToProps =(state : IState, props?: RouteComponentProps<{}> & GlobalContextProps) : RecordsPropsOnly => {
 
     // Flatten map of records
-    let records = mapMap(state.items || {},(key:string, item:Record) => item) as Record[];
+    let records = toJsonWithTypes( // Immutable object into live ones, with prototype
+        mapValues(state.items || {}) as Record[]);
+
 
     // Apply search and sorting
     let params = parseParams(props.location.search);

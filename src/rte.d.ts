@@ -26,3 +26,8 @@ declare module "react-rte/lib/RichTextEditor" {
 
     }
 }
+
+// We don't care about the content : we just need it to be imported in test, for faking the presence of Window
+declare module "jsdom-global" {
+
+}

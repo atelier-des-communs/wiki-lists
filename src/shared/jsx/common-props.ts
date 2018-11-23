@@ -5,7 +5,7 @@ import {StructType} from "../model/types";
 import {Record} from "../model/instances";
 import {GlobalContextProps} from "./context/global-context";
 import {RouteComponentProps} from "react-router";
-import {DbDefinition} from "../../server/db/db";
+import {DbDefinition} from "../model/db-def";
 
 
 /** Custom route path params parsed for the "records" page */

@@ -3,8 +3,9 @@ import {combineReducers} from "redux-seamless-immutable";
 import {StructType} from "../model/types";
 import * as Immutable from "seamless-immutable";
 import {Record} from "../model/instances";
-import {DbDefinition} from "../../server/db/db";
+import {DbDefinition} from "../model/db-def";
 import {Map} from "../utils";
+import {toJsonWithTypes} from "../serializer";
 
 
 export interface IState {
@@ -50,19 +51,19 @@ export class UpdateDbAction implements Action {
 }
 
 export function createAddItemAction(record: Record) : AddItemAction {
-    return {type:ActionType.ADD_ITEM, record:Immutable.from(record)}
+    return {type:ActionType.ADD_ITEM, record:toImmutableJson(record)}
 }
 export function createUpdateItemAction(record: Record) : UpdateItemAction {
-    return {type:ActionType.UPDATE_ITEM, record:Immutable.from(record)}
+    return {type:ActionType.UPDATE_ITEM, record:toImmutableJson(record)}
 }
 export function createDeleteAction(id: string) : DeleteItemAction {
     return {type:ActionType.DELETE_ITEM, id}
 }
 export function createUpdateSchema(schema:StructType) : UpdateSchemaAction {
-    return {type:ActionType.UPDATE_SCHEMA, schema:Immutable.from(schema)};
+    return {type:ActionType.UPDATE_SCHEMA, schema:toImmutableJson(schema)};
 }
 export function createUpdateDbAction(dbDef:DbDefinition) : UpdateDbAction {
-    return {type:ActionType.UPDATE_DB, dbDef:Immutable.from(dbDef)};
+    return {type:ActionType.UPDATE_DB, dbDef:toImmutableJson(dbDef)};
 }
 export type TAction  =
     UpdateSchemaAction |
@@ -76,7 +77,7 @@ function itemsReducer(items:Immutable.ImmutableObject<Map<Record>> = null, actio
         case ActionType.ADD_ITEM:
         case ActionType.UPDATE_ITEM:
             if (items == null) {
-                items = Immutable.from({} as Map<Record>);
+                items = toImmutableJson({} as Map<Record>);
             }
             let record = (action as ActionWithRecord).record;
             return items.set(record._id, record);
@@ -103,4 +104,11 @@ export let reducers : Reducer<IState> = combineReducers ({
     items: itemsReducer,
     dbDefinition: dbDefReducer
 });
+
+/** Transform live object into immutable JSON with @class attributes to be put in store :
+ * should be transformed back to 'live' object with toObjWithYypes */
+function toImmutableJson(foo: any) {
+    return Immutable.from(toJsonWithTypes((foo)));
+}
+
 

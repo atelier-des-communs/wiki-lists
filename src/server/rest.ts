@@ -16,7 +16,6 @@ import {
     createDb,
     createRecordDb,
     DbDataFetcher,
-    DbDefinition,
     deleteRecordDb,
     updateRecordDb,
     updateSchemaDb
@@ -30,6 +29,7 @@ import {AccessRight} from "../shared/access";
 import * as xss from "xss";
 import {selectLanguage} from "./i18n/messages";
 import {toJsonWithTypes, toObjWithTypes} from "../shared/serializer";
+import {DbDefinition} from "../shared/model/db-def";
 
 async function addItemAsync(req:Request) : Promise<Record> {
     let record = sanitizeJson(req.body) as Record;
@@ -87,7 +87,7 @@ export function setUp(server:Express) {
         returnPromise(res, updateItemAsync(req));
     });
 
-    server.post(DELETE_ITEM_URL, function (req: Request, res: Response) {
+    server.delete(DELETE_ITEM_URL, function (req: Request, res: Response) {
         returnPromise(res, deleteItemAsync(req));
     });
 

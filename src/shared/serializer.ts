@@ -34,7 +34,7 @@ export function clearRegistry() {
 }
 
 /** Transform tree of object into plain JSON tree, with "@type" decorations */
-export function toJsonWithTypes<T>(obj:T) : T {
+export function toJsonWithTypes<T>(obj:T, path:string="") : T {
 
     if (obj == null) {
         return null;
@@ -42,14 +42,14 @@ export function toJsonWithTypes<T>(obj:T) : T {
 
     if (Array.isArray(obj)) {
 
-        return (obj as any).map(toJsonWithTypes);
+        return (obj as any).map((value:any, index:number) => toJsonWithTypes(value, `${path}[${index}]`));
 
     } else if (typeof(obj) == "object") {
 
         // Walk the tree
         let res : any = {};
         for (let key of Object.keys(obj)) {
-            res[key] = toJsonWithTypes((obj as any)[key]);
+            res[key] = toJsonWithTypes((obj as any)[key], `${path}.${key}` );
         }
 
         // Simple object => no extra processing
@@ -59,10 +59,10 @@ export function toJsonWithTypes<T>(obj:T) : T {
 
         // Get class tag
         let tag : string = (obj.constructor as any).tag;
-        if (!tag) throw  new Error(`Missing tag for class : ${obj.constructor}`);
+        if (!tag) throw  new Error(`Missing tag for class : ${obj.constructor} at '${path}'`);
 
         // Get class or serializer
-        if (!(tag in classRegistry)) throw new Error(`Type tag ${tag} not found in registry`);
+        if (!(tag in classRegistry)) throw new Error(`Type tag ${tag} not found in registry at '${path}'`);
         let classHandler = classRegistry[tag];
 
 

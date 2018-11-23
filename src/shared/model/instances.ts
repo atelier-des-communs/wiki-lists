@@ -1,9 +1,10 @@
 import {DatetimeType, NumberType, StructType, TextType} from "./types";
 import {deepClone} from "../utils";
 import {IMessages} from "../i18n/messages";
+import {registerClass} from "../serializer";
 
 
-export interface Record {
+export class Record {
 
     _id?: string;
     _creationTime?: Date;
@@ -13,6 +14,7 @@ export interface Record {
     // Other fields, defined by the schema of the table
     [x:string]: any;
 }
+registerClass(Record, "record");
 
 // Definition of system attributes, as StrucType
 export function systemType(_: IMessages) {

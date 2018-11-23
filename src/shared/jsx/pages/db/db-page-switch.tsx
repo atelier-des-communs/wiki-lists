@@ -18,6 +18,7 @@ import "../../../img/logo.png";
 import {Button, Message} from "semantic-ui-react";
 import {AccessRight, hasRight} from "../../../access";
 import {deepClone} from "../../../utils";
+import {toObjWithTypes} from "../../../serializer";
 
 type DbPageProps =
     GlobalContextProps &
@@ -121,11 +122,13 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
 
 
 // Filter data from Redux store and map it to props
-const mapStateToProps =(state : IState, props?: RouteComponentProps<{}> & GlobalContextProps) : DbProps => {
-    let db = deepClone(state.dbDefinition);
+const mapStateToProps = (state : IState, props?: RouteComponentProps<{}> & GlobalContextProps) : DbProps => {
 
-    // FIXME : Might not be the right palce to add system properties to schema
-    db.schema = withSystemAttributes(state.dbDefinition.schema, props.messages);
+    // Transform immutable object into "live" one.
+    let db = toObjWithTypes(state.dbDefinition);
+
+    // FIXME : Might not be the right place to add system properties to schema
+    db.schema = withSystemAttributes(db.schema, props.messages);
     return {db}
 };
 

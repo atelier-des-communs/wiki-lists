@@ -1,7 +1,7 @@
 // HTML
 import {IState} from "./redux/index";
 import {Record} from "./model/instances";
-import {DbDefinition} from "../server/db/db";
+import {DbDefinition} from "./model/db-def";
 import {Language} from "./i18n/messages";
 
 export const BASE_DB_PATH = "/db/";

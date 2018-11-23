@@ -10,7 +10,7 @@ import {AddButtonPosition, AttributeList} from "../dialogs/parts/attribute-list"
 import {Wizard, WizardStep} from "../components/wizard";
 import {checkAvailability, createDb, toPromiseWithErrors} from "../../../client/rest/client";
 import {AndCompose, notEmptyValidator, regExpValidator} from "../../validators/validators";
-import {DbDefinition} from "../../../server/db/db";
+import {DbDefinition} from "../../model/db-def";
 import {MainLayout} from "./layout/main-layout";
 import {ErrorPO} from "../utils/validation-errors";
 
@@ -79,13 +79,13 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
             regExpValidator(SLUG_REG, _.slug_regexp_no_match))(this.state.slug),
             () => checkAvailability(this.state.slug).then(res => res ? null : _.db_not_available)];
 
+        // Makes async REST call for Db creation
         let addDbValidator = () => {
-            let dbDef : DbDefinition = {
+            let dbDef = new  DbDefinition({
                 schema : this.state.schema,
                 name : this.state.slug,
                 label : this.state.name,
-                description : this.state.description
-            };
+                description : this.state.description});
             return toPromiseWithErrors(createDb(dbDef));
         };
 
@@ -168,23 +168,22 @@ interface SchemaTemplate {
     schema: StructType;
 }
 
-function newAttr(name:string, label:string, type: Type<any>, isName:boolean = false) {
-    let res = new Attribute();
-    res.name = name;
-    res.label = label;
-    res.type = type;
-    if (isName) {
-        res.isName = true;
-        res.isMandatory = true;
-    }
-    return res;
-}
+
 
 // Generate list of templates for schemas
 function templates(_:IMessages) : SchemaTemplate[] {
 
-    let nameAttr = newAttr("name", _.name, new TextType(), true);
-    let descrAttr = newAttr("description", _.description, new TextType(true));
+    let nameAttr = new Attribute({
+        name: "name",
+        label:_.name,
+        type:new TextType(),
+        isName:true,
+        isMandatory:true});
+
+    let descrAttr = new Attribute({
+        name: "description",
+        label: _.description,
+        type:new TextType(true)});
 
     let defaultSchema = new StructType([nameAttr, descrAttr]);
 

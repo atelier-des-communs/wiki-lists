@@ -1,5 +1,5 @@
 import {EnumType, StructType, Types} from "../../shared/model/types";
-import {DB_HOST, DB_NAME, DB_PORT} from "../../conf"
+import config from "../../conf"
 import {MongoClient, ObjectId} from "mongodb";
 import {Record} from "../../shared/model/instances";
 import {validateSchemaAttributes} from "../../shared/validators/schema-validators";
@@ -12,19 +12,20 @@ import {AccessRight} from "../../shared/access";
 import {getAccessRights, HttpError} from "../utils";
 import {Request} from "express-serve-static-core"
 import * as shortid from "shortid";
+import {registerClass} from "../../shared/serializer";
+import {DbDefinition} from "../../shared/model/db-def";
 
 const DATABASES_COL = "schemas";
 const DATABASE_COL_TEMPLATE = (name:string) => {return `db.${name}`};
-const UID_SIZE = 8;
 
 /* Singleton instance */
 class  Connection {
     static client : MongoClient;
     static async getDb() {
         if (!this.client) {
-            this.client = await MongoClient.connect(`mongodb://${DB_HOST}:${DB_PORT}/`);
+            this.client = await MongoClient.connect(`mongodb://${config.DB_HOST}:${config.DB_PORT}/`);
         }
-        return this.client.db(DB_NAME);
+        return this.client.db(config.DB_NAME);
     }
 
     // Returns collection of items for a given database
@@ -45,19 +46,9 @@ async function init() : Promise<void> {
 }
 
 // Part of Db Settings that can be overriden
-export interface DbSettings {
-    label:string;
-    description:string;
-}
 
 // Entire Db description, with read only fields
-export interface DbDefinition extends DbSettings {
-    /** Shortname of the db */
-    name : string;
-    schema: StructType;
-    secret?:string;
-    rights? : AccessRight[];
-}
+registerClass(DbDefinition, "dbDefinition");
 
 export async function updateSchemaDb(dbName: string, schema:StructType, _:IMessages) : Promise<StructType> {
     let db = await Connection.getDb();
@@ -120,7 +111,7 @@ export async function updateRecordDb(dbName: string, record : Record, _:IMessage
         throw Error(`No item matched for id : ${record._id}`);
     }
     let updated = await col.findOne({_id: id});
-    return transformRecord(updated);
+    return cleanBSON(updated);
 }
 
 
@@ -145,7 +136,7 @@ export async function createRecordDb(dbName: string, record : Record, _:IMessage
 
     let res = await col.insertOne(record);
     record._id = res.insertedId.toHexString();
-    return transformRecord(record);
+    return cleanBSON(record);
 }
 
 export async function deleteRecordDb(dbName: string, id : string) : Promise<boolean> {
@@ -169,15 +160,15 @@ export async function getDbDef(dbName: string) : Promise<DbDefinition> {
     let col = db.collection<DbDefinition>(DATABASES_COL);
     let database = await col.findOne({name: dbName});
     if (!database) throw new HttpError(404, `Missing db: ${dbName}`);
-    return database
+    return cleanBSON(database);
 }
 
 
-/** Transform record as plain JSON */
-function transformRecord(record: Record) : Record {
-    let res = {...record};
-    if ((res._id as any) instanceof ObjectId) {
-        res._id = (record._id as any).toHexString();
+/** Transform record from BSON to plain JSON */
+function cleanBSON<T extends Object>(obj: {}) : T {
+    let res = {...obj} as any;
+    if (res._id instanceof ObjectId) {
+        res._id = ((obj as any)._id as ObjectId).toHexString();
     }
     return res;
 }
@@ -211,14 +202,14 @@ export class DbDataFetcher implements DataFetcher {
         let col = await Connection.getDbCol(dbName);
         let record = await col.findOne({_id: new ObjectId(id)});
         if (!record) throw new Error(`Missing db: ${dbName}`);
-        return transformRecord(record);
+        return cleanBSON(record);
     }
 
     async getRecords(dbName: string) : Promise<Record[]> {
         let col = await Connection.getDbCol(dbName);
         let cursor = await col.find();
         let records = await cursor.toArray();
-        return records.map(transformRecord);
+        return records.map(cleanBSON);
     }
 
 }

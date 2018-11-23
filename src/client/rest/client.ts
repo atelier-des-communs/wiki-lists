@@ -15,46 +15,12 @@ import {
 } from "../../shared/api";
 import {StructType} from "../../shared/model/types";
 import {ValidationError, ValidationException} from "../../shared/validators/validators";
-import {DbDefinition} from "../../server/db/db";
+import {DbDefinition} from "../../shared/model/db-def";
 import {empty} from "../../shared/utils";
 import {toJsonWithTypes, toObjWithTypes} from "../../shared/serializer";
 
-let axios = Axios.create();
+const axios = Axios.create();
 
-
-
-// Catch sepcific status code and unwrap it as a validation exception
-function unwrapAxiosResponse<T>(promise : AxiosPromise<T>) : Promise<T> {
-    return promise.then((response: any) => {
-
-        // Parse type annotation and add prototypes
-        return toObjWithTypes(response.data);
-
-    }).catch(error => {
-       console.info("Server error happened", error);
-
-       // In case of validation error, wrap the errors into proper ValidationException
-       if (error.response && error.response.status == VALIDATION_STATUS_CODE) {
-           console.info("Transformed to validation exception", error.response.data);
-           throw new ValidationException(error.response.data);
-       } else {
-           alert("A network error happened : " + error);
-           // otherwize, continue
-           throw error;
-       }
-    });
-}
-
-
-/** Add type information before sending */
-async function post<T>(url:string, data:any=null) : Promise<T> {
-    let json = toJsonWithTypes(data);
-    return unwrapAxiosResponse<T>(axios.post(url, json));
-}
-
-async function get<T>(url:string) : Promise<T> {
-    return unwrapAxiosResponse<T>(axios.get(url));
-}
 
 /** Return the full item with new _id */
 export async function createItem(dbName: string, item : Record) : Promise<Record> {
@@ -84,7 +50,7 @@ export async function createDb(dbDef:DbDefinition) : Promise<boolean> {
 
 /** Return the image of the update item, as saved in DB */
 export async function deleteItem(dbName: string, id : string) : Promise<boolean> {
-    return await post<boolean>(DELETE_ITEM_URL
+    return await del<boolean>(DELETE_ITEM_URL
             .replace(":db_name", dbName)
             .replace(":id", id));
 }
@@ -126,6 +92,45 @@ export function toPromiseWithErrors(promise : Promise<{}>) : Promise<null | Vali
                 // Rethrow
                 throw e;
             }});
+}
+
+
+// Catch sepcific status code and unwrap it as a validation exception
+function unwrapAxiosResponse<T>(promise : AxiosPromise<T>) : Promise<T> {
+    return promise.then((response: any) => {
+
+        // Parse type annotation and add prototypes
+        return toObjWithTypes(response.data);
+
+    }).catch(error => {
+        console.info("Server error happened", error);
+
+        // In case of validation error, wrap the errors into proper ValidationException
+        if (error.response && error.response.status == VALIDATION_STATUS_CODE) {
+            console.info("Transformed to validation exception", error.response.data);
+            throw new ValidationException(error.response.data);
+        } else {
+            alert("A network error happened : " + error);
+            // otherwize, continue
+            throw error;
+        }
+    });
+}
+
+
+/** Add type information before sending */
+async function post<T>(url:string, data:any=null) : Promise<T> {
+    let json = toJsonWithTypes(data);
+    return unwrapAxiosResponse<T>(axios.post(url, json));
+}
+
+async function del<T>(url:string, data:any=null) : Promise<T> {
+    let json = toJsonWithTypes(data);
+    return unwrapAxiosResponse<T>(axios.delete(url, json));
+}
+
+async function get<T>(url:string) : Promise<T> {
+    return unwrapAxiosResponse<T>(axios.get(url));
 }
 
 
