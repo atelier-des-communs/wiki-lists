@@ -48,4 +48,3 @@ src/**/*.jsx.map
 tsd.json
 typings
 
-package-lock.json
