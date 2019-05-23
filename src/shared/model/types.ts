@@ -1,5 +1,5 @@
 import {arrayToMap, Map} from "../utils";
-import {registerClass} from "../serializer";
+import {classTag, registerClass} from "../serializer";
 import {extend} from "lodash";
 
 export interface Type<T> {
@@ -15,22 +15,22 @@ export enum Types {
     DATETIME = "datetime",
 }
 
-
+@classTag(Types.BOOLEAN)
 export class BooleanType implements Type<boolean> {
     tag = Types.BOOLEAN;
 }
-registerClass(BooleanType, Types.BOOLEAN);
 
+@classTag(Types.NUMBER)
 export class NumberType implements Type<number> {
     tag =  Types.NUMBER;
 }
-registerClass(NumberType, Types.NUMBER);
 
+@classTag(Types.DATETIME)
 export class DatetimeType implements Type<Date> {
     tag =  Types.DATETIME;
 }
-registerClass(DatetimeType, Types.DATETIME);
 
+@classTag(Types.TEXT)
 export class TextType implements Type<string> {
     tag = Types.TEXT;
     rich:boolean = false;
@@ -38,7 +38,6 @@ export class TextType implements Type<string> {
         this.rich = rich;
     }
 }
-registerClass(TextType, Types.TEXT);
 
 export class EnumValue {
     value: string;

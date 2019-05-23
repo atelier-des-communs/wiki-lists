@@ -1,5 +1,8 @@
+/**
+ * Serializer adding type information to JSON (with @class attribute) enabling to attach prototype to it on client side.
+ * All Classes should be registered with the decorator @classTag(tag)
+ */
 import {deepClone, Map, mapMap} from "./utils";
-
 
 
 // Custom serializers, to / from JSON object, in order to be able to add the @class property on it
@@ -8,11 +11,15 @@ interface Serializer<T> {
     fromJson(json:{}): T;
 }
 
-// Registry of
+// Registry of Classes => custom serializers
 let classRegistry : Map<Function | Serializer<{}>> = {};
 
 const CLASS_PROP = "@class";
 
+/**
+ * Add a Class to the registry.
+ * Class may have a unique identifier as the "tag" property.
+ */
 export function registerClass<T>(type: { new (...args:any[]): T}, tag:string = null, serializer:Serializer<T>=null) {
     tag = tag || (type as any).tag;
     if (!tag) {
@@ -33,7 +40,7 @@ export function clearRegistry() {
     classRegistry = {};
 }
 
-/** Transform tree of object into plain JSON tree, with "@type" decorations */
+/** Transform tree of object into plain JSON tree, with "@class" decorations */
 export function toJsonWithTypes<T>(obj:T, path:string="") : T {
 
     if (obj == null) {
@@ -79,7 +86,7 @@ export function toJsonWithTypes<T>(obj:T, path:string="") : T {
     }
 }
 
-/** Walks a JSON tree and replace "@type" tag with proper __proto__ */
+/** Walks a JSON tree and replace "@class" tag with proper __proto__ */
 export function toObjWithTypes<T>(json:T) : T {
 
     if (json == null) {
@@ -119,7 +126,16 @@ export function toObjWithTypes<T>(json:T) : T {
     }
 }
 
+/** Class decorator used to register a class for serialization / deserialization */
+export function classTag(tag:string) {
+    return function(clazz: Function) {
+        (clazz as any).tag = tag;
+        registerClass(clazz as any, tag);
+    }
+}
 
+// Custom type serializer
+// TODO : Move it elsewhere
 registerClass(Date, "date", {
     toJson(date: Date) {
         return {
@@ -129,5 +145,4 @@ registerClass(Date, "date", {
     fromJson(json : any) {
         return json.value ? new Date(Date.parse(json.value)) : null;
     }
-
 });

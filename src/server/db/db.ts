@@ -47,8 +47,6 @@ async function init() : Promise<void> {
 
 // Part of Db Settings that can be overriden
 
-// Entire Db description, with read only fields
-registerClass(DbDefinition, "dbDefinition");
 
 export async function updateSchemaDb(dbName: string, schema:StructType, _:IMessages) : Promise<StructType> {
     let db = await Connection.getDb();

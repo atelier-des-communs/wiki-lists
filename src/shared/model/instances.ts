@@ -1,9 +1,9 @@
 import {DatetimeType, NumberType, StructType, TextType} from "./types";
 import {deepClone} from "../utils";
 import {IMessages} from "../i18n/messages";
-import {registerClass} from "../serializer";
+import {classTag, registerClass} from "../serializer";
 
-
+@classTag("Record")
 export class Record {
 
     _id?: string;
@@ -14,9 +14,8 @@ export class Record {
     // Other fields, defined by the schema of the table
     [x:string]: any;
 }
-registerClass(Record, "record");
 
-// Definition of system attributes, as StrucType
+// Definition of system attributes, as StructType
 export function systemType(_: IMessages) {
     let res = new StructType();
     res.attributes.push({
