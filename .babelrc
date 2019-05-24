@@ -2,10 +2,6 @@
   "plugins": [
     ["transform-imports",
       {
-        "react-semantic-ui": {
-          "transform": "semantic-ui-react/dist/es/elements/{member}/{member}",
-          "preventFullImport": true
-        },
         "lodash": {
           "transform": "lodash/${member}",
           "preventFullImport": true
@@ -15,6 +11,7 @@
           "preventFullImport": true
         }
       }],
+    ["transform-semantic-ui-react-imports"],
     ["@babel/plugin-syntax-dynamic-import"]],
   "presets": [["@babel/env", { "targets": { "node": 6 } }]]
 }

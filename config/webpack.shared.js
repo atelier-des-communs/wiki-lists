@@ -9,22 +9,15 @@ exports.APP_DIR = path.resolve(__dirname, "..", "src");
 
 var common_loaders = {
     "js" : {
-        test: /\.(jsx)$/,
+        test: /\.jsx?$/,
         exclude: /node_modules/,
         use: {
             "loader" : 'babel-loader',
-            "options" :{
-                "presets" : ["env", "react"]
-            }
         },
     },
     "ts" : {
-        test: /\.ts[x]?$/,
+        test: /\.tsx?$/,
         use: ["babel-loader", "ts-loader"],
-    },
-    "rt" : {
-        test: /\.rt$/,
-        use :  ["react-templates-loader?modules=commonjs"]
     },
     "css":  {
         test: /\.css$/,

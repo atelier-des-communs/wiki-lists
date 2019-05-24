@@ -15,7 +15,6 @@ export function withAsyncImport<ComponentProps>(
 
     let resClass = class extends AsyncDataComponent<ComponentProps & GlobalContextProps> {
 
-        /** Should look at props / state, and return null if no loading is required */
         fetchData() {
             // Already loaded => don't fire promises (useful for SRR prefetching)
             if (Component) return null;

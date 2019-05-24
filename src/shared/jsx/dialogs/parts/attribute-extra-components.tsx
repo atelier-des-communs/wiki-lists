@@ -6,11 +6,10 @@ import {deepClone, slug} from "../../../utils";
 import * as React from "react";
 import {Button, Form, Grid, Header, Label} from "semantic-ui-react";
 import {SafePopup} from "../../utils/ssr-safe";
-import {SketchPicker} from "react-color";
+import {default as SketchPicker, SketchPickerProps} from "react-color/lib/components/sketch/Sketch";
 import {EditableText} from "../../components/editable-text";
 import {IMessages} from "../../../i18n/messages";
 import {ErrorPO} from "../../utils/validation-errors";
-import {ValidationError} from "../../../validators/validators";
 
 
 const DEFAULT_ENUM_COLOR="#e8e8e8";

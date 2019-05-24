@@ -15,7 +15,7 @@ import {extend} from "lodash";
 export class UIAttribute extends Attribute {
     expanded ?:boolean;
     new? : boolean;
-    uid?: number; // Used as React unique "key", since attrirbute name is not yet filled
+    uid?: number; // Used as React unique "key", since attribute name is not yet filled
 
     constructor(init:UIAttribute) {
         super(init);

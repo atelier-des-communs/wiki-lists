@@ -1,6 +1,6 @@
 /*
  * Abstract component that requires async data
- * The promises it fires will be gathered on the global context enabling SSR to wait of
+ * The promises it fires are stored in the global context enabling SSR to wait of
  * all of them to resolve and re-rendering.
  */
 import * as React from "react";
