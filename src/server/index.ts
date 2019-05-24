@@ -8,6 +8,7 @@ import {setUp as setUpHtml} from "./html";
 import {setUp as setUpExport} from "./export";
 import {supportedLanguages} from "./i18n/messages";
 import {LANG_COOKIE} from "../shared/api";
+import '../shared/model';
 
 const MAX_AGE  = 30 * 24 * 3600 * 1000; // One month
 

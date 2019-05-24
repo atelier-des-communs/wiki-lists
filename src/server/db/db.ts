@@ -189,6 +189,7 @@ export class DbDataFetcher implements DataFetcher {
         dbDef.rights = await getAccessRights(dbName, pass);
 
         // Remove secret for non admins
+        // TODO : FIXME dangerous ...
         if (!isIn(dbDef.rights, AccessRight.ADMIN)) {
             delete dbDef.secret;
         }

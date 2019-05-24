@@ -11,7 +11,7 @@ import {IMarshalledContext} from "../shared/api";
 import {restDataFetcher} from "./rest/client";
 import * as cookies from "browser-cookies";
 import {toObjWithTypes} from "../shared/serializer";
-
+import '../shared/model';
 
 /** Initial state of the store has been serialized for us by server side rendering */
 let marshalledContext = toObjWithTypes(

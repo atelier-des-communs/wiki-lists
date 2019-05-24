@@ -22,6 +22,7 @@ const CLASS_PROP = "@class";
  */
 export function registerClass<T>(type: { new (...args:any[]): T}, tag:string = null, serializer:Serializer<T>=null) {
     tag = tag || (type as any).tag;
+    console.log(`Registering class tag ${tag}`);
     if (!tag) {
         console.log(type.prototype);
         throw new Error(`Missing type tag for class '${type}'`);

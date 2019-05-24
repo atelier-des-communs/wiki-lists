@@ -20,7 +20,7 @@ var common_loaders = {
     },
     "ts" : {
         test: /\.ts[x]?$/,
-        use: ["ts-loader"],
+        use: ["babel-loader", "ts-loader"],
     },
     "rt" : {
         test: /\.rt$/,
@@ -72,9 +72,9 @@ var common_config = (loaders, name) => ({
     },
     plugins: [
         new MiniCssExtractPlugin("[name].css"),
-        // new StatsWriterPlugin({
-        //    fields : null,
-        //    filename: "./reports/" + name + "-stats.json"})
+        new StatsWriterPlugin({
+            fields : null,
+            filename: "./reports/" + name + "-stats.json"})
     ],
     node : {
         __dirname : true

@@ -1,0 +1,20 @@
+{
+  "plugins": [
+    ["transform-imports",
+      {
+        "react-semantic-ui": {
+          "transform": "semantic-ui-react/dist/es/elements/{member}/{member}",
+          "preventFullImport": true
+        },
+        "lodash": {
+          "transform": "lodash/${member}",
+          "preventFullImport": true
+        },
+        "date-fns" : {
+          "transform": "date-fns/${member}",
+          "preventFullImport": true
+        }
+      }],
+    ["@babel/plugin-syntax-dynamic-import"]],
+  "presets": [["@babel/env", { "targets": { "node": 6 } }]]
+}
