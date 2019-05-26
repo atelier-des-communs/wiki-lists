@@ -3,35 +3,39 @@ var MiniCssExtractPlugin = require('mini-css-extract-plugin');
 var nodeExternals = require('webpack-node-externals');
 const { StatsWriterPlugin } = require("webpack-stats-plugin");
 
+
 exports.CLIENT_BUILD_DIR = path.resolve(__dirname, "..", "dist", "client");
 exports.SERVER_BUILD_DIR = path.resolve(__dirname, "..", "dist", "server");
 exports.APP_DIR = path.resolve(__dirname, "..", "src");
 
 var common_loaders = {
-    "js" : {
+    js : {
         test: /\.jsx?$/,
         exclude: /node_modules/,
         use: {
             "loader" : 'babel-loader',
+            "options" :{
+                "presets" : ["env", "react"]
+            }
         },
     },
-    "ts" : {
+    ts : {
         test: /\.tsx?$/,
-        use: ["babel-loader", "ts-loader"],
+        use: ["ts-loader"],
     },
-    "css":  {
+    css:  {
         test: /\.css$/,
         exclude: /node_modules/,
         use: [MiniCssExtractPlugin.loader, "css-loader"]},
-    "img" : {
+    img : {
         test: /\.(jp[e]?g|png|gif|svg)$/i,
         loader: "file-loader?name=img/[name].[ext]?publicPath=/static"
     },
-    "html" : {
+    html : {
         test: /\.html$/,
         loader: "file-loader?name=[name].[ext]"
     },
-    "ico" : {
+    ico : {
         test: /\.ico$/,
         loader: "file-loader?name=[name].[ext]"
     }};
@@ -43,10 +47,54 @@ function flatten_loaders(obj) {
 
 exports.flatten_loaders = flatten_loaders;
 
-/** Creates a copy of common loaders, safe to be updated */
-exports.common_loaders = function() {
-    return Object.assign({}, common_loaders);
+client_loaders = Object.assign({}, common_loaders);
+server_loaders = Object.assign({}, common_loaders);
+
+// For clients, activate chain babel loader for shrinking code (with rewrite of imports)
+client_loaders.ts.use = [
+    {
+        loader: "babel-loader",
+        options : {
+            "plugins": [[
+                "transform-imports",
+                {"lodash": {
+                        "transform": "lodash/${member}",
+                        "preventFullImport": true
+                    },
+                    "date-fns": {
+                        "transform": "date-fns/${member}",
+                        "preventFullImport": true
+                }}],
+                ["transform-semantic-ui-react-imports"],
+                ["@babel/plugin-syntax-dynamic-import"]]
+        },
+    },
+
+    {loader:"ts-loader"}
+    ];
+
+// For SSR we need different CSS loader
+server_loaders["css"] = {
+    test: /\.css$/,
+    exclude: /node_modules/,
+    loader: 'css-loader'
 };
+
+server_loaders["css_external"] = {
+    test: /\.css$/,
+    include: /node_modules/,
+    use: ['css-loader/locals'],
+};
+
+// Client loader
+client_loaders["css_external"] = {
+    test: /\.css$/,
+    include: /node_modules/,
+    use: [MiniCssExtractPlugin.loader, 'css-loader'],
+};
+
+exports.server_loaders = server_loaders;
+exports.client_loaders = client_loaders;
 
 var langs = ["fr-FR", "en-GB"];
 
