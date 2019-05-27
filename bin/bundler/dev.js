@@ -1,7 +1,7 @@
 var webpack = require("webpack");
 var config = require("../../config/webpack.dev.js");
 
-util.inspect(config, {depth:null});
+console.dir(config, {depth:null});
 
 var options = {
 	chunk: false,

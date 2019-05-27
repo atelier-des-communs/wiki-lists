@@ -1,13 +1,9 @@
 var shared = require("./webpack.shared.js");
-var server_loaders = shared.server_loaders;
-var client_loaders = shared.client_loaders;
 
-var client = shared.client_config(client_loaders, "dev.client");
-client.mode = "development";
+var client = shared.client_config("development", "dev.client");
 client.output.publicPath = "http://localhost:8081/static/";
 
-var server = shared.server_config(server_loaders, "dev.server");
-server.mode = "development";
+var server = shared.server_config("development", "dev.server");
 server.output.publicPath = "http://localhost:8081/static/";
 
 module.exports = [client, server];

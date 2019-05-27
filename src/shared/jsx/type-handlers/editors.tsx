@@ -1,14 +1,15 @@
 import * as React from "react";
 import {BooleanType, DatetimeType, EnumType, enumValuesMap, NumberType, TextType, Type, Types} from "../../model/types";
 import {Checkbox, FormSelect, Icon, Input, Label} from "semantic-ui-react";
-import ReactQuill from 'react-quill';
 import {DropdownItemProps} from "semantic-ui-react/dist/commonjs/modules/Dropdown/DropdownItem"
 import {empty, intToStr, strToInt} from "../../utils";
 import {AttributeDisplay} from "../../views/display";
 import {enumLabel} from "../utils/utils";
 import {MessagesProps} from "../../i18n/messages";
 import {format, parse} from "date-fns";
+import ReactQuill from "react-quill";
 import 'react-quill/dist/quill.snow.css';
+
 
 const DATE_FORMAT="D MMM YYYY HH:mm";
 
@@ -122,6 +123,7 @@ class DatetimeHandler extends ControlledValueHandler<Date, DatetimeType> {
                 onChange={(e: React.FormEvent<HTMLInputElement>) => this.onChange(parse(e.currentTarget.value))} />
     }
 }
+
 
 class RichTextHandler extends ControlledValueHandler<string, TextType> {
     constructor(props: ValueHandlerProps<string, TextType>) {

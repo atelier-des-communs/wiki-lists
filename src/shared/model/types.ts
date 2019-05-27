@@ -83,6 +83,7 @@ export function newType(typeTag:string) {
     }
 }
 
+@classTag("attribute")
 export class Attribute {
     name: string;
     label?: string;
@@ -95,9 +96,8 @@ export class Attribute {
         extend(this, init);
     }
 }
-registerClass(Attribute, "attribute");
 
-
+@classTag(Types.STRUCT)
 export class StructType implements Type<Map<any>> {
     tag: Types.STRUCT;
     attributes : Attribute[] = [];
@@ -105,7 +105,6 @@ export class StructType implements Type<Map<any>> {
         this.attributes = attributes;
     }
 }
-registerClass(StructType, Types.STRUCT);
 
 export function attributesMap(schema:StructType) : Map<Attribute> {
     return arrayToMap(schema.attributes, attr => attr.name);

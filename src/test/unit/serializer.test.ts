@@ -1,4 +1,4 @@
-import {clearRegistry, registerClass, toJsonWithTypes, toObjWithTypes} from "../../shared/serializer";
+import {clearRegistry, registerClass, classTag, toJsonWithTypes, toObjWithTypes} from "../../shared/serializer";
 
 class A {};
 
@@ -37,11 +37,10 @@ test("Should not touch plain objects when unserializing", () => {
 
 test("Should add type info", () => {
 
+    @classTag("a")
     class A {
         b = 1
     }
-
-    registerClass(A, "a")
 
     let obj = {a : new A()};
     let json = {
@@ -55,14 +54,13 @@ test("Should add type info", () => {
 
 test("Should parse type info and setup methods", () => {
 
+    @classTag("a")
     class A {
         b : null;
         getB() {
             return this.b;
         }
     }
-
-    registerClass(A, "a")
 
     let json = {
         a :{
