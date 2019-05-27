@@ -2,6 +2,8 @@ var webpack = require("webpack");
 var ProgressPlugin = require("webpack/lib/ProgressPlugin");
 var config = require("../../config/webpack.prod.js");
 
+
+console.dir(config, {depth:null})
 var compiler = webpack(config);
 
 compiler.apply(new ProgressPlugin(function(percentage, log) {

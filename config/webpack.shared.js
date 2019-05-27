@@ -41,37 +41,34 @@ var common_loaders = {
     }};
 
 
-function flatten_loaders(obj) {
-    return Object.keys(obj).map(key => obj[key]);
-}
 
-exports.flatten_loaders = flatten_loaders;
+
 
 client_loaders = Object.assign({}, common_loaders);
 server_loaders = Object.assign({}, common_loaders);
 
 // For clients, activate chain babel loader for shrinking code (with rewrite of imports)
-client_loaders.ts.use = [
-    {
-        loader: "babel-loader",
-        options : {
-            "plugins": [[
-                "transform-imports",
-                {"lodash": {
-                        "transform": "lodash/${member}",
-                        "preventFullImport": true
-                    },
-                    "date-fns": {
-                        "transform": "date-fns/${member}",
-                        "preventFullImport": true
-                }}],
-                ["transform-semantic-ui-react-imports"],
-                ["@babel/plugin-syntax-dynamic-import"]]
-        },
-    },
-
-    {loader:"ts-loader"}
-    ];
+client_loaders.ts = {
+        test: /\.tsx?$/,
+        use: [
+            {
+                loader: "babel-loader",
+                options : {
+                    "plugins": [[
+                        "transform-imports",
+                        {"lodash": {
+                                "transform": "lodash/${member}",
+                                "preventFullImport": true
+                            },
+                            "date-fns": {
+                                "transform": "date-fns/${member}",
+                                "preventFullImport": true
+                        }}],
+                        ["transform-semantic-ui-react-imports"],
+                        ["@babel/plugin-syntax-dynamic-import"]]},
+            },
+            {loader:"ts-loader"}]
+};
 
 // For SSR we need different CSS loader
 server_loaders["css"] = {
@@ -96,17 +93,24 @@ client_loaders["css_external"] = {
 exports.server_loaders = server_loaders;
 exports.client_loaders = client_loaders;
 
+// Transform map to array of values
+function flatten_loaders(obj) {
+    return Object.keys(obj).map(key => obj[key]);
+}
+
+
 var langs = ["fr-FR", "en-GB"];
 
 
-var common_config = (loaders, name) => ({
+
+var mkconfig = (loaders, name) => ({
     output: {
         filename: "[name].js",
         publicPath: "/static/"
     },
     name:name,
     module: {
-        rules: exports.flatten_loaders(loaders)
+        rules: flatten_loaders(loaders)
     },
     resolve: {
         extensions: [".rt", ".js", ".jsx", ".ts", ".tsx"]
@@ -123,7 +127,7 @@ var common_config = (loaders, name) => ({
 });
 
 exports.server_config= (loaders, name) => {
-    var res = common_config(loaders, name);
+    var res = mkconfig(loaders, name);
     res.externals = [
         nodeExternals({whitelist:[/\.css/]}),
         {
@@ -141,7 +145,7 @@ exports.server_config= (loaders, name) => {
 }
 
 exports.client_config = (loaders, name) => {
-    var res = common_config(loaders, name);
+    var res = mkconfig(loaders, name);
     res.target = "web";
     res.entry = {"client.bundle": exports.APP_DIR + "/client"};
     // Add languages as separate entries
