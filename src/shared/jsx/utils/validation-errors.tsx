@@ -78,7 +78,7 @@ export const RemainingErrorsPlaceholder : React.SFC<ErrorsProps> = (props) =>
                 // Filter remaining keys not already displayed
                 Object
                     .keys(errors)
-                    .filter(key => displayedErrors.indexOf(key) != -1),
+                    .filter(key => displayedErrors.indexOf(key) == -1),
 
                 // Flaten to JSX spans
                 key => {
