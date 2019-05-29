@@ -1,10 +1,9 @@
 import * as React from "react";
-import {GlobalContextProps, withGlobalContext} from "../context/global-context";
-import {Button, Container, Form, Input, Label, TextArea} from "semantic-ui-react";
-import {RouteComponentProps} from "react-router";
+import {withGlobalContext} from "../context/global-context";
+import {Button, Container, Form, Input, TextArea} from "semantic-ui-react";
 import {BASE_DB_PATH, RECORDS_PATH} from "../../api";
 import {deepClone, slug} from "../../utils";
-import {Attribute, StructType, TextType, Type} from "../../model/types";
+import {Attribute, StructType, TextType} from "../../model/types";
 import {IMessages} from "../../i18n/messages";
 import {AddButtonPosition, AttributeList} from "../dialogs/parts/attribute-list";
 import {Wizard, WizardStep} from "../components/wizard";
@@ -110,8 +109,10 @@ export class AddDbPageInternal extends React.Component<PageProps<{}>> {
                                 value={this.state.name}
                                 onChange={(event, data) => this.updateName(data.value)}/>
 
-                            <ErrorPlaceholder attributeKey="name" validators={
-                                notEmptyValidator("name", _)} />
+                            <ErrorPlaceholder
+                                attributeKey="name"
+                                validators={notEmptyValidator("name", _)}
+                                value={()=> this.state.name} />
 
                         </Form.Field>
 
@@ -123,10 +124,13 @@ export class AddDbPageInternal extends React.Component<PageProps<{}>> {
                                 onChange={(event, data) => this.updateSlug(data.value)} >
                             </Input>
 
-                            <ErrorPlaceholder value={() => this.state.slug} attributeKey="slug" validators={[
-                                notEmptyValidator("slug", _),
-                                regExpValidator("slug", SLUG_REG, _.slug_regexp_no_match),
-                                slugAvailabilityValidator]}/>
+                            <ErrorPlaceholder
+                                value={() => this.state.slug}
+                                attributeKey="slug"
+                                validators={[
+                                    notEmptyValidator("slug", _),
+                                    regExpValidator("slug", SLUG_REG, _.slug_regexp_no_match),
+                                    slugAvailabilityValidator]}/>
 
 
                         </Form.Field>

@@ -133,6 +133,15 @@ export function empty(a: any) {
     return typeof(a) == "undefined" || a === null || a === "";
 }
 
+export function emptyMap(map: Object) {
+    return map == null || Object.keys(map).length == 0;
+}
+
+export function emptyList(list: any[]) {
+    return list == null || list.length == 0;
+}
+
+
 // Builds a function calling a event handler and stoping propagation
 export function stopPropag(eventFunc : () => void) {
     return (e:any, other:any) => {

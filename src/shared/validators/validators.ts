@@ -1,5 +1,5 @@
 // Single error message of validation
-import {empty, itToArray, Map, oneToArray} from "../utils";
+import {empty, emptyMap, itToArray, Map, oneToArray} from "../utils";
 import {IMessages} from "../i18n/messages";
 
 // Type alias to Map of error(s) per field
@@ -13,12 +13,10 @@ export function validationError(key:string, val:string) : ValidationErrors {
 }
 
 // Validators are either synchronous or asynchronous
-export type SynchronousValidator = () => ValidationErrors;
-export type AsyncronousValidator = () => Promise<ValidationErrors>;
-export type Validator = SynchronousValidator | AsyncronousValidator;
+export type Validator = () =>  ValidationErrors | Promise<ValidationErrors>;
 
 // Value validator
-export type ValueValidator = (value:string) => ValidationErrors | Promise<ValidationErrors>
+export type ValueValidator = (value:string) => (ValidationErrors | Promise<ValidationErrors>)
 
 
 
@@ -27,6 +25,9 @@ export type ValueValidator = (value:string) => ValidationErrors | Promise<Valida
 export function mergeErrors(it : IterableIterator<ValidationErrors>) : ValidationErrors {
     let res : ValidationErrors = {};
     for (let errors of it) {
+        if (errors == null) {
+            continue
+        }
         for (let key of Object.keys(errors)) {
 
             let val = errors[key];
@@ -53,7 +54,7 @@ export class ValidationException extends Error {
 /** Raise ValidationException in case of errors */
 export function dieIfErrors(errorsIt: IterableIterator<ValidationErrors>) {
     let errors = mergeErrors(errorsIt);
-    if (errors) {
+    if (!emptyMap(errors)) {
         throw new ValidationException(errors);
     }
 }

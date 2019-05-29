@@ -142,6 +142,11 @@ exports.client_config = (mode, name) => {
     var res = mkconfig(client_loaders, name);
     res.mode = mode;
     res.target = "web";
+
+    if (mode === "development") {
+        res.devtool = 'inline-source-map';
+    }
+
     res.entry = {"client.bundle": exports.APP_DIR + "/client"};
     // Add languages as separate entries
     for (var key of langs) {

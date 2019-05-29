@@ -83,7 +83,7 @@ export let restDataFetcher : DataFetcher = {
 
 // For simple action transform the promise into a Promise of either null (success) or list of validation errors
 // FIXME : this sucks : too much complicated ...
-export function toPromiseWithErrors(promise : Promise<{}>) : Promise<null | ValidationErrors> {
+export function toPromiseWithErrors(promise : Promise<{}>) : Promise<ValidationErrors> {
     return promise
         .then(res => null)
         .catch(e => {

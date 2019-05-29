@@ -3,12 +3,12 @@ import * as React from "react";
 import {GlobalContextProps} from "../context/global-context";
 import {Button, Segment, Step} from "semantic-ui-react";
 import {RemainingErrorsPlaceholder, ErrorsContext, getErrorPlaceholderValidators} from "../utils/validation-errors";
-import {fireAllValidators, ValidationErrors, ValidationException} from "../../validators/validators";
-import {Map} from "../../utils";
+import {fireAllValidators, ValidationErrors, ValidationException, Validator} from "../../validators/validators";
+import {emptyMap, Map} from "../../utils";
 
 export interface WizardStepProps {
     title: string;
-    validator? : () => Promise<ValidationErrors | null>;
+    validator? : Validator;
 }
 
 export interface WizardProps {
@@ -64,7 +64,7 @@ export class Wizard extends React.Component<GlobalContextProps & WizardProps> {
         let validationErrors = await fireAllValidators(validators);
 
         // Update errors and stop here
-        if (validationErrors) {
+        if (!emptyMap(validationErrors)) {
             this.setErrors(validationErrors);
             return false;
         }
@@ -74,7 +74,7 @@ export class Wizard extends React.Component<GlobalContextProps & WizardProps> {
         if (stepValidator) {
             validationErrors = await stepValidator();
 
-            if (validationErrors) {
+            if (!emptyMap(validationErrors)) {
                 this.setErrors(validationErrors);
                 return false;
             }

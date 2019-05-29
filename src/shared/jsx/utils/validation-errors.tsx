@@ -8,7 +8,7 @@ import {ValidationErrors, Validator, ValueValidator} from "../../validators/vali
 import {applyRec} from "./utils";
 import {Label, Message} from "semantic-ui-react";
 import {IMessages} from "../../i18n/messages";
-import {empty, flatMap, mapMap, OneOrMany, oneToArray} from "../../utils";
+import {empty, emptyList, flatMap, mapMap, OneOrMany, oneToArray} from "../../utils";
 
 
 interface ErrorContextProps {
@@ -46,8 +46,8 @@ export const ErrorLabel : React.SFC<{errors:string | string[]}> = (props) => {
 
 /** Placeholder for errors that will be replaced by actual errors for the corresponding key by #replaceErrors */
 interface ErrorPlaceholderProps  {
-    value ?: () => string,
     attributeKey:string,
+    value ?: () => string,
     validators?: OneOrMany<ValueValidator> ;
 }
 
@@ -94,7 +94,7 @@ export const RemainingErrorsPlaceholder : React.SFC<ErrorsProps> = (props) =>
                     })
                 });
 
-            if (remainingMessages) {
+            if (!emptyList(remainingMessages)) {
                 return  <Message
                     visible
                     error
@@ -126,11 +126,10 @@ export function getErrorPlaceholderValidators(element:React.ReactElement<{childr
             let valueF = props.value;
 
             // Append validators
-            res.push.apply(valueValidators.map(valueValidator => {
-                return () => {
-                    valueValidator(valueF());
-                }
-            }));
+            let newValidators : Validator[] = valueValidators.map(valueValidator => {
+                return () => {return valueValidator(valueF())};
+            });
+            res.push(...newValidators);
         }
 
         return child;
