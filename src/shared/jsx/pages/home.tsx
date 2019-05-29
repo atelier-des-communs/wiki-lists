@@ -5,8 +5,10 @@ import {RouteComponentProps} from "react-router";
 import {Link} from "react-router-dom";
 import {CREATE_DB_PATH} from "../../api";
 import {MainLayout} from "./layout/main-layout";
+import {PageSFC} from "../common-props";
 
-export const HomePageInternal : React.SFC<GlobalContextProps & RouteComponentProps<{}>> = (props) => {
+const HomePageInternal : PageSFC<{}> = (props) => {
+
     let _ = props.messages;
 
     props.head.setTitle(`${_.site_name} | ${_.site_title}`);

@@ -9,15 +9,21 @@ import {IMessages} from "../../i18n/messages";
 import {AddButtonPosition, AttributeList} from "../dialogs/parts/attribute-list";
 import {Wizard, WizardStep} from "../components/wizard";
 import {checkAvailability, createDb, toPromiseWithErrors} from "../../../client/rest/client";
-import {AndCompose, notEmptyValidator, regExpValidator} from "../../validators/validators";
+import {
+    notEmptyValidator,
+    regExpValidator,
+    validationError,
+    Validator,
+    ValueValidator
+} from "../../validators/validators";
 import {DbDefinition} from "../../model/db-def";
 import {MainLayout} from "./layout/main-layout";
-import {ErrorPO} from "../utils/validation-errors";
+import {ErrorPlaceholder} from "../utils/validation-errors";
+import {PageProps} from "../common-props";
 
 const SLUG_REG = new RegExp(/^[1-9a-zA-Z\-_]*$/);
 
-type AddDbPageProps = GlobalContextProps & RouteComponentProps<{}>;
-export class AddDbPageInternal extends React.Component<AddDbPageProps> {
+export class AddDbPageInternal extends React.Component<PageProps<{}>> {
 
     state : {
         name:string,
@@ -29,7 +35,7 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
 
     templates : SchemaTemplate[];
 
-    constructor(props: AddDbPageProps) {
+    constructor(props: PageProps<{}>) {
         super(props);
         this.templates = templates(this.props.messages);
         this.state = {
@@ -72,20 +78,18 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
         let _ = this.props.messages;
         let base_url = location.protocol + '//' + location.host + BASE_DB_PATH;
 
-        let nameValidator = () => {return notEmptyValidator(_)(this.state.name)};
-
-        let slugValidators = [() => AndCompose(
-            notEmptyValidator(_),
-            regExpValidator(SLUG_REG, _.slug_regexp_no_match))(this.state.slug),
-            () => checkAvailability(this.state.slug).then(res => res ? null : _.db_not_available)];
+        // Async check of availability of slug
+        let slugAvailabilityValidator : ValueValidator = (value:string) => checkAvailability(value)
+            .then(res => res ? null : validationError("slug", _.db_not_available));
 
         // Makes async REST call for Db creation
-        let addDbValidator = () => {
+        let addDbValidator : Validator = () => {
             let dbDef = new  DbDefinition({
                 schema : this.state.schema,
                 name : this.state.slug,
                 label : this.state.name,
                 description : this.state.description});
+
             return toPromiseWithErrors(createDb(dbDef));
         };
 
@@ -95,7 +99,7 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
             <h1>{_.creating_db}</h1>
 
             <Form>
-                <Wizard {...this.props} onValidate={() => this.goToNewDb()}>
+                <Wizard {...this.props} onFinish={() => this.goToNewDb()}>
 
                     <WizardStep title={_.create_db_name_description} >
 
@@ -106,7 +110,8 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
                                 value={this.state.name}
                                 onChange={(event, data) => this.updateName(data.value)}/>
 
-                            <ErrorPO attributeKey="name" validators={nameValidator} />
+                            <ErrorPlaceholder attributeKey="name" validators={
+                                notEmptyValidator("name", _)} />
 
                         </Form.Field>
 
@@ -118,7 +123,10 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
                                 onChange={(event, data) => this.updateSlug(data.value)} >
                             </Input>
 
-                            <ErrorPO attributeKey="slug" validators={slugValidators}/>
+                            <ErrorPlaceholder value={() => this.state.slug} attributeKey="slug" validators={[
+                                notEmptyValidator("slug", _),
+                                regExpValidator("slug", SLUG_REG, _.slug_regexp_no_match),
+                                slugAvailabilityValidator]}/>
 
 
                         </Form.Field>
@@ -133,7 +141,7 @@ export class AddDbPageInternal extends React.Component<AddDbPageProps> {
 
                     </WizardStep>
 
-                    <WizardStep title={_.fields} validator={() => addDbValidator()}>
+                    <WizardStep title={_.fields} validator={addDbValidator}>
                         <div>
                             {_.schema_templates} :
                         </div>

@@ -4,7 +4,7 @@ import {AccessRight} from "../shared/access";
 import {getDbDef} from "./db/db";
 import {isIn} from "../shared/utils";
 import {Request} from "express-serve-static-core"
-import {toJsonWithTypes} from "../shared/serializer";
+import {toAnnotatedJson} from "../shared/serializer";
 
 export interface ContentWithStatus {
     statusCode:number,
@@ -23,7 +23,7 @@ export function returnPromiseWithCode(res: Express.Response, promise: Promise<Co
         result => {
 
             // Add type information to JSON
-            let json = toJsonWithTypes(result.content);
+            let json = toAnnotatedJson(result.content);
 
             res.status(result.statusCode).send(result.content)
         }).

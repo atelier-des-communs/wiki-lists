@@ -9,7 +9,7 @@ import {SafePopup} from "../../utils/ssr-safe";
 import {default as SketchPicker, SketchPickerProps} from "react-color/lib/components/sketch/Sketch";
 import {EditableText} from "../../components/editable-text";
 import {IMessages} from "../../../i18n/messages";
-import {ErrorPO} from "../../utils/validation-errors";
+import {ErrorPlaceholder} from "../../utils/validation-errors";
 
 
 const DEFAULT_ENUM_COLOR="#e8e8e8";
@@ -79,7 +79,7 @@ const EnumExtra: TypeExtraComponent<EnumType> = (props) => {
 
         <Header as="h4" >
             {_.enum_values}
-            <ErrorPO attributeKey={`${errorPrefix}values`} />
+            <ErrorPlaceholder attributeKey={`${errorPrefix}values`} />
         </Header>
 
         { /* Loop on enum values */
@@ -118,8 +118,8 @@ const EnumExtra: TypeExtraComponent<EnumType> = (props) => {
                 title={_.delete_option}
                 onClick={() => deleteOption(index)}/>
 
-            <ErrorPO attributeKey={`${errorPrefix}values.${index}.value`}  />
-            <ErrorPO attributeKey={`${errorPrefix}values.${index}.label`}  />
+            <ErrorPlaceholder attributeKey={`${errorPrefix}values.${index}.value`}  />
+            <ErrorPlaceholder attributeKey={`${errorPrefix}values.${index}.label`}  />
             <br/>
         </div>
     })}

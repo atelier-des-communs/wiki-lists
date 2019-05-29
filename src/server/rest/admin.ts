@@ -1,5 +1,5 @@
 import {
-    ADD_ITEM_URL,
+    ADD_ITEM_URL, API_BASE_URL,
     CHECK_DB_NAME,
     COOKIE_DURATION,
     CREATE_DB_URL,
@@ -10,7 +10,7 @@ import {
     SECRET_COOKIE,
     UPDATE_ITEM_URL,
     UPDATE_SCHEMA_URL
-} from "../shared/api";
+} from "../../shared/api";
 import {
     checkAvailability,
     createDb,
@@ -19,20 +19,21 @@ import {
     deleteRecordDb,
     updateRecordDb,
     updateSchemaDb
-} from "./db/db";
-import {Record} from "../shared/model/instances";
-import {requiresRight, returnPromise, traverse} from "./utils";
+} from "../db/db";
+import {Record} from "../../shared/model/instances";
+import {requiresRight, returnPromise, traverse} from "../utils";
 import {Express} from "express";
-import {StructType} from "../shared/model/types";
-import {Request, Response} from "express-serve-static-core"
-import {AccessRight} from "../shared/access";
+import {StructType} from "../../shared/model/types";
+import {Request, Response, RequestHandler} from "express-serve-static-core"
+import {AccessRight} from "../../shared/access";
 import * as xss from "xss";
-import {selectLanguage} from "./i18n/messages";
-import {toJsonWithTypes, toObjWithTypes} from "../shared/serializer";
-import {DbDefinition} from "../shared/model/db-def";
+import {selectLanguage} from "../i18n/messages";
+import {toAnnotatedJson, toTypedObjects} from "../../shared/serializer";
+import {DbDefinition} from "../../shared/model/db-def";
+import * as mung from "express-mung";
 
 async function addItemAsync(req:Request) : Promise<Record> {
-    let record = sanitizeJson(req.body) as Record;
+    let record = req.body as Record;
     await requiresRight(req, AccessRight.EDIT);
     return createRecordDb(
         req.params.db_name,
@@ -41,7 +42,7 @@ async function addItemAsync(req:Request) : Promise<Record> {
 }
 
 async function updateItemAsync(req:Request) : Promise<Record>{
-    let record = sanitizeJson(req.body) as Record;
+    let record = req.body as Record;
     await requiresRight(req, AccessRight.EDIT);
     return updateRecordDb(
         req.params.db_name,
@@ -56,7 +57,7 @@ async function deleteItemAsync(req:Request) : Promise<boolean>{
 }
 
 async function updateSchemaAsync(req:Request) : Promise<StructType>{
-    let schema = sanitizeJson(req.body) as StructType;
+    let schema = req.body as StructType;
     await requiresRight(req, AccessRight.ADMIN);
     return updateSchemaDb(
         req.params.db_name,
@@ -65,7 +66,7 @@ async function updateSchemaAsync(req:Request) : Promise<StructType>{
 }
 
 async function createDbAsync(req:Request, res:Response) : Promise<boolean>{
-    let dbDef = sanitizeJson(req.body) as DbDefinition;
+    let dbDef = req.body as DbDefinition;
     dbDef = await createDb(dbDef, selectLanguage(req).messages);
 
     // Set secret in cookies, for admin rights
@@ -76,8 +77,36 @@ async function createDbAsync(req:Request, res:Response) : Promise<boolean>{
     return true;
 }
 
+function sanitizeJson(input:any) {
+    let xssFunc = (obj: any, prop: string, value: any) : any => {
+        if (typeof(value) == "string") {
+            obj[prop] = xss(value);
+        }
+    };
+    traverse(input, xssFunc);
+    return input;
+}
+
+/** Add prototypes to incomming JSON, based on annotation, and remove it in output.
+ * Add XSS safety */
+let safeInput : RequestHandler = (req, res, next) => {
+    req.body = toTypedObjects(sanitizeJson(req.body));
+    next()
+};
+
+let decorateOutput: mung.Transform = (body, req, res) => {
+    return toAnnotatedJson(body);
+};
+
 
 export function setUp(server:Express) {
+
+
+    // Add middleware in input / output to transform into json with type information
+    server.use(API_BASE_URL, safeInput);
+    server.use(API_BASE_URL, mung.json(decorateOutput));
+
+    // Routes
 
     server.post(ADD_ITEM_URL, function (req: Request, res: Response) {
         returnPromise(res, addItemAsync(req));
@@ -115,23 +144,7 @@ export function setUp(server:Express) {
         returnPromise(res, new DbDataFetcher(req).getDbDefinition(req.params.db_name));
     });
 
-
-
-
 }
 
-// Recursively sanitize JSON
-// FIXME put is as a Express plugin, for automatic sanitizing
-function sanitizeJson(input:any) {
-    let xssFunc = (obj: any, prop: string, value: any) : any => {
-        if (typeof(value) == "string") {
-            obj[prop] = xss(value);
-        }
-    };
-    traverse(input, xssFunc);
 
-    // Add type information
-    toObjWithTypes(input);
 
-    return input;
-}

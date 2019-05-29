@@ -5,9 +5,9 @@ import {ValueHandler} from "../type-handlers/editors";
 import {Record, withoutSystemAttributes} from "../../model/instances";
 import {attrLabel, typeIsWide} from "../utils/utils";
 import {CloseableDialog, ValidatingDialog} from "./common-dialog";
-import {ValidationError} from "../../validators/validators";
+import {ValidationErrors} from "../../validators/validators";
 import {MessagesProps} from "../../i18n/messages";
-import {ErrorPO, RemainingErrorsPO, ErrorsContext} from "../utils/validation-errors";
+import {ErrorPlaceholder, RemainingErrorsPlaceholder, ErrorsContext} from "../utils/validation-errors";
 
 
 interface EditDialogProps extends CloseableDialog, MessagesProps{
@@ -21,7 +21,7 @@ export class EditDialog extends ValidatingDialog<EditDialogProps> {
 
     state : {
         loading: boolean,
-        errors:ValidationError[] };
+        errors:ValidationErrors };
     record : any;
 
     static cleanSchema(props:EditDialogProps) :EditDialogProps {
@@ -37,7 +37,7 @@ export class EditDialog extends ValidatingDialog<EditDialogProps> {
         // Clone the input object : not modify it until we validate
         this.state =  {
             loading: false,
-            errors:[]};
+            errors:{}};
 
         // copy of the record
         this.record = {...props.record};
@@ -83,13 +83,13 @@ export class EditDialog extends ValidatingDialog<EditDialogProps> {
                     type={attr.type}
                     onValueChange={callback}
                 />
-                <ErrorPO attributeKey={attr.name} />
+                <ErrorPlaceholder attributeKey={attr.name} />
             </Form.Field>
             </Grid.Column>
 
         });
 
-        return <ErrorsContext.Provider value={this.state.errors}>
+        return <ErrorsContext.Provider value={{errors:this.state.errors, displayedErrors:[]}}>
 
         <Modal
             open={true}
@@ -107,7 +107,7 @@ export class EditDialog extends ValidatingDialog<EditDialogProps> {
 
             <Modal.Actions>
 
-                <RemainingErrorsPO messages={_}/>
+                <RemainingErrorsPlaceholder messages={_}/>
 
                 <Button color='red' onClick={this.props.close}>
                     <Icon name='remove'/> {_.cancel}

@@ -2,17 +2,17 @@
 import * as React from "react";
 import {GlobalContextProps} from "../context/global-context";
 import {Button, Segment, Step} from "semantic-ui-react";
-import {fireValidators, RemainingErrorsPO, ErrorsContext} from "../utils/validation-errors";
-import {ValidationError, ValidationException} from "../../validators/validators";
+import {RemainingErrorsPlaceholder, ErrorsContext, getErrorPlaceholderValidators} from "../utils/validation-errors";
+import {fireAllValidators, ValidationErrors, ValidationException} from "../../validators/validators";
 import {Map} from "../../utils";
 
 export interface WizardStepProps {
     title: string;
-    validator? : () => Promise<ValidationError[] | null>;
+    validator? : () => Promise<ValidationErrors | null>;
 }
 
 export interface WizardProps {
-    onValidate : () => void; // Called upon sucessfull validation of last step
+    onFinish : () => void; // Called upon sucessfull validation of last step
 }
 
 export const WizardStep : React.SFC<WizardStepProps> = (props) => {
@@ -25,7 +25,7 @@ export class Wizard extends React.Component<GlobalContextProps & WizardProps> {
 
     state : {
         step: number,
-        errors:  Map<ValidationError[]> // We separate validation errors per step
+        errors:  Map<ValidationErrors> // We separate validation errors per step
     };
     wizardSteps : React.Component<WizardStepProps>[];
 
@@ -36,7 +36,7 @@ export class Wizard extends React.Component<GlobalContextProps & WizardProps> {
 
         // Init map of errors
         for (var i=0; i < this.wizardSteps.length; i++) {
-            this.state.errors[i] = [];
+            this.state.errors[i] = {};
         }
     }
 
@@ -44,48 +44,49 @@ export class Wizard extends React.Component<GlobalContextProps & WizardProps> {
         this.setState({step:this.state.step-1});
     }
 
-    nextStep() {
+    setErrors(validationErrors:ValidationErrors) {
+        this.state.errors[this.state.step] = validationErrors;
+        this.forceUpdate();
+    }
 
-        // Empty errors for this step
-        this.state.errors[this.state.step] = [];
+    async nextStep() {
+
+        // Init errors for current step
+        this.state.errors[this.state.step] = {};
 
         // Gather validators on error placeholders
         let stepEl = this.wizardSteps[this.state.step];
-        let errors =  this.state.errors[this.state.step];
-        let validator = fireValidators(stepEl as any, errors);
 
-        validator.then((res:boolean) => {
+        // Get all validators attached to placholders
+        let validators = getErrorPlaceholderValidators(stepEl as any);
 
-            if (!res) return false;
+        // Fire all local validators
+        let validationErrors = await fireAllValidators(validators);
 
-            // Chain main validator on the step itself
-            if (stepEl.props.validator) {
-                return stepEl.props.validator().then(res => {
-                    if (res == null) {
-                        return true;
-                    } else {
-                        errors.push(...res);
-                        return false;
-                    }
-                });
-            } else {
-                return true;
+        // Update errors and stop here
+        if (validationErrors) {
+            this.setErrors(validationErrors);
+            return false;
+        }
+
+        // Global step validator
+        let stepValidator = stepEl.props.validator;
+        if (stepValidator) {
+            validationErrors = await stepValidator();
+
+            if (validationErrors) {
+                this.setErrors(validationErrors);
+                return false;
             }
+        }
 
-        }).then((res:boolean) => {
-
-            // Force redraw / update of errors
-            this.setState({errors:this.state.errors});
-
-            // Show next step or call onValidate
-            if (res) {
-                if (this.state.step < this.wizardSteps.length - 1) {
-                    this.setState({step: this.state.step + 1});
-                } else {
-                    this.props.onValidate();
-                }
-            }
-        });
+        // Show next step or call onFinish
+        if (this.state.step < this.wizardSteps.length - 1) {
+            this.setState({step: this.state.step + 1});
+        } else {
+            this.props.onFinish();
+        }
+        return true;
     }
 
     render() {
@@ -99,7 +100,8 @@ export class Wizard extends React.Component<GlobalContextProps & WizardProps> {
             </Step.Content>
         </Step>);
 
-        let currentStep = React.Children.map(this.props.children, (child, index) => index== this.state.step ? child : null);
+        // Filter current child according to current step
+        let currentStep = React.Children.map(this.props.children, (child, index) => index == this.state.step ? child : null);
 
         let errors =  this.state.errors[this.state.step];
         let lastStep = this.state.step == this.wizardSteps.length  - 1;
@@ -109,10 +111,12 @@ export class Wizard extends React.Component<GlobalContextProps & WizardProps> {
                 {steps}
             </Step.Group>
             <Segment attached="bottom">
-                <ErrorsContext.Provider value={errors}>
+
+                <ErrorsContext.Provider value={{errors, displayedErrors:[]}}>
+
                     {currentStep}
 
-                    <RemainingErrorsPO messages={_} />
+                    <RemainingErrorsPlaceholder messages={_} />
 
                     <div style={{textAlign:"right"}}>
 

@@ -1,4 +1,4 @@
-import {DbPageProps, ReduxEventsProps, SingleRecordProps} from "../common-props";
+import {DbPathParams, PageProps, ReduxEventsProps, SingleRecordProps} from "../common-props";
 import {Button} from "semantic-ui-react"
 import {SafeClickWrapper} from "../utils/ssr-safe";
 import * as React from "react";
@@ -8,7 +8,7 @@ import {goToUrl} from "../../utils";
 import {singleRecordLink} from "../../api";
 
 
-interface EditButtonsProps extends  DbPageProps, SingleRecordProps, ReduxEventsProps {
+interface EditButtonsProps extends PageProps<DbPathParams>, SingleRecordProps, ReduxEventsProps {
     hideViewButton?:boolean;
 }
 

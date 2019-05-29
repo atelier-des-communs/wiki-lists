@@ -4,131 +4,139 @@
  *  replaceErrors() will transform the VDOM by replacing ValidationError with error contents.
  */
 import * as React from "react";
-import {ValidationError} from "../../validators/validators";
-import {recursiveChildrenMap} from "./utils";
+import {ValidationErrors, Validator, ValueValidator} from "../../validators/validators";
+import {applyRec} from "./utils";
 import {Label, Message} from "semantic-ui-react";
 import {IMessages} from "../../i18n/messages";
-import {empty, resolveFuncOrPromise} from "../../utils";
+import {empty, flatMap, mapMap, OneOrMany, oneToArray} from "../../utils";
 
 
-type SynchronousValidator = () => string | null;
-type AsyncronousValidator = () => Promise<string | null>;
-type Validator = SynchronousValidator | AsyncronousValidator;
-
-
+interface ErrorContextProps {
+    errors : ValidationErrors;
+    displayedErrors: string[]; // List of keys already displayed
+}
 
 // Context holding current validation errors, passed to nested children
-export const ErrorsContext : React.Context<ValidationError[]> = React.createContext([]);
-
-interface ValidationErrorProps  {
-    attributeKey:string,
-    validators?: Validator[] | Validator;
-}
-
-interface ValidationErrorWithDisplay extends ValidationError {
-    displayed: boolean;
-}
+export const ErrorsContext : React.Context<ErrorContextProps> = React.createContext({errors:{}, displayedErrors:[]});
 
 
+// Display single error or list of errors, only if present
+export const ErrorLabel : React.SFC<{errors:string | string[]}> = (props) => {
+    let errors  = props.errors;
+
+    if (!errors) {
+        return null;
+    }
+
+    // Single error ?
+    if (typeof errors === "string") {
+        errors = [errors];
+    }
+
+    errors = errors as string[];
+
+    if (errors.length > 0) {
+        return <Label color="red">
+            {errors.map( error => <><span>{error}</span><br/></>)}
+        </Label>;
+    } else {
+        return null;
+    }
+};
 
 /** Placeholder for errors that will be replaced by actual errors for the corresponding key by #replaceErrors */
-export const ErrorPO : React.SFC<ValidationErrorProps> = (props) =>
-     <ErrorsContext.Consumer>
-        {(errors) => {
-            let errorsMsg = errors
-                .filter(error => error.attribute == props.attributeKey)
-                .map(error => {
-                    (error as ValidationErrorWithDisplay).displayed = true;
-                    return <><span>{error.message}</span><br/></>});
+interface ErrorPlaceholderProps  {
+    value ?: () => string,
+    attributeKey:string,
+    validators?: OneOrMany<ValueValidator> ;
+}
 
-            if (errorsMsg.length > 0) {
-                return <Label color="red">{errorsMsg}</Label>;
-            } else {
-                return null;
-            }
+/** Take errors results from context for this attribute, display it */
+export const ErrorPlaceholder : React.SFC<ErrorPlaceholderProps> = (props) =>
+     <ErrorsContext.Consumer>
+        {({errors, displayedErrors}) => {
+            let attrErrors = errors[props.attributeKey];
+            displayedErrors.push(props.attributeKey)
+            return <ErrorLabel errors={oneToArray(attrErrors)} />
         }}
     </ErrorsContext.Consumer>;
 
+
+/** Placeholder for general errors, not catched by any ErrorPlaceHolder.
+ * It will be replaced by remaining errors by #replaceErrors */
 interface ErrorsProps {
     messages: IMessages
 }
-
-/** Placeholder general error, not catched by any ValidationError.
- * It will be replaced by remaining errors by #replaceErrors */
-export const RemainingErrorsPO : React.SFC<ErrorsProps> = (props) =>
+export const RemainingErrorsPlaceholder : React.SFC<ErrorsProps> = (props) =>
     <ErrorsContext.Consumer>
-        {(errors) => {
+        {({errors, displayedErrors}) => {
 
-    let _ = props.messages;
+            let _ = props.messages;
 
-    let remainingMessages = errors
-        .filter(error => !((error as ValidationErrorWithDisplay).displayed))
-        .map(error => {
-            let message = error.message;
-            if (!empty(error.attribute)) {
-                console.warn("Error had an attribute name but was not displayed", error.attribute);
-                message = error.attribute + ":" + message;
-            }
+            let remainingMessages = flatMap(
 
-            return <>
-                <span>{message}</span><br/>
-            </>
-        });
+                // Filter remaining keys not already displayed
+                Object
+                    .keys(errors)
+                    .filter(key => displayedErrors.indexOf(key) != -1),
 
-    if (remainingMessages.length > 0) {
-        return  <Message
-            visible
-            error
-            header={_.form_error}
-            content={remainingMessages} />
-    } else {
-        return null;
-    }}}
+                // Flaten to JSX spans
+                key => {
+                    let messages = oneToArray(errors[key]);
+                    return messages.map(message => {
+                        if (!empty(key)) {
+                            console.warn("Error had an attribute name but was not displayed", key);
+                            message = key + ": " + message;
+                        }
+                        return <>
+                            <span>{message}</span><br/>
+                        </>
+                    })
+                });
 
-    </ErrorsContext.Consumer>
+            if (remainingMessages) {
+                return  <Message
+                    visible
+                    error
+                    header={_.form_error}
+                    content={remainingMessages} />
+            } else {
+                return null;
+            }}}
+    </ErrorsContext.Consumer>;
 
 
 
 /**
- * Gathers all ErrorPO validators and compose them into a single promise that :
- * - Evaluate all validators
- * - Fills "errors" with ValidationErrors
- * - Returns a single boolean value of all the validation
+ * Gathers all ErrorPlaceholder ValueValidators, and bind them to their value
  */
-export function fireValidators(element:React.ReactElement<{children:any}>, errors: ValidationError[]) : Promise<boolean> {
+export function getErrorPlaceholderValidators(element:React.ReactElement<{children:any}>) : Validator[] {
 
-    // Gather validators
-    let promises: Promise<boolean>[] = [];
+    let res : Validator[] = [];
 
-    recursiveChildrenMap(element, (child, index) => {
+    applyRec(element, (child, index) => {
         if (!React.isValidElement(child)) {
             return child;
         }
 
         // Replace single error placeholder
-        if (child.type == ErrorPO) {
-            let props =(child.props as ValidationErrorProps);
-            let newValidators : Validator[] = [].concat(props.validators || []);
+        if (child.type == ErrorPlaceholder) {
+            let props =(child.props as ErrorPlaceholderProps);
+            let valueValidators = oneToArray(props.validators)
+            let valueF = props.value;
 
-            // Map them to boolean Promise
-            let newPromises = newValidators.map(validator => {
-                return resolveFuncOrPromise(validator).then(error => {
-                    if (error) {
-                        errors.push(new ValidationError(props.attributeKey, error));
-                        return false;
-                    } else {
-                        return true;
-                    }
-                })
-            });
-            promises.push(...newPromises);
+            // Append validators
+            res.push.apply(valueValidators.map(valueValidator => {
+                return () => {
+                    valueValidator(valueF());
+                }
+            }));
         }
+
         return child;
     });
 
-    return Promise.all(promises).then(values => {
-        return values.reduce((a, b) => a && b, true);
-    });
+    return res;
 }
 
 

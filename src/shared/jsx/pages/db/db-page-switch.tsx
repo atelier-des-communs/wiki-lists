@@ -2,7 +2,7 @@
 // Displays a common header (title and description) and handle route switching to other pages
 
 import * as React from 'react';
-import {DbPathParams, DbProps, ReduxEventsProps} from "../../common-props";
+import {DbPathParams, DbProps, PageProps, ReduxEventsProps} from "../../common-props";
 import {GlobalContextProps} from "../../context/global-context";
 import {Route, RouteComponentProps, Switch} from "react-router"
 import {createUpdateDbAction, IState} from "../../../redux";
@@ -17,13 +17,11 @@ import {Link} from 'react-router-dom';
 import "../../../img/logo.png";
 import {Button, Message} from "semantic-ui-react";
 import {AccessRight, hasRight} from "../../../access";
-import {deepClone} from "../../../utils";
-import {toObjWithTypes} from "../../../serializer";
+import {toTypedObjects} from "../../../serializer";
 
 type DbPageProps =
-    GlobalContextProps &
+    PageProps<DbPathParams> &
     DbProps & // mapped from redux react
-    RouteComponentProps<DbPathParams> &
     ReduxEventsProps &
     DispatchProp<any>;
 
@@ -45,10 +43,6 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
         // Pass down schema and rights to sub components
         let singleRecordPage = (otherProps: any) => <SingleRecordPage {...props} {...otherProps} />
         let recordsPage = (otherProps: any) => <RecordsPage {...props} {...otherProps} />
-
-        let goToHome = () => {
-            window.location.href = "/";
-        };
 
 
         let base_url = location.protocol + '//' + location.host;
@@ -75,11 +69,12 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
 
                 <div style={{textAlign: "right"}}>
                     {_.powered_by}
-                    <img
+                    <Link to="/" >
+                        <img
                         src="/static/img/logo.png"
                         width="100"
-                        style={{cursor: 'pointer', verticalAlign: "middle"}}
-                        onClick={() => goToHome()}/>
+                        style={{cursor: 'pointer', verticalAlign: "middle"}} />
+                    </Link>
                 </div>
             </Header>
             <div style={{margin: "1em"}}>
@@ -125,14 +120,14 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
 const mapStateToProps = (state : IState, props?: RouteComponentProps<{}> & GlobalContextProps) : DbProps => {
 
     // Transform immutable object into "live" one.
-    let db = toObjWithTypes(state.dbDefinition);
+    let db = toTypedObjects(state.dbDefinition);
 
     // FIXME : Might not be the right place to add system properties to schema
     db.schema = withSystemAttributes(db.schema, props.messages);
     return {db}
 };
 
-// Async fetch of data
+// Async fetch of dbDefinition
 function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>) : Promise<any> {
     let state = props.store.getState();
     if (!state.dbDefinition) {

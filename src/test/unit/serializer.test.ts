@@ -1,4 +1,4 @@
-import {clearRegistry, registerClass, classTag, toJsonWithTypes, toObjWithTypes} from "../../shared/serializer";
+import {clearRegistry, registerClass, classTag, toAnnotatedJson, toTypedObjects} from "../../shared/serializer";
 
 class A {};
 
@@ -16,7 +16,7 @@ test("Should not touch plain objects when serializing", () => {
         },
         e: [1, false]};
 
-    expect(toJsonWithTypes(obj)).toEqual(obj);
+    expect(toAnnotatedJson(obj)).toEqual(obj);
 });
 
 test("Should not touch plain objects when unserializing", () => {
@@ -31,7 +31,7 @@ test("Should not touch plain objects when unserializing", () => {
         },
         e: [1, false]};
 
-    expect(toObjWithTypes(obj)).toEqual(obj);
+    expect(toTypedObjects(obj)).toEqual(obj);
 });
 
 
@@ -48,8 +48,8 @@ test("Should add type info", () => {
             "@class": "a",
                 b : 1, }};
 
-    expect(toJsonWithTypes(obj)).toEqual(json);
-    expect(toObjWithTypes(json)).toEqual(obj);
+    expect(toAnnotatedJson(obj)).toEqual(json);
+    expect(toTypedObjects(json)).toEqual(obj);
 });
 
 test("Should parse type info and setup methods", () => {
@@ -67,7 +67,7 @@ test("Should parse type info and setup methods", () => {
             "@class": "a",
              b: 2, }};
 
-    let obj = toObjWithTypes(json);
+    let obj = toTypedObjects(json);
 
     expect((obj.a as any).getB()).toEqual(2);
 });
@@ -96,6 +96,6 @@ test("Should serialize with custom serializer", () => {
             value : 2}
     };
 
-    expect(toJsonWithTypes(obj)).toEqual(json);
-    expect(toObjWithTypes(json)).toEqual(obj);
+    expect(toAnnotatedJson(obj)).toEqual(json);
+    expect(toTypedObjects(json)).toEqual(obj);
 });

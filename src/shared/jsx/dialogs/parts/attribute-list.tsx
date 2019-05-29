@@ -7,7 +7,7 @@ import {typeExtraSwitch} from "../parts/attribute-extra-components";
 import {Info} from "../../utils/utils";
 import {withoutSystemAttributes} from "../../../model/instances";
 import {IMessages} from "../../../i18n/messages";
-import {ErrorPO} from "../../utils/validation-errors";
+import {ErrorPlaceholder} from "../../utils/validation-errors";
 import {extend} from "lodash";
 
 
@@ -208,8 +208,8 @@ export class AttributeList extends React.Component<AttributeListProps> {
                                     <Label
                                         basic size={"tiny"} style={{float:"right"}} >{_.name}</Label>}
 
-                                        <ErrorPO attributeKey={`${index}.name`} />
-                                        <ErrorPO attributeKey={`${index}.label`} />
+                                        <ErrorPlaceholder attributeKey={`${index}.name`} />
+                                        <ErrorPlaceholder attributeKey={`${index}.label`} />
 
                             </Header>
                         </Grid.Column>

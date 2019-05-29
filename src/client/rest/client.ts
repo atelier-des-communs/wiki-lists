@@ -14,10 +14,10 @@ import {
     VALIDATION_STATUS_CODE
 } from "../../shared/api";
 import {StructType} from "../../shared/model/types";
-import {ValidationError, ValidationException} from "../../shared/validators/validators";
+import {ValidationErrors, ValidationException} from "../../shared/validators/validators";
 import {DbDefinition} from "../../shared/model/db-def";
 import {empty} from "../../shared/utils";
-import {toJsonWithTypes, toObjWithTypes} from "../../shared/serializer";
+import {toAnnotatedJson, toTypedObjects} from "../../shared/serializer";
 
 const axios = Axios.create();
 
@@ -82,7 +82,8 @@ export let restDataFetcher : DataFetcher = {
 };
 
 // For simple action transform the promise into a Promise of either null (success) or list of validation errors
-export function toPromiseWithErrors(promise : Promise<{}>) : Promise<null | ValidationError[]> {
+// FIXME : this sucks : too much complicated ...
+export function toPromiseWithErrors(promise : Promise<{}>) : Promise<null | ValidationErrors> {
     return promise
         .then(res => null)
         .catch(e => {
@@ -100,18 +101,20 @@ function unwrapAxiosResponse<T>(promise : AxiosPromise<T>) : Promise<T> {
     return promise.then((response: any) => {
 
         // Parse type annotation and add prototypes
-        return toObjWithTypes(response.data);
+        return toTypedObjects(response.data);
 
     }).catch(error => {
         console.info("Server error happened", error);
 
         // In case of validation error, wrap the errors into proper ValidationException
         if (error.response && error.response.status == VALIDATION_STATUS_CODE) {
+
             console.info("Transformed to validation exception", error.response.data);
             throw new ValidationException(error.response.data);
+
         } else {
+
             alert("A network error happened : " + error);
-            // otherwize, continue
             throw error;
         }
     });
@@ -120,12 +123,12 @@ function unwrapAxiosResponse<T>(promise : AxiosPromise<T>) : Promise<T> {
 
 /** Add type information before sending */
 async function post<T>(url:string, data:any=null) : Promise<T> {
-    let json = toJsonWithTypes(data);
+    let json = toAnnotatedJson(data);
     return unwrapAxiosResponse<T>(axios.post(url, json));
 }
 
 async function del<T>(url:string, data:any=null) : Promise<T> {
-    let json = toJsonWithTypes(data);
+    let json = toAnnotatedJson(data);
     return unwrapAxiosResponse<T>(axios.delete(url, json));
 }
 

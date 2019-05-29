@@ -40,8 +40,8 @@ export function clearRegistry() {
     classRegistry = {};
 }
 
-/** Transform tree of object into plain JSON tree, with "@class" decorations */
-export function toJsonWithTypes<T>(obj:T, path:string="") : T {
+/** Transform tree of objects into plain JSON tree, with "@class" decorations */
+export function toAnnotatedJson<T>(obj:T, path:string="") : T {
 
     if (obj == null) {
         return null;
@@ -49,14 +49,14 @@ export function toJsonWithTypes<T>(obj:T, path:string="") : T {
 
     if (Array.isArray(obj)) {
 
-        return (obj as any).map((value:any, index:number) => toJsonWithTypes(value, `${path}[${index}]`));
+        return (obj as any).map((value:any, index:number) => toAnnotatedJson(value, `${path}[${index}]`));
 
     } else if (typeof(obj) == "object") {
 
         // Walk the tree
         let res : any = {};
         for (let key of Object.keys(obj)) {
-            res[key] = toJsonWithTypes((obj as any)[key], `${path}.${key}` );
+            res[key] = toAnnotatedJson((obj as any)[key], `${path}.${key}` );
         }
 
         // Simple object => no extra processing
@@ -87,20 +87,20 @@ export function toJsonWithTypes<T>(obj:T, path:string="") : T {
 }
 
 /** Walks a JSON tree and replace "@class" tag with proper __proto__ */
-export function toObjWithTypes<T>(json:T) : T {
+export function toTypedObjects<T>(json:T) : T {
 
     if (json == null) {
         return null;
     }
 
     if (Array.isArray(json)) {
-        return (json as any).map(toObjWithTypes);
+        return (json as any).map(toTypedObjects);
     } else if (typeof(json) == "object") {
 
         // Walk the tree
         let res : any = {};
         for (let key of Object.keys(json)) {
-            res[key] = toObjWithTypes((json as any)[key]);
+            res[key] = toTypedObjects((json as any)[key]);
         }
 
         // Get class tag

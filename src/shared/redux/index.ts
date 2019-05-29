@@ -5,12 +5,14 @@ import * as Immutable from "seamless-immutable";
 import {Record} from "../model/instances";
 import {DbDefinition} from "../model/db-def";
 import {Map} from "../utils";
-import {toJsonWithTypes} from "../serializer";
+import {toAnnotatedJson} from "../serializer";
+import {IUser} from "../model/user";
 
 
 export interface IState {
     items : {[key:string] : Record};
     dbDefinition : DbDefinition;
+    user: IUser;
 }
 
 export enum ActionType {
@@ -19,6 +21,7 @@ export enum ActionType {
     DELETE_ITEM = "DELETE_ITEM",
     UPDATE_SCHEMA = "UPDATE_SCHEMA",
     UPDATE_DB = "UPDATE_DB",
+    UPDATE_USER = "UPDATE_USER"
 }
 
 interface ActionWithRecord extends Action {
@@ -50,6 +53,11 @@ export class UpdateDbAction implements Action {
     public dbDef: DbDefinition;
 }
 
+export class UpdateUserAction implements Action {
+    public type = ActionType.UPDATE_USER;
+    public user: IUser;
+}
+
 export function createAddItemAction(record: Record) : AddItemAction {
     return {type:ActionType.ADD_ITEM, record:toImmutableJson(record)}
 }
@@ -65,12 +73,17 @@ export function createUpdateSchema(schema:StructType) : UpdateSchemaAction {
 export function createUpdateDbAction(dbDef:DbDefinition) : UpdateDbAction {
     return {type:ActionType.UPDATE_DB, dbDef:toImmutableJson(dbDef)};
 }
+export function createUpdateUserAction(user:IUser) : UpdateUserAction {
+    return {type:ActionType.UPDATE_USER, user:toImmutableJson(user)};
+}
+
 export type TAction  =
     UpdateSchemaAction |
     UpdateDbAction |
     UpdateItemAction |
     AddItemAction |
-    DeleteItemAction;
+    DeleteItemAction |
+    UpdateUserAction;
 
 function itemsReducer(items:Immutable.ImmutableObject<Map<Record>> = null, action:TAction) {
     switch (action.type) {
@@ -99,16 +112,25 @@ function dbDefReducer(dbDef:Immutable.ImmutableObject<DbDefinition> = null, acti
     return dbDef;
 }
 
+function userReducer(user: Immutable.ImmutableObject<IUser> = null, action : TAction) {
+    if (action.type == ActionType.UPDATE_USER) {
+        return (action as UpdateUserAction).user;
+    } else {
+        return user;
+    }
+}
+
 /** Combine reducers */
 export let reducers : Reducer<IState> = combineReducers ({
     items: itemsReducer,
-    dbDefinition: dbDefReducer
+    dbDefinition: dbDefReducer,
+    user:userReducer
 });
 
 /** Transform live object into immutable JSON with @class attributes to be put in store :
  * should be transformed back to 'live' object with toObjWithYypes */
 function toImmutableJson(foo: any) {
-    return Immutable.from(toJsonWithTypes((foo)));
+    return Immutable.from(toAnnotatedJson((foo)));
 }
 
 

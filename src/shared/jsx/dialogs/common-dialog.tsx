@@ -1,5 +1,5 @@
 import * as React from "react";
-import {ValidationError} from "../../validators/validators";
+import {ValidationErrors} from "../../validators/validators";
 import {Label} from "semantic-ui-react";
 
 export interface CloseableDialog {
@@ -11,7 +11,7 @@ export abstract class ValidatingDialog<T extends CloseableDialog> extends React.
 
     state : {
         loading: boolean,
-        errors:ValidationError[]};
+        errors:ValidationErrors};
 
     constructor(props:T) {
         super(props);

@@ -2,6 +2,13 @@ import {FlagNameValues} from "semantic-ui-react/dist/commonjs/elements/Flag/Flag
 
 export interface IMessages {
 
+    auth: {
+        password: string;
+        login: string;
+        userNotFound:string;
+        wrongPassword : string;
+    };
+
     selection: string;
 
     site_name : string;
@@ -125,6 +132,8 @@ export interface IMessages {
     public_link : string;
     hide : string;
     back_to_list : string;
+
+    email: string;
 
 }
 

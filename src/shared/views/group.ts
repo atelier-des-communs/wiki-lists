@@ -1,5 +1,5 @@
 import {Record} from "../model/instances";
-import {Map, mapToArray, sortByFunc} from "../utils";
+import {Map, mapValues, sortByFunc} from "../utils";
 import {Attribute} from "../model/types";
 
 export class Group {
@@ -25,7 +25,7 @@ export function groupBy(records:Record[], attr:Attribute): Group[] {
         }
         group.records.push(record)
     });
-    let res = mapToArray(groups);
+    let res = mapValues(groups);
     sortByFunc(res, group => group.value);
     return res;
 }

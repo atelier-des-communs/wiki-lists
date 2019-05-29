@@ -1,6 +1,7 @@
 import {IMessages} from "../../shared/i18n/messages";
 
 export let messages : IMessages = {
+    email: "Email",
 
     site_name : "Wiki-list",
     site_title : "Structured data, for human beings.",
@@ -125,7 +126,15 @@ export let messages : IMessages = {
     hide : "Hide",
     back_to_list :  "Back to the list",
 
+    auth: {
+        password: "Password",
+        login: "Login",
+        userNotFound : "User not found",
+        wrongPassword : "Wrong password",
+    }
+
+
 };
 
-// Make messages globally available
+// Make messages globally available (this file is imported directly)
 (window as any).__MESSAGES__ = messages;

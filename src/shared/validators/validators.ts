@@ -1,59 +1,95 @@
 // Single error message of validation
-import {empty, itToArray} from "../utils";
+import {empty, itToArray, Map, oneToArray} from "../utils";
 import {IMessages} from "../i18n/messages";
 
+// Type alias to Map of error(s) per field
+export type ValidationErrors = Map<string | string[]>
 
-// Function returning either null (no error) or a localized error message
-export type Validator = (value:any) => string | null;
+// Create singleton map of single validation error
+export function validationError(key:string, val:string) : ValidationErrors {
+    let res : ValidationErrors = {};
+    res[key] = val;
+    return res;
+}
+
+// Validators are either synchronous or asynchronous
+export type SynchronousValidator = () => ValidationErrors;
+export type AsyncronousValidator = () => Promise<ValidationErrors>;
+export type Validator = SynchronousValidator | AsyncronousValidator;
+
+// Value validator
+export type ValueValidator = (value:string) => ValidationErrors | Promise<ValidationErrors>
 
 
-export class ValidationError {
-    attribute: string;
-    message:string;
-    constructor(field:string, message:string) {
-        this.attribute = field;
-        this.message = message;
+
+
+// Merge dicts of errors, happending errors in arrays for a same key
+export function mergeErrors(it : IterableIterator<ValidationErrors>) : ValidationErrors {
+    let res : ValidationErrors = {};
+    for (let errors of it) {
+        for (let key of Object.keys(errors)) {
+
+            let val = errors[key];
+
+            if (key in res) {
+                res[key] = oneToArray(res[key]).concat(oneToArray(val));;
+            } else {
+                res[key] = val;
+            }
+        }
     }
+    return res;
 }
 
 export class ValidationException extends Error {
-    validationErrors : ValidationError[];
+    validationErrors : ValidationErrors;
 
-    constructor(errors : ValidationError[]) {
+    constructor(errors : ValidationErrors) {
         super(JSON.stringify(errors));
         this.validationErrors = errors;
     }
 }
 
-export function raiseExceptionIfErrors(errorsIt: IterableIterator<ValidationError>) {
-    let errors = itToArray(errorsIt);
-    if (errors.length > 0) {
+/** Raise ValidationException in case of errors */
+export function dieIfErrors(errorsIt: IterableIterator<ValidationErrors>) {
+    let errors = mergeErrors(errorsIt);
+    if (errors) {
         throw new ValidationException(errors);
     }
 }
 
-
-// Compose validators
-export function AndCompose(val1 : Validator, val2: Validator) : Validator {
-    return (value:any) => {
-        let msg1 = val1(value);
-        if (msg1 != null) return msg1;
-        return val2(value);
+// Tranform synchronous function to Promise
+// also takes Promise => returns it as is
+function resolveValidator(validator : Validator) : Promise<ValidationErrors> {
+    // Not Promise ? => make one
+    let res = validator();
+    if (res == null || !(res as any).then) {
+        return new Promise((resolve, reject) => {resolve(res)});
+    } else {
+        return res as Promise<ValidationErrors>;
     }
+}
+
+/** Fires validators (sync or async ones) and returns a promise*/
+export function fireAllValidators(validators : Validator[]) : Promise<ValidationErrors> {
+    let promises : Promise<ValidationErrors>[] = validators.map(resolveValidator);
+
+    // Wait for all and merge the result ValidationErrors
+    return Promise.all(promises).then(errorsList => mergeErrors(errorsList))
 }
 
 // Common validators
-export function notEmptyValidator(_:IMessages) : Validator {
+export function notEmptyValidator(key:string, _:IMessages) : ValueValidator {
     return (value:string) => {
-        if (empty(value)) return _.should_not_be_empty;
-        return null;
+        if (empty(value)) return validationError(key, _.should_not_be_empty);
+        return {};
     }
 }
 
-export function regExpValidator(reg: RegExp, msg:string) : Validator {
+export function regExpValidator(key:string, reg: RegExp, msg:string) : ValueValidator {
     return (value:string) => {
-        if (reg.test(value)) return null;
-        return msg;
+        if (reg.test(value)) return {};
+        return validationError(key,msg);
     }
 }
 

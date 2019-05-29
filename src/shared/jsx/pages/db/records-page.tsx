@@ -11,7 +11,7 @@ import {RouteComponentProps} from "react-router"
 import {Record} from "../../../model/instances";
 import {FilterSidebar, FiltersPopup, SearchComponent} from "../../type-handlers/filters";
 import {applySearchAndFilters, clearFiltersOrSearch, hasFiltersOrSearch} from "../../../views/filters";
-import {DbPathParams, RecordsProps, RecordsPropsOnly, ReduxEventsProps} from "../../common-props";
+import {DbPathParams, PageProps, RecordsProps, RecordsPropsOnly, ReduxEventsProps} from "../../common-props";
 import {ConnectedTableComponent} from "../../components/table";
 import {extractGroupBy, groupBy, updatedGroupBy} from "../../../views/group";
 import {Collapsible} from "../../utils/collapsible";
@@ -30,13 +30,12 @@ import {createAddItemAction, IState} from "../../../redux";
 import {connectComponent} from "../../context/redux-helpers";
 import {ResponsiveButton} from "../../components/responsive";
 import {safeStorage} from "../../utils/storage";
-import {toJsonWithTypes} from "../../../serializer";
+import {toAnnotatedJson} from "../../../serializer";
 
 
 type RecordsPageProps =
-    GlobalContextProps &
+    PageProps<DbPathParams> &
     RecordsProps & // mapped from redux react
-    RouteComponentProps<DbPathParams> &
     ReduxEventsProps &
     DispatchProp<any>;
 
@@ -312,7 +311,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
 const mapStateToProps =(state : IState, props?: RouteComponentProps<{}> & GlobalContextProps) : RecordsPropsOnly => {
 
     // Flatten map of records
-    let records = toJsonWithTypes( // Immutable object into live ones, with prototype
+    let records = toAnnotatedJson( // Immutable object into live ones, with prototype
         mapValues(state.items || {}) as Record[]);
 
 

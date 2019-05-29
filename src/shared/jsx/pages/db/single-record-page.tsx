@@ -12,7 +12,7 @@ import {GlobalContextProps} from "../../context/global-context";
 import {connectComponent} from "../../context/redux-helpers";
 import {createAddItemAction} from "../../../redux";
 import {recordsLink} from "../../../api";
-import {toJsonWithTypes} from "../../../serializer";
+import {toAnnotatedJson} from "../../../serializer";
 
 type SingleRecordPageProps =
     GlobalContextProps &
@@ -45,7 +45,7 @@ export const SingleRecordPageInternal : React.SFC<SingleRecordPageProps>  = (pro
 
 // Fetch data from Redux store and map it to props
 const mapStateToProps =(state : IState, props?: RouteComponentProps<SingleRecordPathParams> & GlobalContextProps) : SingleRecordPropsOnly => {
-    let record = toJsonWithTypes(state.items[props.match.params.id]);
+    let record = toAnnotatedJson(state.items[props.match.params.id]);
     return {record, large:true}
 };
 

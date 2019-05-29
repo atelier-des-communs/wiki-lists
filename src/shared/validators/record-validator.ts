@@ -1,10 +1,10 @@
 import {attributesMap, StructType} from "../model/types";
 import {empty} from "../utils";
-import {ValidationError} from "./validators";
+import {validationError, ValidationErrors} from "./validators";
 import {Record, systemType} from "../model/instances";
 import {IMessages} from "../i18n/messages";
 
-export function * validateRecord(record: Record, schema:StructType, _:IMessages, isNew:boolean) : IterableIterator<ValidationError> {
+export function * validateRecord(record: Record, schema:StructType, _:IMessages, isNew:boolean) : IterableIterator<ValidationErrors> {
     let attrMap = attributesMap(schema);
     let sysAttrMap = attributesMap(systemType(_));
 
@@ -12,7 +12,7 @@ export function * validateRecord(record: Record, schema:StructType, _:IMessages,
     for (let name in record) {
         if (!(name in attrMap)) {
             if (!(name in sysAttrMap)) {
-                yield new ValidationError(name, _.unknown_attribute + ": " + name);
+                yield validationError(name, _.unknown_attribute + ": " + name);
             }
         } else {
             let attr = attrMap[name];
@@ -27,12 +27,12 @@ export function * validateRecord(record: Record, schema:StructType, _:IMessages,
         let attr = attrMap[name];
 
         if (!(name in record) && isNew) {
-            yield new ValidationError(name, _.missing_attribute);
+            yield validationError(name, _.missing_attribute);
         }
 
         if (attr.isMandatory) {
             if ((name in record) && empty(record[name])) {
-                yield new ValidationError(name, _.mandatory_attribute);
+                yield validationError(name, _.mandatory_attribute);
             }
         }
     }

@@ -40,8 +40,10 @@ export interface GlobalContextProps  {
     /** Generic cookies interfaces served differently on SSR and client */
     cookies : ICookies;
 
+    /** Current land */
     lang : string;
 
+    /** List of supported languages */
     supportedLanguages: Language[];
 }
 

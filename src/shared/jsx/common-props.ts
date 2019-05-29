@@ -1,6 +1,7 @@
 /*
 * Some common props for components
 */
+import * as React from "react";
 import {StructType} from "../model/types";
 import {Record} from "../model/instances";
 import {GlobalContextProps} from "./context/global-context";
@@ -18,8 +19,14 @@ export interface SingleRecordPathParams extends DbPathParams {
     id :string;
 }
 
-/** Properties common to all DB pages */
-export type DbPageProps = RouteComponentProps<DbPathParams> & GlobalContextProps;
+/** Root page props */
+export type PageProps<RouteProps> = GlobalContextProps & RouteComponentProps<RouteProps>
+
+export class PageComponent<RouteProps> extends React.Component<PageProps<RouteProps>> {
+
+}
+
+export type PageSFC<RouteProps> = React.SFC<PageProps<RouteProps>>;
 
 
 /** Props for components acting on a specific DB */

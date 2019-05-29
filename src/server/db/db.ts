@@ -1,9 +1,9 @@
 import {EnumType, StructType, Types} from "../../shared/model/types";
-import config from "../../conf"
-import {MongoClient, ObjectId} from "mongodb";
+import config from "../config"
+import {MongoClient} from "mongodb";
 import {Record} from "../../shared/model/instances";
 import {validateSchemaAttributes} from "../../shared/validators/schema-validators";
-import {raiseExceptionIfErrors} from "../../shared/validators/validators";
+import {dieIfErrors} from "../../shared/validators/validators";
 import {validateRecord} from "../../shared/validators/record-validator";
 import {DataFetcher, SECRET_COOKIE} from "../../shared/api";
 import {isIn} from "../../shared/utils";
@@ -12,7 +12,6 @@ import {AccessRight} from "../../shared/access";
 import {getAccessRights, HttpError} from "../utils";
 import {Request} from "express-serve-static-core"
 import * as shortid from "shortid";
-import {registerClass} from "../../shared/serializer";
 import {DbDefinition} from "../../shared/model/db-def";
 
 const DATABASES_COL = "schemas";
@@ -53,7 +52,7 @@ export async function updateSchemaDb(dbName: string, schema:StructType, _:IMessa
     let col = db.collection<DbDefinition>(DATABASES_COL);
 
     // Validate errors
-    raiseExceptionIfErrors(validateSchemaAttributes(schema.attributes, _));
+    dieIfErrors(validateSchemaAttributes(schema.attributes, _));
 
     // Mark attributes as saved
     // FIXME : do otherwize - mark new types and atributes as new and don't save it
@@ -77,7 +76,10 @@ export async function createDb(def: DbDefinition, _:IMessages) : Promise<DbDefin
     let col = db.collection<DbDefinition>(DATABASES_COL);
 
     // Validate attributes
-    raiseExceptionIfErrors(validateSchemaAttributes(def.schema.attributes, _));
+    dieIfErrors(validateSchemaAttributes(def.schema.attributes, _));
+
+    // UID
+    (def as any)._id = shortid.generate();
 
     // FIXME add server side validators of name, label etc
     def.secret = shortid.generate();
@@ -95,10 +97,9 @@ export async function updateRecordDb(dbName: string, record : Record, _:IMessage
     let dbDef = await getDbDef(dbName);
 
     // Validate record
-    raiseExceptionIfErrors(validateRecord(record, dbDef.schema, _, false));
+    dieIfErrors(validateRecord(record, dbDef.schema, _, false));
 
-    // Transform string ID to BSON ObjectID
-    let id = new ObjectId(record._id);
+    let id = record._id;
     delete record._id;
 
     // Update time
@@ -106,10 +107,9 @@ export async function updateRecordDb(dbName: string, record : Record, _:IMessage
 
     let res = await col.updateOne({_id: id}, { $set : record});
     if (res.matchedCount != 1) {
-        throw Error(`No item matched for id : ${record._id}`);
+        throw Error(`No item matched for id : ${id}`);
     }
-    let updated = await col.findOne({_id: id});
-    return cleanBSON(updated);
+    return await col.findOne({_id: id});
 }
 
 
@@ -118,12 +118,14 @@ export async function createRecordDb(dbName: string, record : Record, _:IMessage
     let dbDef = await getDbDef(dbName);
 
     // Validate record
-    raiseExceptionIfErrors(validateRecord(record, dbDef.schema, _, true));
+    dieIfErrors(validateRecord(record, dbDef.schema, _, true));
 
 
     if (record._id) {
         throw new Error("New records should not have _id yet");
     }
+
+    record._id = shortid.generate();
 
     if (typeof(record._pos) == "undefined" || record._pos == null) {
         // Use current timestamp for position : avoid searching for largest _pos in db
@@ -132,14 +134,13 @@ export async function createRecordDb(dbName: string, record : Record, _:IMessage
 
     record._creationTime = new Date();
 
-    let res = await col.insertOne(record);
-    record._id = res.insertedId.toHexString();
-    return cleanBSON(record);
+    await col.insertOne(record);
+    return record;
 }
 
 export async function deleteRecordDb(dbName: string, id : string) : Promise<boolean> {
     let col = await Connection.getDbCol(dbName);
-    let res = await col.deleteOne({_id : new ObjectId(id)});
+    let res = await col.deleteOne({_id : id});
     if (res.deletedCount != 1) {
         throw Error(`No record deleted with id: ${id}`);
     }
@@ -158,19 +159,8 @@ export async function getDbDef(dbName: string) : Promise<DbDefinition> {
     let col = db.collection<DbDefinition>(DATABASES_COL);
     let database = await col.findOne({name: dbName});
     if (!database) throw new HttpError(404, `Missing db: ${dbName}`);
-    return cleanBSON(database);
+    return database;
 }
-
-
-/** Transform record from BSON to plain JSON */
-function cleanBSON<T extends Object>(obj: {}) : T {
-    let res = {...obj} as any;
-    if (res._id instanceof ObjectId) {
-        res._id = ((obj as any)._id as ObjectId).toHexString();
-    }
-    return res;
-}
-
 
 // DataFetcher for SSR : direct access to DB
 export class DbDataFetcher implements DataFetcher {
@@ -199,16 +189,15 @@ export class DbDataFetcher implements DataFetcher {
 
     async getRecord(dbName:string, id:string) : Promise<Record> {
         let col = await Connection.getDbCol(dbName);
-        let record = await col.findOne({_id: new ObjectId(id)});
+        let record = await col.findOne({_id: id});
         if (!record) throw new Error(`Missing db: ${dbName}`);
-        return cleanBSON(record);
+        return record;
     }
 
     async getRecords(dbName: string) : Promise<Record[]> {
         let col = await Connection.getDbCol(dbName);
         let cursor = await col.find();
-        let records = await cursor.toArray();
-        return records.map(cleanBSON);
+        return await cursor.toArray();
     }
 
 }

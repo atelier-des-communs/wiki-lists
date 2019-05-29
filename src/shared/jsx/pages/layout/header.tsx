@@ -1,8 +1,9 @@
 import * as React from "react";
 import "../../../img/logo.png";
 import {Button, Flag} from "semantic-ui-react";
-import {LANG_COOKIE} from "../../../api";
+import {LANG_COOKIE, LOGIN_PAGE_PATH} from "../../../api";
 import {GlobalContextProps} from "../../context/global-context";
+import {Link} from "react-router-dom";
 
 /** Common header : showing language switch and login */
 export const Header : React.SFC<GlobalContextProps> = (props) => {
@@ -15,10 +16,11 @@ export const Header : React.SFC<GlobalContextProps> = (props) => {
     }
 
     let langSelector = <Button.Group compact size="mini" floated="right" style={{margin:"5px"}}>
+
         {props.supportedLanguages.map(lang =>
             <Button
                 key={lang.key}
-                compact size="mini"
+                compact size="small"
                 active={props.lang == lang.key}
                 onClick={() => changeLang(lang.key)}>
 
@@ -29,6 +31,13 @@ export const Header : React.SFC<GlobalContextProps> = (props) => {
     </Button.Group >;
 
     return <>
+
+        <Button as={Link}
+                to={LOGIN_PAGE_PATH}
+            floated="right" style={{margin:"5px"}}
+            key="user"
+            compact primary size="small"
+            content={_.auth.login} />
 
         {langSelector}
 

@@ -1,6 +1,7 @@
 import {IMessages} from "../../shared/i18n/messages";
 
 export let messages : IMessages = {
+    email: "Email",
 
     site_name : "Wiki-list",
     site_title : "Données structurées, pour des humains.",
@@ -26,13 +27,13 @@ export let messages : IMessages = {
     // Boolean filter
     all :  "tout",
     yes : "oui",
-    no:"non",
+    no: "non",
 
     group_by:"grouper par",
     sort_by:"trier par",
     sort_asc : "croissant",
     sort_desc : "décroissant",
-    empty_group_by:"grouper par : <aucun>",
+    empty_group_by: "grouper par : <aucun>",
 
     // Schema dialog
     edit_attributes : "Editer les attributs",
@@ -130,9 +131,16 @@ export let messages : IMessages = {
     public_link : "Lien public : à partager",
 
     hide : "Cacher",
-    back_to_list : "Retour à la liste"
+    back_to_list : "Retour à la liste",
+
+    auth: {
+        password :"Mot de passe",
+        login: "Se connecter",
+        userNotFound : "Email non trouvé",
+        wrongPassword : "Mot de passe incorrect",
+    }
 
 };
 
-// Make messages globally available
+// Make messages globally available (this file is imported directly)
 (window as any).__MESSAGES__ = messages;

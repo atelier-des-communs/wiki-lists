@@ -14,13 +14,14 @@ export function  mapMap<T, O>(map: {[key:string] : T}, callback: Callback<T, O>)
     return Object.keys(map).map(key => callback(key, map[key]));
 }
 
+/** Return all values of a map */
 export function  mapValues<T>(map: {[key:string] : T}) : Array<T> {
     return Object.keys(map).map(key => map[key]);
 }
 
-export function  mapToArray<T>(map: {[key:string] : T}) : Array<T> {
-    return Object.keys(map).map(key => map[key]);
-}
+
+
+export type OneOrMany<T> = T | T[];
 
 /** Handy map definition */
 export interface Map<T = {}> {
@@ -149,6 +150,11 @@ export function itToArray<T>(it: IterableIterator<T>) : T[] {
     return res;
 }
 
+export function flatMap<T, U>(array: T[], callbackfn: (value: T, index: number, array: T[]) => U[]): U[] {
+    return Array.prototype.concat(...array.map(callbackfn));
+}
+
+
 export function strToInt(value:string) {
     if (empty(value)) {
         return null;
@@ -168,15 +174,16 @@ export function slug(input:string) {
     return slugify(input, {remove: /[*+~.()'"!:@\\?]/g, lower: true})
 }
 
-// Tranform synchronous function to Promise
-// also takes Promise => returns it as is
-export function resolveFuncOrPromise<T>(funcOrPromise : (() => Promise<T>) | (() => T)) : Promise<T> {
-    // Not Promise ? => make one
-    let res = funcOrPromise();
-    if (res == null || !(res as any).then) {
-        return new Promise((resolve, reject) => {resolve(res)});
+
+
+// Transform single element of anything into singleton list of it, or return same if it was already an Array
+export function oneToArray<T>(elem : OneOrMany<T>) : T[]  {
+    if (elem == null) {
+        return []
+    } else if (Array.isArray(elem)) {
+        return elem;
     } else {
-        return res as Promise<T>;
+        return [elem]
     }
 }
 

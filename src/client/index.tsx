@@ -10,11 +10,11 @@ import {GlobalContextProps, HeadSetter, ICookies} from "../shared/jsx/context/gl
 import {IMarshalledContext} from "../shared/api";
 import {restDataFetcher} from "./rest/client";
 import * as cookies from "browser-cookies";
-import {toObjWithTypes} from "../shared/serializer";
+import {toTypedObjects} from "../shared/serializer";
 import '../shared/model';
 
 /** Initial state of the store has been serialized for us by server side rendering */
-let marshalledContext = toObjWithTypes(
+let marshalledContext = toTypedObjects(
     (window as any).__MARSHALLED_CONTEXT__ as IMarshalledContext);
 
 let reduxDevTools =

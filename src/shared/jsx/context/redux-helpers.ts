@@ -9,7 +9,8 @@ import {StructType} from "../../model/types";
 import {RouteComponentProps} from "react-router";
 import {withAsyncData} from "../async/async-data-component";
 
-const matchDispatchToProps = (dispatch: Dispatch<{}>, props?: RouteComponentProps<DbPathParams> & GlobalContextProps) : ReduxEventsProps => {
+/** Expose actions as common props */
+export const matchDispatchToProps = (dispatch: Dispatch<{}>, props?: RouteComponentProps<DbPathParams> & GlobalContextProps) : ReduxEventsProps => {
 
     let dbName = props.match.params.db_name;
 

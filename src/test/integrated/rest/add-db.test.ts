@@ -1,6 +1,6 @@
 import MongoMemoryServer from 'mongodb-memory-server';
 
-import config from "../../../conf";
+import config from "../../../server/config";
 import * as path from "path";
 import {Server} from "http";
 import * as serverModule from "../../../../dist/server/server.bundle.js";
