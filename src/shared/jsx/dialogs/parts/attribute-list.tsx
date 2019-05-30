@@ -1,28 +1,15 @@
 import * as React from "react";
 import {Attribute, newType, StructType, Type, Types} from "../../../model/types";
 import {Button, Checkbox, Dropdown, Grid, Header, Icon, Label, Segment, SegmentGroup} from "semantic-ui-react";
-import {deepClone, slug} from "../../../utils";
+import {deepClone, Map, slug} from "../../../utils";
 import {EditableText} from "../../components/editable-text";
 import {typeExtraSwitch} from "../parts/attribute-extra-components";
 import {Info} from "../../utils/utils";
-import {withoutSystemAttributes} from "../../../model/instances";
+import {nonSystemAttributes} from "../../../model/instances";
 import {IMessages} from "../../../i18n/messages";
 import {ErrorPlaceholder} from "../../utils/validation-errors";
-import {extend} from "lodash";
+import * as shortid from "shortid";
 
-
-// Add some UI / Client only properties to the Attribute type
-export class UIAttribute extends Attribute {
-    expanded ?:boolean;
-    new? : boolean;
-    uid?: number; // Used as React unique "key", since attribute name is not yet filled
-
-    constructor(init:UIAttribute) {
-        super(init);
-        extend(this, init);
-    }
-
-}
 
 export enum AddButtonPosition {
     TOP,
@@ -30,30 +17,25 @@ export enum AddButtonPosition {
 
 interface AttributeListProps {
     messages:IMessages;
-    onUpdateAttributes : (attributes: UIAttribute[]) => void;
+    onUpdateAttributes : (attributes: Attribute[]) => void;
     schema : StructType;
     addButtonPosition: AddButtonPosition
 }
 
 export class AttributeList extends React.Component<AttributeListProps> {
 
-    state : { attributes : UIAttribute[]};
-
-    // Counter used for filling UID of new attributes
-    uid = 0;
-
-    // Remove system attributes
-    static cleanSchema(props:AttributeListProps) : AttributeListProps {
-        let {schema, ...otherProps} = props;
-        return {schema:withoutSystemAttributes(schema), ...otherProps}
-    }
+    state : {
+        attributes : Attribute[],
+        expanded : Map<boolean>};
 
     constructor(props: AttributeListProps) {
 
-        super(AttributeList.cleanSchema(props));
+        super(props);
 
         // Clone the input object : not modify it until we validate
-        this.state =  {attributes: deepClone(this.props.schema.attributes)};
+        this.state =  {
+            attributes: nonSystemAttributes(deepClone(this.props.schema.attributes)),
+            expanded: {}};
     }
 
     forceRedraw() {
@@ -73,12 +55,13 @@ export class AttributeList extends React.Component<AttributeListProps> {
 
     addAttribute(typeTag: string) {
         let type = newType(typeTag);
-        let attr = new UIAttribute({type, name:null});
+        let attr = new Attribute({type, name:null});
 
-        // Speicifc to
-        attr.expanded = true;
+        attr.uid = shortid.generate();
         attr.new = true;
-        attr.uid = this.uid++;
+
+        // Start expanded
+        this.state.expanded[attr.uid] = true;
 
         if (this.props.addButtonPosition == AddButtonPosition.TOP) {
             this.state.attributes.unshift(attr);
@@ -106,8 +89,17 @@ export class AttributeList extends React.Component<AttributeListProps> {
         this.forceRedraw()
     }
 
+    isExpanded(attr: Attribute) {
+        return this.state.expanded[attr.uid]
+    }
+
+    setExpanded(attr: Attribute, expanded:boolean) {
+        return this.state.expanded[attr.uid] = expanded
+    }
+
     toggleAttr(attrIndex:number) {
-        this.state.attributes[attrIndex].expanded = !this.state.attributes[attrIndex].expanded;
+        let attr = this.state.attributes[attrIndex];
+        this.setExpanded(attr, !this.isExpanded(attr));
         this.forceRedraw();
     }
 
@@ -157,8 +149,8 @@ export class AttributeList extends React.Component<AttributeListProps> {
                 onUpdate: (type) => this.updateType(index, type)});
 
 
-            // Extra parameters, common to all attributes
-            let attributeExtra = <Grid columns={3}>
+            // Attribute details
+            let attributeDetails = <Grid columns={3}>
 
                 {attr.type.tag == Types.TEXT &&
                 <Grid.Column >
@@ -189,9 +181,7 @@ export class AttributeList extends React.Component<AttributeListProps> {
 
             </Grid>
 
-            // Before this attribute is saved, the local uid is the key
-            return <Segment key={attr.new ? attr.uid : attr.name} >
-
+            return <Segment key={attr.uid} >
 
                 <Grid divided="vertically" >
                     <Grid.Row className="hoverable" >
@@ -219,7 +209,7 @@ export class AttributeList extends React.Component<AttributeListProps> {
                                 compact className="shy"
                                 onClick={() => this.toggleAttr(index)}>
                                 {_.attribute_details }
-                                <Icon name={attr.expanded ? "chevron up" : "chevron down"} />
+                                <Icon name={this.isExpanded(attr) ? "chevron up" : "chevron down"} />
                             </Button>
                             <Label size={"large"}>
                                 <Icon name={typeDescr(attr.type.tag).icon as any} />
@@ -243,10 +233,10 @@ export class AttributeList extends React.Component<AttributeListProps> {
                         </Grid.Column>
                     </Grid.Row>
 
-                    {attr.expanded &&
+                    {this.isExpanded(attr) &&
                     <Grid.Row  >
                         <Grid.Column>
-                            { attributeExtra }
+                            { attributeDetails }
                         </Grid.Column>
                     </Grid.Row>
                     }

@@ -2,7 +2,7 @@ import * as React from "react";
 import {StructType} from "../../model/types";
 import {Button, Form, Grid, Header, Icon, Label, Message, Modal} from "semantic-ui-react";
 import {ValueHandler} from "../type-handlers/editors";
-import {Record, withoutSystemAttributes} from "../../model/instances";
+import {Record, nonSystemAttributes} from "../../model/instances";
 import {attrLabel, typeIsWide} from "../utils/utils";
 import {CloseableDialog, ValidatingDialog} from "./common-dialog";
 import {ValidationErrors} from "../../validators/validators";
@@ -24,15 +24,9 @@ export class EditDialog extends ValidatingDialog<EditDialogProps> {
         errors:ValidationErrors };
     record : any;
 
-    static cleanSchema(props:EditDialogProps) :EditDialogProps {
-        let {schema, ...otherProps} = props;
-        return {
-            schema:withoutSystemAttributes(schema),
-            ...otherProps};
-    }
 
     constructor(props: EditDialogProps) {
-        super(EditDialog.cleanSchema(props));
+        super(props);
 
         // Clone the input object : not modify it until we validate
         this.state =  {
@@ -60,7 +54,7 @@ export class EditDialog extends ValidatingDialog<EditDialogProps> {
         let _ = this.props.messages;
 
         // Loop on schema attributes
-        let attributes = this.props.schema.attributes.filter(attr => !attr.system);
+        let attributes = nonSystemAttributes(this.props.schema.attributes);
         let fields = attributes.map(attr => {
 
             // Update record for this attribute upon change

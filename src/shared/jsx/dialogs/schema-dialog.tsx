@@ -4,9 +4,9 @@ import {Button, Form, Header, Icon, Message, Modal,} from "semantic-ui-react";
 import {deepClone} from "../../utils";
 import {ValidationErrors} from "../../validators/validators";
 import {CloseableDialog, ValidatingDialog} from "./common-dialog";
-import {withoutSystemAttributes} from "../../model/instances";
+import {nonSystemAttributes} from "../../model/instances";
 import {IMessages} from "../../i18n/messages";
-import {AddButtonPosition, AttributeList, UIAttribute} from "./parts/attribute-list";
+import {AddButtonPosition, AttributeList} from "./parts/attribute-list";
 import {RemainingErrorsPlaceholder, ErrorsContext} from "../utils/validation-errors";
 
 
@@ -24,24 +24,16 @@ export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
         errors:ValidationErrors,
         attributes : Attribute[]};
 
-    // Counter used for filling UID of new attributes
-    uid = 0;
-
-    static cleanSchema(props:SchemaDialogProps) : SchemaDialogProps {
-        let {schema, ...otherProps} = props;
-        return {schema:withoutSystemAttributes(schema), ...otherProps}
-    }
-
     constructor(props: SchemaDialogProps) {
 
-        super(SchemaDialog.cleanSchema(props));
+        super(props);
 
         this.state =  {
             loading: false,
             errors:{},
 
             // Clone the input object : not modify it until we validate
-            attributes: deepClone(this.props.schema.attributes)};
+            attributes: nonSystemAttributes(deepClone(this.props.schema.attributes))};
     }
 
     forceRedraw() {
@@ -50,11 +42,9 @@ export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
 
     async validateInternal() {
 
-        // filter out UI properties of attributes
+        // Remove "new"
         let attributes = this.state.attributes.map(attr => {
            let res = deepClone(attr) as any;
-           delete res.expanded;
-           delete res.uid;
            delete res.new;
            return res;
         });
@@ -77,7 +67,6 @@ export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
                 {_.edit_attributes}
             </Header>
 
-
             <Modal.Content >
 
                 <Form>
@@ -85,7 +74,7 @@ export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
                         addButtonPosition={AddButtonPosition.TOP}
                         messages={this.props.messages}
                         schema={this.props.schema}
-                        onUpdateAttributes={(attributes: UIAttribute[]) => {
+                        onUpdateAttributes={(attributes) => {
                             this.state.attributes = attributes;
                             this.forceRedraw(); }}
                     />

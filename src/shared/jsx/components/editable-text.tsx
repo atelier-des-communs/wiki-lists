@@ -64,15 +64,14 @@ export class EditableText extends React.Component<EditableTextProps> {
 
         return this.state.editMode ?
             <Input key="edit"
-                {... this.props}
-
                 ref={this.setStepInputRef}
                 defaultValue={this.props.value}
+                   value={this.props.value}
                 onKeyPress={(e:any) => this.keyPressed(e)}
                 onBlur={() => this.blur()}
                 onChange={(e, change) => this.props.onChange(change.value)} /> :
 
-            (this.props.as ?
+            (SpanEl ?
             <SpanEl
                 key="read"
                 className="editable"

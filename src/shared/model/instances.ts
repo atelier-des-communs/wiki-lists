@@ -1,4 +1,4 @@
-import {DatetimeType, NumberType, StructType, TextType} from "./types";
+import {Attribute, DatetimeType, NumberType, StructType, TextType} from "./types";
 import {deepClone} from "../utils";
 import {IMessages} from "../i18n/messages";
 import {classTag, registerClass} from "../serializer";
@@ -58,8 +58,8 @@ export function withSystemAttributes(schema:StructType, _:IMessages) {
     return res
 }
 
-export function withoutSystemAttributes(schema:StructType) {
-    let res = deepClone(schema);
-    res.attributes = schema.attributes.filter(attr => !attr.system);
-    return res;
+export function nonSystemAttributes(attributes: Attribute[]) {
+    return attributes.filter(attr => !attr.system);
 }
+
+

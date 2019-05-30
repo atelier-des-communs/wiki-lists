@@ -39,6 +39,7 @@ export class TextType implements Type<string> {
     }
 }
 
+@classTag("EnumValue")
 export class EnumValue {
     value: string;
     label?: string;
@@ -75,8 +76,8 @@ export function newType(typeTag:string) {
             let res = new EnumType();
             // Two empty values for the UI
             // FIXME : should be on UI side, not here
-            res.values.push(new EnumValue(null));
-            res.values.push(new EnumValue(null));
+            res.values.push(new EnumValue("option1", "Option 1"));
+            res.values.push(new EnumValue("option2", "Option 2"));
             return res;
         default:
             throw new Error(`Type not supported : ${typeTag}`);
@@ -85,6 +86,8 @@ export function newType(typeTag:string) {
 
 @classTag("attribute")
 export class Attribute {
+    new? : boolean;
+    uid?: string;
     name: string;
     label?: string;
     type: Type<any>;
