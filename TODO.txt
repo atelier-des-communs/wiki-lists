@@ -1,3 +1,4 @@
+[BUG] Enum filters does not seem to work anymore
 [BUG] Single record => back to list => shows only one record without REST get
 [BUG] Deleting attribute used in sorting / grouping : be resilient
 [BUG] Attribut inconnu après suppresion d'attribut, puis sauvegarde d'ancien record : il faut supprimer les champs

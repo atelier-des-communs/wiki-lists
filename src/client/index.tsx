@@ -8,7 +8,7 @@ import {toImmutable} from "../shared/utils";
 import "./index.css";
 import {GlobalContextProps, HeadSetter, ICookies} from "../shared/jsx/context/global-context";
 import {IMarshalledContext} from "../shared/api";
-import {restDataFetcher} from "./rest/client";
+import {restDataFetcher} from "./rest/client-db";
 import * as cookies from "browser-cookies";
 import {toTypedObjects} from "../shared/serializer";
 import '../shared/model';

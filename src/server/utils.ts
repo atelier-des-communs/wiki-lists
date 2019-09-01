@@ -1,5 +1,5 @@
 import * as Express from "express";
-import {SECRET_COOKIE, VALIDATION_STATUS_CODE} from "../shared/api";
+import {SECRET_COOKIE, VALIDATION_ERROR_STATUS_CODE} from "../shared/api";
 import {AccessRight} from "../shared/access";
 import {getDbDef} from "./db/db";
 import {isIn} from "../shared/utils";
@@ -21,10 +21,6 @@ export function returnPromise(res: Express.Response, promise: Promise<{}>, code=
 export function returnPromiseWithCode(res: Express.Response, promise: Promise<ContentWithStatus>) {
     promise.then(
         result => {
-
-            // Add type information to JSON
-            let json = toAnnotatedJson(result.content);
-
             res.status(result.statusCode).send(result.content)
         }).
     catch(
@@ -32,7 +28,7 @@ export function returnPromiseWithCode(res: Express.Response, promise: Promise<Co
             console.error("Error occured in promise : ", error);
             if (error.validationErrors) {
                 // Send list of errors back to client, with custom error codes
-                res.status(VALIDATION_STATUS_CODE).send(error.validationErrors);
+                res.status(VALIDATION_ERROR_STATUS_CODE).send(error.validationErrors);
             } else if (error.code) {
                 res.status(error.code).send(error.message);
             } else {
@@ -61,7 +57,13 @@ export async function getAccessRights(dbStr: string, pass:string) {
             throw new HttpError(403, "Bad password");
         }
     } else {
-        return [AccessRight.EDIT, AccessRight.VIEW];
+        // FIXME default rights defined in the DB
+        if (dbDef.anonRights) {
+            return dbDef.anonRights;
+        } else {
+            // Default anonymous user access : wiki
+            return [AccessRight.EDIT, AccessRight.VIEW];
+        }
     }
 }
 

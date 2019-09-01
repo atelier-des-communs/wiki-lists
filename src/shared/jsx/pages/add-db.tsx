@@ -7,7 +7,7 @@ import {Attribute, StructType, TextType} from "../../model/types";
 import {IMessages} from "../../i18n/messages";
 import {AddButtonPosition, AttributeList} from "../dialogs/parts/attribute-list";
 import {Wizard, WizardStep} from "../components/wizard";
-import {checkAvailability, createDb, toPromiseWithErrors} from "../../../client/rest/client";
+import {checkAvailability, createDb} from "../../../client/rest/client-db";
 import {
     notEmptyValidator,
     regExpValidator,
@@ -19,6 +19,7 @@ import {DbDefinition} from "../../model/db-def";
 import {MainLayout} from "./layout/main-layout";
 import {ErrorPlaceholder} from "../utils/validation-errors";
 import {PageProps} from "../common-props";
+import {toPromiseWithErrors} from "../../../client/rest/common";
 
 const SLUG_REG = new RegExp(/^[1-9a-zA-Z\-_]*$/);
 

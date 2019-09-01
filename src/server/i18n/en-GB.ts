@@ -137,4 +137,6 @@ export let messages : IMessages = {
 };
 
 // Make messages globally available (this file is imported directly)
-(window as any).__MESSAGES__ = messages;
+if (typeof window !== "undefined") {
+    (window as any).__MESSAGES__ = messages;
+}

@@ -4,7 +4,7 @@ import * as compression from "compression";
 import * as cookieParser from "cookie-parser";
 import * as language from "express-request-language";
 import * as session from "express-session";
-import {setUp as setUpRest} from "./rest/admin";
+import {setUp as setUpRest} from "./rest/db";
 import {setUp as setUpHtml} from "./html";
 import {setUp as setUpExport} from "./export";
 import {setUp as setUpAuth} from "./rest/auth";

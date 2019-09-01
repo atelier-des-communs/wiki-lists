@@ -1,7 +1,7 @@
 // Common events mapped to redux store action
 import {Record} from "../../model/instances";
 import {GlobalContextProps, withGlobalContext} from "./global-context";
-import {createItem, deleteItem, updateItem, updateSchema} from "../../../client/rest/client";
+import {createItem, deleteItem, updateItem, updateSchema} from "../../../client/rest/client-db";
 import {DbPathParams, ReduxEventsProps} from "../common-props";
 import {connect, Dispatch} from "react-redux";
 import {createAddItemAction, createDeleteAction, createUpdateItemAction, createUpdateSchema} from "../../redux";

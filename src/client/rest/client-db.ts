@@ -11,16 +11,13 @@ import {
     GET_ITEMS_URL,
     UPDATE_ITEM_URL,
     UPDATE_SCHEMA_URL,
-    VALIDATION_STATUS_CODE
+    VALIDATION_ERROR_STATUS_CODE
 } from "../../shared/api";
 import {StructType} from "../../shared/model/types";
-import {ValidationErrors, ValidationException} from "../../shared/validators/validators";
+import {ValidationErrors} from "../../shared/validators/validators";
 import {DbDefinition} from "../../shared/model/db-def";
 import {empty} from "../../shared/utils";
-import {toAnnotatedJson, toTypedObjects} from "../../shared/serializer";
-
-const axios = Axios.create();
-
+import {post, get, del} from "./common";
 
 /** Return the full item with new _id */
 export async function createItem(dbName: string, item : Record) : Promise<Record> {
@@ -57,8 +54,8 @@ export async function deleteItem(dbName: string, id : string) : Promise<boolean>
 
 export async function checkAvailability(dbName: string) : Promise<boolean> {
     if (empty(dbName)) return true;
-    return await unwrapAxiosResponse(axios.get(
-        CHECK_DB_NAME.replace(":db_name", dbName)));
+    return await get<boolean>(
+        CHECK_DB_NAME.replace(":db_name", dbName));
 }
 
 export let restDataFetcher : DataFetcher = {
@@ -81,60 +78,9 @@ export let restDataFetcher : DataFetcher = {
     }
 };
 
-// For simple action transform the promise into a Promise of either null (success) or list of validation errors
-// FIXME : this sucks : too much complicated ...
-export function toPromiseWithErrors(promise : Promise<{}>) : Promise<ValidationErrors> {
-    return promise
-        .then(res => null)
-        .catch(e => {
-            if (e.validationErrors) {
-                return e.validationErrors;
-            } else {
-                // Rethrow
-                throw e;
-            }});
-}
 
 
-// Catch sepcific status code and unwrap it as a validation exception
-function unwrapAxiosResponse<T>(promise : AxiosPromise<T>) : Promise<T> {
-    return promise.then((response: any) => {
 
-        // Parse type annotation and add prototypes
-        return toTypedObjects(response.data);
-
-    }).catch(error => {
-        console.info("Server error happened", error);
-
-        // In case of validation error, wrap the errors into proper ValidationException
-        if (error.response && error.response.status == VALIDATION_STATUS_CODE) {
-
-            console.info("Transformed to validation exception", error.response.data);
-            throw new ValidationException(error.response.data);
-
-        } else {
-
-            alert("A network error happened : " + error);
-            throw error;
-        }
-    });
-}
-
-
-/** Add type information before sending */
-async function post<T>(url:string, data:any=null) : Promise<T> {
-    let json = toAnnotatedJson(data);
-    return unwrapAxiosResponse<T>(axios.post(url, json));
-}
-
-async function del<T>(url:string, data:any=null) : Promise<T> {
-    let json = toAnnotatedJson(data);
-    return unwrapAxiosResponse<T>(axios.delete(url, json));
-}
-
-async function get<T>(url:string) : Promise<T> {
-    return unwrapAxiosResponse<T>(axios.get(url));
-}
 
 
 

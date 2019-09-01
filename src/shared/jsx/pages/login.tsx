@@ -5,13 +5,14 @@ import {MainLayout} from "./layout/main-layout";
 import {Map} from "../../utils";
 import {PageComponent, PageProps} from "../common-props";
 import {ErrorLabel} from "../utils/validation-errors";
+import {ValidationErrors} from "../../validators/validators";
 
 class _LoginPage extends PageComponent<{}> {
 
     state: {
         email: string,
         password: string
-        errors: Map<string>
+        errors: ValidationErrors
     };
 
     constructor(props: PageProps<{}>) {

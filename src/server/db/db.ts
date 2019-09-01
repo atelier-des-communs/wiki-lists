@@ -176,11 +176,11 @@ export class DbDataFetcher implements DataFetcher {
 
         // Decorate Db with user rights
         let pass = this.request.cookies[SECRET_COOKIE(dbName)];
-        dbDef.rights = await getAccessRights(dbName, pass);
+        dbDef.userRights = await getAccessRights(dbName, pass);
 
         // Remove secret for non admins
         // TODO : FIXME dangerous ...
-        if (!isIn(dbDef.rights, AccessRight.ADMIN)) {
+        if (!isIn(dbDef.userRights, AccessRight.ADMIN)) {
             delete dbDef.secret;
         }
 

@@ -20,8 +20,12 @@ export class DbDefinition implements DbSettings {
     name: string;
     schema: StructType;
     secret?: string;
-    rights?: AccessRight[];
+    anonRights?: AccessRight[];
 
+
+    // Decorated by backend : current user rights
+    // Bad design, should be stored in separate structure ?
+    userRights?: AccessRight[];
 
     constructor(init: DbDefinition) {
         extend(this, init);
