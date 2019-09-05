@@ -5,7 +5,7 @@
  */
 import * as React from "react";
 import {GlobalContextProps, withGlobalContext} from "../context/global-context";
-import {Loader} from "semantic-ui-react";
+import {Loader, Dimmer} from "semantic-ui-react";
 
 export abstract class AsyncDataComponent<T extends GlobalContextProps> extends React.Component<T> {
 
@@ -17,39 +17,29 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps> extends R
     }
 
     /** Should look at props / state, and return null if no loading is required */
-    abstract fetchData() : null | Promise<{}> |  Promise<{}>[];
+    abstract fetchData() :  Promise<{}>;
 
     componentWillMount() {
-        let promises  = this.fetchData();
-        let singlePromise : Promise<{}>;
-        if (promises) {
-
-            // Reduce multiple promises into single one
-            if (promises instanceof Array) {
-                if (promises.length == 0) {
-                    return;
-                } else {
-                    singlePromise = Promise.all(promises);
-                }
-            } else {
-                singlePromise = promises;
-            }
+        let promise  = this.fetchData();
+        if (promise) {
 
             this.setState({loading:true});
 
             this.props.promises.push(
-                singlePromise.then(() => {
+                promise.then(() => {
                     this.setState({loading:false});
                 }));
         }
     }
 
     render() {
-       if (this.state.loading) {
-           return <Loader active />
-       } else {
-           return this.renderLoaded();
-       }
+        let child = this.renderLoaded();
+        return <div>
+                <Dimmer active={this.state.loading}>
+                   <Loader />
+                </Dimmer>
+                {child}
+            </div>
     }
 
     abstract renderLoaded(): false | JSX.Element;
@@ -58,7 +48,7 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps> extends R
 
 // Higher order function wrapping a component with async data fetching
 export function withAsyncData<P>(
-    fetchData:(props: Readonly<P & GlobalContextProps>) => null | Promise<any> | Promise<any>[])
+    fetchData:(props: Readonly<P & GlobalContextProps>) => Promise<any>)
 {
     return (WrappedComponent: React.ComponentType<P>): React.ComponentClass<P> => {
 

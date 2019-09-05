@@ -1,8 +1,8 @@
-import {empty, eqSet, goTo, intToStr, isIn, Map, parseParams, sortBy, strToInt} from "../utils";
+import {empty, eqSet, goTo, intToStr, isIn, Map, mapMap, mapValues, parseParams, sortBy, strToInt} from "../utils";
 import {Attribute, attributesMap, EnumType, StructType, Types} from "../model/types";
 import {Record} from "../model/instances";
 // import normalize from "normalize-text";
-import {extractSort} from "./sort";
+import {extractSort, ISort, serializeSort} from "./sort";
 import {RouteComponentProps} from "react-router"
 
 function queryParamName(attrName: string) {
@@ -10,7 +10,7 @@ function queryParamName(attrName: string) {
 }
 
 
-// FIXME normalize seemsto break server
+// FIXME normalize seems to break server
 function normalize(value:string) {
     if (!value) {
         return "";
@@ -20,8 +20,17 @@ function normalize(value:string) {
 }
 
 export interface IFilter<T> {
+
+    // Attribute
     attr:Attribute;
+
+    // Applies the filter on a value
     filter(value:T):boolean;
+
+    // To mongoDb filter :
+    mongoFilter(): any;
+
+    // For empty filter
     isAll():boolean;
 }
 
@@ -55,6 +64,13 @@ export class BooleanFilter implements IFilter<boolean> {
         } else {
             return this.showFalse;
         }
+    }
+
+    mongoFilter(): any {
+        if (this.isAll()) {
+            return null;
+        }
+        return {[this.attr.name]: this.showTrue}
     }
 }
 
@@ -110,6 +126,14 @@ export class TextFilter implements IFilter<string> {
         let normVal = normalize(value);
         return normVal.indexOf(this.searchNorm) > -1;
     }
+
+    mongoFilter(): any {
+        if (this.isAll()) {
+            return null;
+        }
+        // FIXME : use text search instead
+        return {[this.attr.name] : new RegExp(normalize(this.search), 'i')};
+    }
 }
 
 export function serializeTextFilter(attrName: string, filter:TextFilter) {
@@ -150,7 +174,7 @@ export class EnumFilter implements IFilter<string> {
     }
 
     allValues(): string[] {
-        let type = this.attr.type  as EnumType;
+        let type = this.attr.type as EnumType;
         return type.values.map(enumVal => enumVal.value);
     }
 
@@ -164,6 +188,24 @@ export class EnumFilter implements IFilter<string> {
         } else {
             return isIn(this.showValues, value);
         }
+    }
+
+    mongoFilter(): any {
+        if (this.isAll()) {
+            return null;
+        }
+        var res :any = {
+            [this.attr.name] : {
+                $in: this.showValues
+            }
+        };
+
+        if (this.showEmpty) {
+            res = {$or : [
+                {[this.attr.name]: null},
+                res]}
+        }
+        return res;
     }
 }
 
@@ -221,6 +263,19 @@ export class NumberFilter implements IFilter<number> {
         }
         return (this.min == null || value >= this.min) &&
             (this.max == null || value <= this.max)
+    }
+    mongoFilter(): any {
+        if (this.isAll()) {
+            return null;
+        }
+        var res : any = {};
+        if (this.min != null) {
+            res['$gte'] = this.min;
+        }
+        if (this.max != null) {
+            res['$lte'] = this.max;
+        }
+        return res;
     }
 }
 
@@ -344,6 +399,21 @@ export function hasFiltersOrSearch(schema: StructType, props: RouteComponentProp
     let filters = extractFilters(schema, queryParams);
     let search = extractSearch(queryParams);
     return (Object.keys(filters).length > 0) || search;
+}
+
+export function serializeFilters(filters: Map<Filter>) {
+    let res= {};
+    mapMap(filters, function(key:string, filter:Filter) {
+        res = {...res, ...serializeFilter(filter.attr, filter)};
+    });
+    return res;
+}
+
+export function serializeSortAndFilters(sort: ISort, filters: Map<Filter>, search:string) : Map<any>{
+    return {
+        ...serializeFilters(filters),
+        ...serializeSort(sort),
+        ...serializeSearch(search)};
 }
 
 export function clearFiltersOrSearch(schema: StructType, props: RouteComponentProps<{}>) {

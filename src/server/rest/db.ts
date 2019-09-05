@@ -1,7 +1,7 @@
 import {
     ADD_ITEM_URL, API_BASE_URL,
     CHECK_DB_NAME,
-    COOKIE_DURATION,
+    COOKIE_DURATION, COUNT_ITEMS_URL,
     CREATE_DB_URL,
     DELETE_ITEM_URL,
     GET_DB_DEFINITION_URL,
@@ -31,6 +31,9 @@ import {selectLanguage} from "../i18n/messages";
 import {toAnnotatedJson, toTypedObjects} from "../../shared/serializer";
 import {DbDefinition} from "../../shared/model/db-def";
 import * as mung from "express-mung";
+import {extractSort} from "../../shared/views/sort";
+import {sortBy, strToInt} from "../../shared/utils";
+import {extractFilters, extractSearch} from "../../shared/views/filters";
 
 async function addItemAsync(req:Request) : Promise<Record> {
     let record = req.body as Record;
@@ -101,13 +104,11 @@ let decorateOutput: mung.Transform = (body, req, res) => {
 
 export function setUp(server:Express) {
 
-
     // Add middleware in input / output to transform into json with type information
     server.use(API_BASE_URL, safeInput);
     server.use(API_BASE_URL, mung.json(decorateOutput));
 
     // Routes
-
     server.post(ADD_ITEM_URL, function (req: Request, res: Response) {
         returnPromise(res, addItemAsync(req));
     });
@@ -136,9 +137,45 @@ export function setUp(server:Express) {
         returnPromise(res, new DbDataFetcher(req).getRecord(req.params.db_name, req.params.id));
     });
 
-    server.get(GET_ITEMS_URL, function (req: Request, res: Response) {
-        returnPromise(res, new DbDataFetcher(req).getRecords(req.params.db_name));
+    server.get(GET_ITEMS_URL, async function (req: Request, res: Response) {
+
+        let fetcher = new DbDataFetcher(req);
+        let schema = await fetcher.getDbDefinition(req.params.db_name);
+
+        // Extract filters
+        let sort = extractSort(req.query);
+        let search = extractSearch(req.query);
+        let filters = extractFilters(schema.schema, req.query);
+        let from = strToInt(req.query.from);
+        let limit = strToInt(req.query.limit);
+
+        console.debug(req.query);
+
+        returnPromise(res, fetcher.getRecords(
+            req.params.db_name,
+            filters,
+            search,
+            sort,
+            from,
+            limit));
     });
+
+    server.get(COUNT_ITEMS_URL, async function (req: Request, res: Response) {
+
+        let fetcher = new DbDataFetcher(req);
+        let schema = await fetcher.getDbDefinition(req.params.db_name);
+
+        // Search & filter
+        let search = extractSearch(req.query);
+        let filters = extractFilters(schema.schema, req.query);
+
+        returnPromise(res, fetcher.countRecords(
+            req.params.db_name,
+            filters,
+            search)
+            .then((count) => {return "" + count}));
+    });
+
 
     server.get(GET_DB_DEFINITION_URL, function (req: Request, res: Response) {
         returnPromise(res, new DbDataFetcher(req).getDbDefinition(req.params.db_name));

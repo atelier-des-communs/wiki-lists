@@ -1,3 +1,6 @@
+[BUG] List not updated when new item added
+[BUG] Whole refreshed when list is fetched from REST service : see filters
+[BUG] View siwtched back to "table" when we return from item to list
 [BUG] Enum filters does not seem to work anymore
 [BUG] Single record => back to list => shows only one record without REST get
 [BUG] Deleting attribute used in sorting / grouping : be resilient

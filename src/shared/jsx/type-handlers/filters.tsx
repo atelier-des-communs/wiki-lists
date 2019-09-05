@@ -42,7 +42,6 @@ abstract class AbstractSingleFilter<T extends Filter> extends React.Component<Si
     // Update the filter by pushing query params in URL
     setFilter = (newFilter: T) => {
         let queryParams = serializeFilter(this.props.attr, newFilter);
-        console.log("filter clicked !", this.props.attr, queryParams);
         goTo(this.props, queryParams);
     }
 }
@@ -188,6 +187,7 @@ class EnumFilterComponent extends AbstractSingleFilter<EnumFilter> {
 }
 
 /* Switch on attribute type : may return null in case filter is not supported */
+// FIXME : change switch to proper registration of types / components
 export function singleFilter(props : RouteComponentProps<{}> & MessagesProps, attr:Attribute, filter:Filter | null) {
 
     let _ = props.messages;

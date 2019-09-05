@@ -2,12 +2,13 @@ import {DOWNLOAD_JSON_URL, DOWNLOAD_XLS_URL} from "../shared/api";
 import {Express} from "express";
 import {AttributeDisplay, extractDisplays} from "../shared/views/display";
 import {Record} from "../shared/model/instances";
-import {applySearchAndFilters} from "../shared/views/filters";
+import {applySearchAndFilters, extractFilters, extractSearch} from "../shared/views/filters";
 import {DbDataFetcher} from "./db/db";
-import {deepClone, Map} from "../shared/utils";
+import {deepClone, Map, sortBy} from "../shared/utils";
 import {Workbook} from "exceljs";
 import {Request, Response} from "express-serve-static-core"
 import {attrLabel} from "../shared/jsx/utils/utils";
+import {extractSort} from "../shared/views/sort";
 
 enum ExportType {
     JSON = "json",
@@ -25,8 +26,12 @@ const EXTENSION = {
 async function getAllWithFilters(req:Request, db_name:string, query:Map<string>) : Promise<Record[]> {
     let dbDataFetcher = new DbDataFetcher(req);
     let schema = (await dbDataFetcher.getDbDefinition(db_name)).schema;
-    let records = await dbDataFetcher.getRecords(db_name);
-    return applySearchAndFilters(records, query, schema);
+
+    let sort = extractSort(query);
+    let search = extractSearch(query);
+    let filters = extractFilters(schema, query);
+
+    return dbDataFetcher.getRecords(db_name, filters, search, sort);
 }
 
 /** Filter out hidden attributes on a JSON object  */

@@ -18,23 +18,22 @@ export function returnPromise(res: Express.Response, promise: Promise<{}>, code=
 
 // Handy function returing 200 and the payload result of the promise, or returning 500 on error
 // It wraps the Promise API around Express API
-export function returnPromiseWithCode(res: Express.Response, promise: Promise<ContentWithStatus>) {
-    promise.then(
-        result => {
-            res.status(result.statusCode).send(result.content)
-        }).
-    catch(
-        error => {
-            console.error("Error occured in promise : ", error);
-            if (error.validationErrors) {
-                // Send list of errors back to client, with custom error codes
-                res.status(VALIDATION_ERROR_STATUS_CODE).send(error.validationErrors);
-            } else if (error.code) {
-                res.status(error.code).send(error.message);
-            } else {
-                res.status(501).send(error);
-            }
-        });
+export async function returnPromiseWithCode(res: Express.Response, promise: Promise<ContentWithStatus>) {
+    try {
+        let result = await promise;
+        console.info("status", result.statusCode, "content", result.content);
+        res.status(result.statusCode).send(result.content);
+    } catch (error) {
+        console.error("Error occured in promise : ", error);
+        if (error.validationErrors) {
+            // Send list of errors back to client, with custom error codes
+            res.status(VALIDATION_ERROR_STATUS_CODE).send(error.validationErrors);
+        } else if (error.code) {
+            res.status(error.code).send(error.message);
+        } else {
+            res.status(501).send(error);
+        }
+    }
 }
 
 export class HttpError {

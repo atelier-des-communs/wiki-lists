@@ -58,7 +58,7 @@ interface MapStateToPropsFunction<TStateProps, PathParams> {
 // @BlackMagic
 export function connectComponent<PathParams extends DbPathParams, TStateProps>(
     stateMapper : MapStateToPropsFunction<TStateProps, PathParams>,
-    fetchData : (props:GlobalContextProps & RouteComponentProps<PathParams>) => null | Promise<any> | Promise<any>[]) {
+    fetchData : (props:GlobalContextProps & RouteComponentProps<PathParams>) => Promise<any>) {
 
     type TOwnProps = GlobalContextProps & RouteComponentProps<PathParams>;
     type TComponentType = TStateProps & GlobalContextProps & RouteComponentProps<PathParams> & ReduxEventsProps;

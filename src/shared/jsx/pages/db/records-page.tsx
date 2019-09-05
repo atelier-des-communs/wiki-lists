@@ -1,16 +1,23 @@
 /* Main page displaying a single collection, with sorting, filtering, grouping */
 import * as React from 'react';
-import {Button, Dropdown, Header, Responsive} from 'semantic-ui-react'
+import {Button, Dropdown, Header, Responsive, Pagination} from 'semantic-ui-react'
 import {EditDialog} from "../../dialogs/edit-dialog";
 import {attributesMap, Types} from "../../../model/types";
-import {goTo, mapMap, mapValues, parseParams} from "../../../utils";
+import {goTo, intToStr, mapMap, mapValues, parseParams, strToInt} from "../../../utils";
 import {SafeClickWrapper, SafePopup} from "../../utils/ssr-safe";
 import {DispatchProp} from "react-redux";
-
+import {isEqual} from "lodash";
+import * as Immutable from "seamless-immutable";
+import * as QueryString from "querystring";
 import {RouteComponentProps} from "react-router"
 import {Record} from "../../../model/instances";
 import {FilterSidebar, FiltersPopup, SearchComponent} from "../../type-handlers/filters";
-import {applySearchAndFilters, clearFiltersOrSearch, hasFiltersOrSearch} from "../../../views/filters";
+import {
+    clearFiltersOrSearch,
+    extractFilters,
+    extractSearch,
+    hasFiltersOrSearch, serializeSortAndFilters
+} from "../../../views/filters";
 import {DbPathParams, PageProps, RecordsProps, RecordsPropsOnly, ReduxEventsProps} from "../../common-props";
 import {ConnectedTableComponent} from "../../components/table";
 import {extractGroupBy, groupBy, updatedGroupBy} from "../../../views/group";
@@ -26,11 +33,18 @@ import {AttributeDisplayComponent} from "../../components/attribute-display";
 import {GlobalContextProps} from "../../context/global-context";
 import {AccessRight, hasRight} from "../../../access";
 import {attrLabel} from "../../utils/utils";
-import {createAddItemAction, IState} from "../../../redux";
+import {
+    createAddItemAction,
+    createUpdateCountAction,
+    createUpdatePageAction,
+    ISortedPages,
+    IState
+} from "../../../redux";
 import {connectComponent} from "../../context/redux-helpers";
 import {ResponsiveButton} from "../../components/responsive";
 import {safeStorage} from "../../utils/storage";
 import {toAnnotatedJson} from "../../../serializer";
+import {extractSort} from "../../../views/sort";
 
 
 type RecordsPageProps =
@@ -39,6 +53,9 @@ type RecordsPageProps =
     ReduxEventsProps &
     DispatchProp<any>;
 
+
+// TODO : make it a setting
+let ITEMS_PER_PAGE = 20;
 
 function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: ViewType) {
 
@@ -71,6 +88,9 @@ function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: Vie
     </div>
 
     let recordsComponent = (records: Record[]) => {
+        if (!records) {
+            return null;
+        }
         return <div style={{marginTop:"1em", marginRight:"1em"}}>
             {records.length == 0 ? nothingHere
                 : recordsSwitch(records)}
@@ -173,6 +193,13 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
             onChange={(e, update) => goTo(props, updatedGroupBy(update.value as string))} />
     }
 
+    goToPage(pageNum : number | string) {
+        if (typeof pageNum  != 'number') {
+            pageNum = parseInt(pageNum);
+        }
+        goTo(this.props, {page: intToStr(pageNum)});
+    }
+
     render() {
         let props = this.props;
         let db = props.db;
@@ -181,6 +208,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
 
         let params = parseParams(props.location.search);
         let groupAttr = extractGroupBy(params);
+        let page = (strToInt(params.page) || 0);
 
         let xls_link =
             DOWNLOAD_XLS_URL.replace(":db_name", dbName)
@@ -237,7 +265,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
                 {...props}
                 schema = {db.schema}
             />
-        </SafePopup>
+        </SafePopup>;
 
         // Set html HEAD
         props.head.setTitle(db.label);
@@ -298,6 +326,11 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
                         {!this.state.filtersSidebar && sideBarButton(null)}
                         {addItemButton(this.props)}
                     </div>
+                    {props.nbPages > 1 ? <Pagination
+                        totalPages={props.nbPages}
+                        activePage={page + 1}
+                        onPageChange={(e, {activePage}) => {this.goToPage(activePage)}}
+                    /> : null }
                     {groupedRecords(groupAttr, props, viewType)}
                 </div>
             </div>
@@ -310,33 +343,85 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
 // Filter data from Redux store and map it to props
 const mapStateToProps =(state : IState, props?: RouteComponentProps<{}> & GlobalContextProps) : RecordsPropsOnly => {
 
+    let queryParams = parseParams(props.location.search);
+    let page : number = (strToInt(queryParams.page) || 1) -1;
+
+    if (!state.sortedPages.count || !(page in state.sortedPages.pages)) {
+        return {nbPages :null, records:null}
+    }
+
+    let records = state.sortedPages.pages[page].map(id => state.items[id]);
+
+    let nbPages = Math.floor(state.sortedPages.count / ITEMS_PER_PAGE) +1;
+
     // Flatten map of records
-    let records = toAnnotatedJson( // Immutable object into live ones, with prototype
-        mapValues(state.items || {}) as Record[]);
-
-
-    // Apply search and sorting
-    let params = parseParams(props.location.search);
-    records = applySearchAndFilters(records, params, state.dbDefinition.schema);
-
-    return {records}
+    return {
+        records:toAnnotatedJson(records),
+        nbPages
+    }
 };
 
 // Async fetch of data
 function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>) : Promise<any> {
+
+    // FIXME parse once and put it in global props
+    let query = parseParams(props.location.search);
+
     let state = props.store.getState();
-    if (state.items == null) {
-        return props.dataFetcher
-            .getRecords(props.match.params.db_name)
-            .then((records) => {
-                // FIXME "items" is not updated to {} when nothing is fetched
-                for (let record of records) {
-                    // Dispatch to redux
-                    props.store.dispatch(createAddItemAction(record));
-                }
-            });
+
+    let sort = extractSort(query);
+    let search = extractSearch(query);
+    let filters = extractFilters(state.dbDefinition.schema, query);
+
+    // Sort and filter params, serialized
+    let sortFilterParams = QueryString.stringify(serializeSortAndFilters(sort, filters, search));
+
+    // Query params are different ? Or nothing fetched yet ?
+    if (state.sortedPages.count == null || sortFilterParams != state.sortedPages.queryParams) {
+
+        // Fetch count
+        return props.dataFetcher.countRecords(
+            props.match.params.db_name,
+            filters, search)
+        .then((count) => {
+
+            // Update state
+            props.store.dispatch(createUpdateCountAction({
+                count:count,
+                queryParams:sortFilterParams,
+                pages:{}
+            }));
+        })
+
     }
-    return null;
+
+    let page : number = strToInt(query.page) || 1;
+    page = page - 1;
+
+    // Is page present ?
+    if (!(page in state.sortedPages.pages)) {
+
+        return props.dataFetcher.getRecords(
+            props.match.params.db_name,
+            filters, search, sort,
+            page * ITEMS_PER_PAGE,
+            ITEMS_PER_PAGE)
+        .then((records) => {
+
+            // Update records by their id
+            for (let record of records) {
+                props.store.dispatch(createAddItemAction(record));
+            }
+
+            // Update page of indexes
+            let recordsIdx = records.map(record => record._id);
+            props.store.dispatch(createUpdatePageAction(page, recordsIdx));
+        })
+    }
+
+    // Nothing more to fetch
+    return null
+
 }
 
 // Connect to Redux

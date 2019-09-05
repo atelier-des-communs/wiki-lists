@@ -37,7 +37,8 @@ export interface DbProps {
 /** Props for components displaying a list of records */
 
 export interface RecordsPropsOnly {
-    records: Record[]};
+    records: Record[],
+    nbPages:number}
 export type RecordsProps = RecordsPropsOnly & DbProps;
 
 export interface SingleRecordPropsOnly {

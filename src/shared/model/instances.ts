@@ -1,7 +1,7 @@
 import {Attribute, DatetimeType, NumberType, StructType, TextType} from "./types";
 import {deepClone} from "../utils";
 import {IMessages} from "../i18n/messages";
-import {classTag, registerClass} from "../serializer";
+import {classTag} from "../serializer";
 
 @classTag("Record")
 export class Record {

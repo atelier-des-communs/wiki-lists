@@ -1,5 +1,5 @@
 import {arrayToMap, Map} from "../utils";
-import {classTag, registerClass} from "../serializer";
+import {classTag} from "../serializer";
 import {extend} from "lodash";
 
 export interface Type<T> {
@@ -56,11 +56,11 @@ export class EnumValue {
     }
 }
 
+@classTag(Types.ENUM)
 export class EnumType implements Type<string> {
     tag = Types.ENUM;
     values : EnumValue[] = [];
 }
-registerClass(EnumType, Types.ENUM);
 
 export function newType(typeTag:string) {
     switch(typeTag) {

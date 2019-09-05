@@ -22,10 +22,10 @@ const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '/static' : 'http
 // This is the max depth we allow before forcing to return the result back to client :
 // This usually means that something is wrong (conditional data fetching not well written),
 // but we prefer to return this anyway
-const MAX_RENDER_DEPTH = 4;
+const MAX_RENDER_DEPTH = 5;
 
-
-class ServerSideHeaderHandler implements HeadSetter {
+/** Head info setter for SSR */
+class SSRHeadSetter implements HeadSetter {
     title = "";
     description = "";
     statusCode = 200;
@@ -43,7 +43,7 @@ class ServerSideHeaderHandler implements HeadSetter {
     }
 }
 
-function renderHtml(head:ServerSideHeaderHandler, html:string, context:IMarshalledContext=null) {
+function renderHtml(head:SSRHeadSetter, html:string, context:IMarshalledContext=null) {
 
     let title = escapeHtml(head.title);
     let description = escapeHtml(head.description);
@@ -78,7 +78,7 @@ function renderHtml(head:ServerSideHeaderHandler, html:string, context:IMarshall
 async function renderApp(req:Request) : Promise<ContentWithStatus> {
 
 
-    let head = new ServerSideHeaderHandler();
+    let head = new SSRHeadSetter();
 
     let lang = selectLanguage(req);
 
@@ -89,14 +89,19 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
         return res;
     });
 
-    let state : IState= {
+    let initialState : IState= {
         items: null, // Will be fetched asynchronously
+        sortedPages : {
+            queryParams: null,
+            count: null,
+            pages: {}
+        },
         dbDefinition: null, // Will be fetched asynchronously
         user: req.user};
 
     const store = createStore(
         reducers,
-        toImmutable(state));
+        toImmutable(initialState));
 
 
     let serverCookies : ICookies = {

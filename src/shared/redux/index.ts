@@ -9,8 +9,24 @@ import {toAnnotatedJson} from "../serializer";
 import {IUser} from "../model/user";
 
 
+export interface ISortedPages {
+
+    count:number;
+
+    /** Filters sort and search */
+    queryParams : any;
+
+    /** Map<pageIdx => [recordid]> */
+    pages : Map<string[]>;
+
+}
 export interface IState {
+    /** id => Rescord */
     items : {[key:string] : Record};
+
+    sortedPages : ISortedPages;
+
+    // Definition of DB
     dbDefinition : DbDefinition;
     user: IUser;
 }
@@ -21,7 +37,9 @@ export enum ActionType {
     DELETE_ITEM = "DELETE_ITEM",
     UPDATE_SCHEMA = "UPDATE_SCHEMA",
     UPDATE_DB = "UPDATE_DB",
-    UPDATE_USER = "UPDATE_USER"
+    UPDATE_USER = "UPDATE_USER",
+    UPDATE_COUNT = "UPDATE_COUNT",
+    UPDATE_PAGE = "UPDATE_PAGE"
 }
 
 interface ActionWithRecord extends Action {
@@ -32,6 +50,8 @@ export class AddItemAction implements ActionWithRecord {
     public type = ActionType.ADD_ITEM;
     public record: Record;
 }
+
+
 
 export class UpdateItemAction implements ActionWithRecord {
     public type = ActionType.UPDATE_ITEM;
@@ -58,9 +78,24 @@ export class UpdateUserAction implements Action {
     public user: IUser;
 }
 
+// SortedPages actions
+export class UpdateCountAction {
+    public type = ActionType.UPDATE_COUNT;
+    public sortedPages : ISortedPages;
+}
+
+export class UpdatePageAction {
+    public type = ActionType.UPDATE_PAGE;
+    public idx : number;
+    public page:string[];
+}
+
+
+
 export function createAddItemAction(record: Record) : AddItemAction {
     return {type:ActionType.ADD_ITEM, record:toImmutableJson(record)}
 }
+
 export function createUpdateItemAction(record: Record) : UpdateItemAction {
     return {type:ActionType.UPDATE_ITEM, record:toImmutableJson(record)}
 }
@@ -76,6 +111,12 @@ export function createUpdateDbAction(dbDef:DbDefinition) : UpdateDbAction {
 export function createUpdateUserAction(user:IUser) : UpdateUserAction {
     return {type:ActionType.UPDATE_USER, user:toImmutableJson(user)};
 }
+export function createUpdateCountAction(sortedPages: ISortedPages) : UpdateCountAction {
+    return {type:ActionType.UPDATE_COUNT, sortedPages:toImmutableJson(sortedPages)}
+}
+export function createUpdatePageAction(idx:number, page: string[]) : UpdatePageAction {
+    return {type:ActionType.UPDATE_PAGE, idx, page}
+}
 
 export type TAction  =
     UpdateSchemaAction |
@@ -83,7 +124,10 @@ export type TAction  =
     UpdateItemAction |
     AddItemAction |
     DeleteItemAction |
-    UpdateUserAction;
+    UpdateUserAction |
+    UpdateCountAction |
+    UpdatePageAction;
+
 
 function itemsReducer(items:Immutable.ImmutableObject<Map<Record>> = null, action:TAction) {
     switch (action.type) {
@@ -120,10 +164,22 @@ function userReducer(user: Immutable.ImmutableObject<IUser> = null, action : TAc
     }
 }
 
+function sortedPagesReducer(state: Immutable.ImmutableObject<ISortedPages>= null, action : TAction) {
+    if (action.type == ActionType.UPDATE_COUNT) {
+        return (action as UpdateCountAction).sortedPages;
+    } else if (action.type == ActionType.UPDATE_PAGE) {
+        let updatePageAction = action as UpdatePageAction;
+        return state.setIn(['pages', updatePageAction.idx], updatePageAction.page);
+    } else {
+        return state;
+    }
+}
+
 /** Combine reducers */
 export let reducers : Reducer<IState> = combineReducers ({
     items: itemsReducer,
     dbDefinition: dbDefReducer,
+    sortedPages : sortedPagesReducer,
     user:userReducer
 });
 

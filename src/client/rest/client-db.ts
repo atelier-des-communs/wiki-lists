@@ -2,7 +2,7 @@ import Axios, {AxiosPromise} from "axios";
 import {Record} from "../../shared/model/instances";
 import {
     ADD_ITEM_URL,
-    CHECK_DB_NAME,
+    CHECK_DB_NAME, COUNT_ITEMS_URL,
     CREATE_DB_URL,
     DataFetcher,
     DELETE_ITEM_URL,
@@ -16,8 +16,11 @@ import {
 import {StructType} from "../../shared/model/types";
 import {ValidationErrors} from "../../shared/validators/validators";
 import {DbDefinition} from "../../shared/model/db-def";
-import {empty} from "../../shared/utils";
+import {empty, Map} from "../../shared/utils";
 import {post, get, del} from "./common";
+import {Filter, serializeFilters, serializeSearch, serializeSortAndFilters} from "../../shared/views/filters";
+import {ISort} from "../../shared/views/sort";
+import * as QueryString from "querystring";
 
 /** Return the full item with new _id */
 export async function createItem(dbName: string, item : Record) : Promise<Record> {
@@ -58,6 +61,7 @@ export async function checkAvailability(dbName: string) : Promise<boolean> {
         CHECK_DB_NAME.replace(":db_name", dbName));
 }
 
+// Data fetcher on client side, using REST service
 export let restDataFetcher : DataFetcher = {
 
     async getDbDefinition(dbName:string) : Promise<DbDefinition>{
@@ -72,9 +76,32 @@ export let restDataFetcher : DataFetcher = {
                 .replace(":id", id));
     },
 
-    async getRecords(dbName:string) : Promise<Record[]> {
-        return await get<Record[]>(GET_ITEMS_URL
-                .replace(":db_name", dbName));
+    async getRecords(dbName:string, filters: Map<Filter> = {}, search: string=null, sort:ISort, from:number=0, limit:number=-1) : Promise<Record[]> {
+
+        let params = serializeSortAndFilters(sort, filters, search);
+        if (from > 0) {
+            params['from'] = from;
+        }
+        if (limit > -1) {
+            params['limit'] = limit;
+        }
+
+        let url = GET_ITEMS_URL.replace(":db_name", dbName)
+            + "?" + QueryString.stringify(params);
+
+        return await get<Record[]>(url);
+    },
+
+    async countRecords(dbName: string, filters?: Map<Filter>, search?: string): Promise<number> {
+        let params = {
+            ...serializeFilters(filters),
+            ...serializeSearch(search)
+        };
+
+        let url = COUNT_ITEMS_URL.replace(":db_name", dbName)
+            + "?" + QueryString.stringify(params);
+
+        return await get<number>(url);
     }
 };
 

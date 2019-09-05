@@ -40,6 +40,10 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
         let _ = props.messages;
         let db = props.db
 
+        if (!db) {
+            return null;
+        }
+
         // Pass down schema and rights to sub components
         let singleRecordPage = (otherProps: any) => <SingleRecordPage {...props} {...otherProps} />
         let recordsPage = (otherProps: any) => <RecordsPage {...props} {...otherProps} />
@@ -118,6 +122,10 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
 
 // Filter data from Redux store and map it to props
 const mapStateToProps = (state : IState, props?: RouteComponentProps<{}> & GlobalContextProps) : DbProps => {
+
+    if (!state.dbDefinition) {
+        return {db:null}
+    }
 
     // Transform immutable object into "live" one.
     let db = toTypedObjects(state.dbDefinition);

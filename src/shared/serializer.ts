@@ -19,6 +19,7 @@ const CLASS_PROP = "@class";
 /**
  * Add a Class to the registry.
  * Class may have a unique identifier as the "tag" property.
+ * Don't use it directly, use the decorator @classTag instead
  */
 export function registerClass<T>(type: { new (...args:any[]): T}, tag:string = null, serializer:Serializer<T>=null) {
     tag = tag || (type as any).tag;

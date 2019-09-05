@@ -1,18 +1,20 @@
 import {EnumType, StructType, Types} from "../../shared/model/types";
 import config from "../config"
-import {MongoClient} from "mongodb";
+import {MongoClient, Cursor} from "mongodb";
 import {Record} from "../../shared/model/instances";
 import {validateSchemaAttributes} from "../../shared/validators/schema-validators";
 import {dieIfErrors} from "../../shared/validators/validators";
 import {validateRecord} from "../../shared/validators/record-validator";
 import {DataFetcher, SECRET_COOKIE} from "../../shared/api";
-import {isIn} from "../../shared/utils";
+import {isIn, Map, mapMap, mapValues} from "../../shared/utils";
 import {IMessages} from "../../shared/i18n/messages";
 import {AccessRight} from "../../shared/access";
 import {getAccessRights, HttpError} from "../utils";
 import {Request} from "express-serve-static-core"
 import * as shortid from "shortid";
 import {DbDefinition} from "../../shared/model/db-def";
+import {Filter} from "../../shared/views/filters";
+import {ISort} from "../../shared/views/sort";
 
 const DATABASES_COL = "schemas";
 const DATABASE_COL_TEMPLATE = (name:string) => {return `db.${name}`};
@@ -194,10 +196,52 @@ export class DbDataFetcher implements DataFetcher {
         return record;
     }
 
-    async getRecords(dbName: string) : Promise<Record[]> {
+    async baseQuery(dbName: string, filters: Map<Filter> = {}, search:string=null) : Promise<Cursor<Record>> {
         let col = await Connection.getDbCol(dbName);
-        let cursor = await col.find();
+
+        // Build mongo filters
+        let mongoFilters = mapValues(filters).map(f => f.mongoFilter()).filter(f => f !== null);
+        let filter = null;
+
+        console.debug('filters', mongoFilters);
+        if (mongoFilters.length == 1) {
+            filter = mongoFilters[0]
+        } else if (mongoFilters.length >= 1) {
+            filter = {$and : mongoFilters}
+        }
+
+        // Base query
+        return col.find(filter);
+    }
+
+    async getRecords(
+        dbName: string,
+        filters: Map<Filter> = {},
+        search:string=null,
+        sort:ISort,
+        from:number=null,
+        limit:number=null) : Promise<Record[]> {
+
+        let cursor = await this.baseQuery(dbName, filters, search);
+
+        // Sort
+        if (sort) {
+            cursor = cursor.sort({[sort.key]: (sort.asc ? 1 : - 1)})
+        }
+
+        // From & Limit
+        if (from != null) {
+            cursor = cursor.skip(from);
+        }
+        if (limit != null) {
+            cursor = cursor.limit(limit);
+        }
         return await cursor.toArray();
+    }
+
+    async countRecords(dbName: string, filters: Map<Filter> = {}, search:string=null) : Promise<number> {
+        let cursor = await this.baseQuery(dbName, filters);
+        return cursor.count();
     }
 
 }
