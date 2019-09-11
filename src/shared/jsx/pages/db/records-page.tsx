@@ -19,7 +19,7 @@ import {
     hasFiltersOrSearch, serializeSortAndFilters
 } from "../../../views/filters";
 import {DbPathParams, PageProps, RecordsProps, RecordsPropsOnly, ReduxEventsProps} from "../../common-props";
-import {ConnectedTableComponent} from "../../components/table";
+import {TableComponent} from "../../components/table";
 import {extractGroupBy, groupBy, updatedGroupBy} from "../../../views/group";
 import {Collapsible} from "../../utils/collapsible";
 import {SchemaDialog} from "../../dialogs/schema-dialog";
@@ -34,7 +34,7 @@ import {GlobalContextProps} from "../../context/global-context";
 import {AccessRight, hasRight} from "../../../access";
 import {attrLabel} from "../../utils/utils";
 import {
-    createAddItemAction,
+    createAddItemAction, createAddItemsAction,
     createUpdateCountAction,
     createUpdatePageAction,
     ISortedPages,
@@ -67,9 +67,7 @@ function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: Vie
     let recordsSwitch = (records: Record[]) => {
         switch (viewType) {
             case ViewType.TABLE :
-                return  <ConnectedTableComponent
-                    {...props}
-                    records={records} />
+                return  <TableComponent {...props} records={records} />
             case ViewType.CARDS:
                 return  <CardsComponent {...props} records={records} />;
             default :
@@ -148,7 +146,9 @@ function addItemButton(props: RecordsPageProps) {
 
 const SIDEBAR_LS_KEY = "filtersSidebar";
 
-class RecordsPageInternal extends React.Component<RecordsPageProps> {
+
+// Main component
+class _RecordsPage extends React.PureComponent<RecordsPageProps> {
 
     state : {
         filtersSidebar : boolean;
@@ -208,7 +208,6 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
 
         let params = parseParams(props.location.search);
         let groupAttr = extractGroupBy(params);
-        let page = (strToInt(params.page) || 0);
 
         let xls_link =
             DOWNLOAD_XLS_URL.replace(":db_name", dbName)
@@ -328,7 +327,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
                     </div>
                     {props.nbPages > 1 ? <Pagination
                         totalPages={props.nbPages}
-                        activePage={page + 1}
+                        activePage={props.page}
                         onPageChange={(e, {activePage}) => {this.goToPage(activePage)}}
                     /> : null }
                     {groupedRecords(groupAttr, props, viewType)}
@@ -343,21 +342,25 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
 // Filter data from Redux store and map it to props
 const mapStateToProps =(state : IState, props?: RouteComponentProps<{}> & GlobalContextProps) : RecordsPropsOnly => {
 
+    // Parse page from query
     let queryParams = parseParams(props.location.search);
-    let page : number = (strToInt(queryParams.page) || 1) -1;
+    let page : number = (strToInt(queryParams.page) || 1);
 
-    if (!state.sortedPages.count || !(page in state.sortedPages.pages)) {
-        return {nbPages :null, records:null}
+    // Not fetched yet ?
+    if (!state.sortedPages.count || !((page -1) in state.sortedPages.pages)) {
+        return {nbPages :null, records:null, page}
     }
 
-    let records = state.sortedPages.pages[page].map(id => state.items[id]);
-
     let nbPages = Math.floor(state.sortedPages.count / ITEMS_PER_PAGE) +1;
+
+    // Get record for given page
+    let records = state.sortedPages.pages[page-1].map(id => state.items[id]);
 
     // Flatten map of records
     return {
         records:toAnnotatedJson(records),
-        nbPages
+        nbPages,
+        page
     }
 };
 
@@ -392,7 +395,6 @@ function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>)
                 pages:{}
             }));
         })
-
     }
 
     let page : number = strToInt(query.page) || 1;
@@ -409,9 +411,7 @@ function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>)
         .then((records) => {
 
             // Update records by their id
-            for (let record of records) {
-                props.store.dispatch(createAddItemAction(record));
-            }
+            props.store.dispatch(createAddItemsAction(records));
 
             // Update page of indexes
             let recordsIdx = records.map(record => record._id);
@@ -427,5 +427,5 @@ function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>)
 // Connect to Redux
 export let RecordsPage = connectComponent(
     mapStateToProps,
-    fetchData)(RecordsPageInternal);
+    fetchData)(_RecordsPage);
 

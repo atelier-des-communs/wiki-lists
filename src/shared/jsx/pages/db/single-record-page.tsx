@@ -4,7 +4,7 @@ import {Link} from "react-router-dom";
 import {ReduxEventsProps, SingleRecordPathParams, SingleRecordProps, SingleRecordPropsOnly} from "../../common-props";
 import {SingleRecordComponent} from "../../components/single-record-component";
 import {DispatchProp} from "react-redux";
-import {IState} from "../../../redux/index";
+import {IState} from "../../../redux";
 import {Container, Header, Segment} from "semantic-ui-react";
 import {recordName, recordNameStr} from "../../utils/utils";
 import {EditButtons} from "../../components/edit-button";

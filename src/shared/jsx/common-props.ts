@@ -19,7 +19,7 @@ export interface SingleRecordPathParams extends DbPathParams {
     id :string;
 }
 
-/** Root page props */
+/** Generic params for any root page : GlobalContext + Route properties */
 export type PageProps<RouteProps> = GlobalContextProps & RouteComponentProps<RouteProps>
 
 export class PageComponent<RouteProps> extends React.Component<PageProps<RouteProps>> {
@@ -38,7 +38,10 @@ export interface DbProps {
 
 export interface RecordsPropsOnly {
     records: Record[],
-    nbPages:number}
+
+    // Pagination
+    nbPages:number,
+    page: number}
 export type RecordsProps = RecordsPropsOnly & DbProps;
 
 export interface SingleRecordPropsOnly {

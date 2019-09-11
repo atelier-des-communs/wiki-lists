@@ -18,117 +18,124 @@ import {AccessRight, hasRight} from "../../access";
 
 type TableProps = RecordsProps & ReduxEventsProps & RouteComponentProps<DbPathParams> & GlobalContextProps;
 
-/** Switch sort order upon click, do it via search parameters / location */
-function onHeaderClick(props: RouteComponentProps<{}>, attr:string) {
 
-    // Parse query string for current sort
-    let sort = extractSort(parseParams(props.location.search));
+class _TableComponent extends React.PureComponent<TableProps> {
 
-    // Same key ? => toggle sort order
-    let newAsc = (sort && sort.key == attr) ? ! sort.asc  : true;
+    constructor(props : TableProps) {
+        super(props);
+    }
 
-    let newSort:ISort = {key:attr, asc:newAsc};
-    let params = serializeSort(newSort);
-    goTo(props, params);
-}
+    /** Switch sort order upon click, do it via search parameters / location */
+    onHeaderClick(props: RouteComponentProps<{}>, attr:string) {
 
+        // Parse query string for current sort
+        let sort = extractSort(parseParams(props.location.search));
 
-const TableComponent: React.SFC<TableProps> = (props) => {
+        // Same key ? => toggle sort order
+        let newAsc = (sort && sort.key == attr) ? ! sort.asc  : true;
 
-    let attrs = props.db.schema.attributes;
-    let queryParams = parseParams(props.location.search);
-    let sort = extractSort(queryParams);
-    let filters = extractFilters(props.db.schema, queryParams);
-    let _ = props.messages;
+        let newSort:ISort = {key:attr, asc:newAsc};
+        let params = serializeSort(newSort);
+        goTo(props, params);
+    }
 
-    let filterAttributeFunc = filterAttribute(props, props.db.schema);
+    render() {
+        let props = this.props;
 
-    // First header cell : the menu toolbox
-    let columnsHeader = hasRight(props, AccessRight.EDIT) && <Table.HeaderCell className="no-print" collapsing key="menu" >
-        <SafePopup position="bottom left" trigger={
-            <Button
-                icon="columns"
-                size="mini"
-                title={_.select_columns}
-                basic compact />} >
-           <AttributeDisplayComponent
-               {...props}
-                schema = {props.db.schema}
-           />
-        </SafePopup>
-    </Table.HeaderCell>;
+        let attrs = props.db.schema.attributes;
+        let queryParams = parseParams(props.location.search);
+        let sort = extractSort(queryParams);
+        let _ = props.messages;
 
-    let recordUrl = (id:string) => {
-        return singleRecordLink(
-            props.match.params.db_name,
-            id);};
+        let filterAttributeFunc = filterAttribute(props, props.db.schema);
 
-
-    /* Column headers, for each attribute */
-    let headers = attrs.filter(filterAttributeFunc).map(attr => {
-
-        let sorted = sort && sort.key == attr.name;
-
-        return <Table.HeaderCell
-            key={attr.name}
-            className="hoverable"
-            style={{cursor:"pointer"}}
-            onClick={() => onHeaderClick(props, attr.name)}
-            sorted={sorted ? (sort.asc ? "ascending" : "descending"): null} >
-
-
-            { ellipsis(attrLabel(attr)) }
-
-        </Table.HeaderCell>
-    });
-
-    /* Table rows */
-    const rows  = props.records.map(record =>
-
-        <Table.Row key={record["_id"] as string}>
-
-            {hasRight(props, AccessRight.EDIT) &&
-            <Table.Cell collapsing key="actions" className="no-print" >
-                <EditButtons {...props} record={record} />
-            </Table.Cell>}
-
-            {attrs.filter(filterAttributeFunc).map(attr => {
-
-                let valueEl = <ValueHandler
+        // First header cell : the menu toolbox
+        let columnsHeader = hasRight(props, AccessRight.EDIT) && <Table.HeaderCell className="no-print" collapsing key="menu" >
+            <SafePopup position="bottom left" trigger={
+                <Button
+                    icon="columns"
+                    size="mini"
+                    title={_.select_columns}
+                    basic compact />} >
+                <AttributeDisplayComponent
                     {...props}
-                    editMode={false}
-                    type={attr.type}
-                    value={record[attr.name]}/>;
+                    schema = {props.db.schema}
+                />
+            </SafePopup>
+        </Table.HeaderCell>;
+
+        let recordUrl = (id:string) => {
+            return singleRecordLink(
+                props.match.params.db_name,
+                id);};
 
 
-                return <Table.Cell key={attr.name} >
-                    {
-                        /* Attribute part of the name ? => wrap it in a link */
-                        attr.isName ?
-                        <Link to={recordUrl(record._id)} >
-                            {valueEl}
-                        </Link> :
-                            valueEl
-                    }
+        /* Column headers, for each attribute */
+        let headers = attrs.filter(filterAttributeFunc).map(attr => {
 
-                </Table.Cell>
-            })}
+            let sorted = sort && sort.key == attr.name;
 
-        </Table.Row>);
+            return <Table.HeaderCell
+                key={attr.name}
+                className="hoverable"
+                style={{cursor:"pointer"}}
+                onClick={() => this.onHeaderClick(props, attr.name)}
+                sorted={sorted ? (sort.asc ? "ascending" : "descending"): null} >
 
-    /** Whole table */
-    return <Table sortable celled  >
-        <Table.Header>
-            <Table.Row>
-                {columnsHeader}
-                {headers}
-            </Table.Row>
-        </Table.Header>
-        <Table.Body>
-            {rows}
-        </Table.Body>
-    </Table>
+
+                { ellipsis(attrLabel(attr)) }
+
+            </Table.HeaderCell>
+        });
+
+        /* Table rows */
+        const rows  = props.records.map(record =>
+
+            <Table.Row key={record["_id"] as string}>
+
+                {hasRight(props, AccessRight.EDIT) &&
+                <Table.Cell collapsing key="actions" className="no-print" >
+                    <EditButtons {...props} record={record} />
+                </Table.Cell>}
+
+                {attrs.filter(filterAttributeFunc).map(attr => {
+
+                    let valueEl = <ValueHandler
+                        {...props}
+                        editMode={false}
+                        type={attr.type}
+                        value={record[attr.name]}/>;
+
+
+                    return <Table.Cell key={attr.name} >
+                        {
+                            /* Attribute part of the name ? => wrap it in a link */
+                            attr.isName ?
+                                <Link to={recordUrl(record._id)} >
+                                    {valueEl}
+                                </Link> :
+                                valueEl
+                        }
+
+                    </Table.Cell>
+                })}
+
+            </Table.Row>);
+
+        /** Whole table */
+        return <Table sortable celled  >
+            <Table.Header>
+                <Table.Row>
+                    {columnsHeader}
+                    {headers}
+                </Table.Row>
+            </Table.Header>
+            <Table.Body>
+                {rows}
+            </Table.Body>
+        </Table>
+    }
 }
 
-export const ConnectedTableComponent = withRouter(withGlobalContext(TableComponent));
+export const TableComponent = withRouter(withGlobalContext(_TableComponent));
 

@@ -27,7 +27,7 @@ type DbPageProps =
 
 const HIDE_LINKS_COOKIE = (db_name:string) => {return `${COOKIE_PREFIX}${db_name}_hide_links`};
 
-export class DbPageSwitchInternal extends React.Component<DbPageProps>{
+export class DbPageSwitchInternal extends React.PureComponent<DbPageProps>{
 
     hideLinks() {
         this.props.cookies.set(HIDE_LINKS_COOKIE(this.props.db.name), "true");

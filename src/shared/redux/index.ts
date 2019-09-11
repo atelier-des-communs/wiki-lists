@@ -33,6 +33,7 @@ export interface IState {
 
 export enum ActionType {
     ADD_ITEM = "ADD_ITEM",
+    ADD_ITEMS = "ADD_ITEMS",
     UPDATE_ITEM = "UPDATE_ITEM",
     DELETE_ITEM = "DELETE_ITEM",
     UPDATE_SCHEMA = "UPDATE_SCHEMA",
@@ -51,6 +52,11 @@ export class AddItemAction implements ActionWithRecord {
     public record: Record;
 }
 
+
+export class AddItemsAction implements Action {
+    public type = ActionType.ADD_ITEMS;
+    public records: Record[];
+}
 
 
 export class UpdateItemAction implements ActionWithRecord {
@@ -95,6 +101,9 @@ export class UpdatePageAction {
 export function createAddItemAction(record: Record) : AddItemAction {
     return {type:ActionType.ADD_ITEM, record:toImmutableJson(record)}
 }
+export function createAddItemsAction(records: Record[]) : AddItemsAction {
+    return {type:ActionType.ADD_ITEMS, records:toImmutableJson(records)}
+}
 
 export function createUpdateItemAction(record: Record) : UpdateItemAction {
     return {type:ActionType.UPDATE_ITEM, record:toImmutableJson(record)}
@@ -123,6 +132,7 @@ export type TAction  =
     UpdateDbAction |
     UpdateItemAction |
     AddItemAction |
+    AddItemsAction |
     DeleteItemAction |
     UpdateUserAction |
     UpdateCountAction |
@@ -138,6 +148,16 @@ function itemsReducer(items:Immutable.ImmutableObject<Map<Record>> = null, actio
             }
             let record = (action as ActionWithRecord).record;
             return items.set(record._id, record);
+        case ActionType.ADD_ITEMS :
+            if (items == null) {
+                items = toImmutableJson({} as Map<Record>);
+            }
+            let records = (action as AddItemsAction).records;
+
+            for (record of records) {
+                items = items.set(record._id, record);
+            }
+            return items;
 
         case ActionType.DELETE_ITEM:
             return items.without((action as DeleteItemAction).id);
