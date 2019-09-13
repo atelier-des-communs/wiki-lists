@@ -253,7 +253,7 @@ function getFilters(props: IFiltersComponentProps & RouteComponentProps<{}>) {
     let filters = extractFilters(props.schema, queryParams);
 
     return props.schema.attributes
-        .filter(attr => !attr.system)
+        .filter(attr => !attr.system && !attr.hidden)
         .map((attr) => ({attr, comp:singleFilter(props, attr, filters[attr.name])}))
         .filter((res) => res.comp != null);
 }
@@ -328,7 +328,7 @@ export const FiltersPopup : React.SFC<IFiltersComponentProps & RouteComponentPro
 };
 
 /* Search component, for all fields */
-class SearchComponentInternal extends React.Component<IFiltersComponentProps & RouteComponentProps<{}>> {
+class _SearchComponent extends React.Component<IFiltersComponentProps & RouteComponentProps<{}>> {
 
     // Don' update location / view on each key stroke ... wait a bit for it
     updateSearch = debounce((search: string) => {
@@ -346,4 +346,4 @@ class SearchComponentInternal extends React.Component<IFiltersComponentProps & R
     }
 }
 
-export const SearchComponent = withRouter<IFiltersComponentProps>(SearchComponentInternal);
+export const SearchComponent = withRouter<IFiltersComponentProps>(_SearchComponent);
