@@ -6,7 +6,7 @@ import {App} from "../shared/app";
 import "../shared/favicon.png";
 import {IState, reducers} from "../shared/redux";
 import {DbDataFetcher} from "./db/db";
-import {deepClone, toImmutable} from "../shared/utils";
+import {toImmutable} from "../shared/utils";
 import {Express} from "express";
 import {ContentWithStatus, returnPromiseWithCode} from "./utils";
 import {Request, Response} from "express-serve-static-core"
@@ -15,6 +15,8 @@ import {GlobalContextProps, HeadSetter, ICookies} from "../shared/jsx/context/gl
 import {selectLanguage, supportedLanguages} from "./i18n/messages";
 import * as escapeHtml from "escape-html";
 import {toAnnotatedJson} from "../shared/serializer";
+import {cloneDeep} from "lodash";
+import {IUser} from "../shared/model/user";
 
 const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '/static' : 'http://localhost:8081/static';
 
@@ -62,6 +64,8 @@ function renderHtml(head:SSRHeadSetter, html:string, context:IMarshalledContext=
 				<link rel="shortcut icon" type="image/png" href="/static/img/favicon.png"/>
 				<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.css" />
 				<link rel="stylesheet" href="${BUNDLE_ROOT}/client.bundle.css" />
+				<!-- FIXME include only for DB with coordinates -->
+				<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.css" />
 			</head>
 		
 			<body>
@@ -84,7 +88,7 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
 
     // Copy supported languages without the messages : they are retrieved from separate JS file
     let supportedLang = supportedLanguages.map((lang) => {
-        let res = deepClone(lang);
+        let res = cloneDeep(lang);
         delete res.messages;
         return res;
     });
@@ -94,10 +98,11 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
         sortedPages : {
             queryParams: null,
             count: null,
-            pages: {}
+            pages: {},
+            markers : null
         },
         dbDefinition: null, // Will be fetched asynchronously
-        user: req.user};
+        user: req.user as IUser};
 
     const store = createStore(
         reducers,

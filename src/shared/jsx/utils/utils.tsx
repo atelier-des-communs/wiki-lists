@@ -6,6 +6,7 @@ import {RouteComponentProps} from "react-router"
 import {Label, Popup} from "semantic-ui-react";
 import {parseParams} from "../../utils";
 import {Record} from "../../model/instances";
+import {IMessages} from "../../i18n/messages";
 
 export function ellipsis(text:string, maxWidth:number= 15) {
     if (text.length > maxWidth) {
@@ -38,12 +39,18 @@ export function typeIsWide(type:Type<any>) : boolean {
     return (type.tag == Types.TEXT && (type as TextType).rich)
 }
 
-/** Use "label" if present, "name" otherwize */
-export function attrLabel(attr:Attribute) : string {
+/** Use "label" if present, "name" otherwize  replace @key by i18n string */
+export function attrLabel(attr:Attribute, _:IMessages) : string {
     if (attr == null) {
         return null;
     }
-    return attr.label || attr.name;
+    let res = (_ === null) ? attr.name : attr.label || attr.name;
+    if (res[0] == "@") {
+        let key = res.substr(1);
+        return (_ as any)[key];
+    } else {
+        return res;
+    }
 }
 
 /** Use "label" if present, "value" otherwize */

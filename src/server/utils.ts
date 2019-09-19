@@ -5,6 +5,7 @@ import {getDbDef} from "./db/db";
 import {isIn} from "../shared/utils";
 import {Request} from "express-serve-static-core"
 import {toAnnotatedJson} from "../shared/serializer";
+import {BadRequestException} from "../shared/validators/validators";
 
 export interface ContentWithStatus {
     statusCode:number,
@@ -25,7 +26,9 @@ export async function returnPromiseWithCode(res: Express.Response, promise: Prom
         res.status(result.statusCode).send(result.content);
     } catch (error) {
         console.error("Error occured in promise : ", error);
-        if (error.validationErrors) {
+        if (error instanceof BadRequestException) {
+            res.status(400).send(error.error)
+        } else  if (error.validationErrors) {
             // Send list of errors back to client, with custom error codes
             res.status(VALIDATION_ERROR_STATUS_CODE).send(error.validationErrors);
         } else if (error.code) {

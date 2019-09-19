@@ -4,11 +4,12 @@ import {AttributeDisplay, extractDisplays} from "../shared/views/display";
 import {Record} from "../shared/model/instances";
 import {applySearchAndFilters, extractFilters, extractSearch} from "../shared/views/filters";
 import {DbDataFetcher} from "./db/db";
-import {deepClone, Map, sortBy} from "../shared/utils";
+import {Map, sortBy} from "../shared/utils";
 import {Workbook} from "exceljs";
 import {Request, Response} from "express-serve-static-core"
 import {attrLabel} from "../shared/jsx/utils/utils";
 import {extractSort} from "../shared/views/sort";
+import {cloneDeep} from "lodash";
 
 enum ExportType {
     JSON = "json",
@@ -36,7 +37,7 @@ async function getAllWithFilters(req:Request, db_name:string, query:Map<string>)
 
 /** Filter out hidden attributes on a JSON object  */
 function filterObj(obj : Map<any>, displays : Map<AttributeDisplay>) {
-    let res = deepClone(obj) as Map<any>;
+    let res = cloneDeep(obj) as Map<any>;
     for (let key in res) {
         if (displays[key] == AttributeDisplay.HIDDEN) {
             delete res[key];
@@ -62,7 +63,7 @@ async function exportAs(db_name:string, req:Request, res:Response, exportType: E
         let worksheet = workbook.addWorksheet("main");
         worksheet.columns = dbDef.schema.attributes
             .filter(attr => displays[attr.name] != AttributeDisplay.HIDDEN)
-            .map(attr => ({header:attrLabel(attr), key:attr.name}));
+            .map(attr => ({header:attrLabel(attr, null), key:attr.name}));
         for (let record  of records) {
             worksheet.addRow(filterObj(record, displays));
         }

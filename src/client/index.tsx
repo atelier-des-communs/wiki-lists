@@ -64,7 +64,7 @@ let context : GlobalContextProps = {
     cookies : clientCookies,
     dataFetcher:restDataFetcher};
 
-let app = <BrowserRouter>
+let app = <BrowserRouter >
     <App {...context} />
 </BrowserRouter>;
 

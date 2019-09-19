@@ -19,7 +19,7 @@ import {AccessRight, hasRight} from "../../access";
 type TableProps = RecordsProps & ReduxEventsProps & RouteComponentProps<DbPathParams> & GlobalContextProps;
 
 
-class _TableComponent extends React.PureComponent<TableProps> {
+class _TableComponent extends React.Component<TableProps> {
 
     constructor(props : TableProps) {
         super(props);
@@ -83,7 +83,7 @@ class _TableComponent extends React.PureComponent<TableProps> {
                 sorted={sorted ? (sort.asc ? "ascending" : "descending"): null} >
 
 
-                { ellipsis(attrLabel(attr)) }
+                { ellipsis(attrLabel(attr, _)) }
 
             </Table.HeaderCell>
         });
@@ -123,7 +123,7 @@ class _TableComponent extends React.PureComponent<TableProps> {
             </Table.Row>);
 
         /** Whole table */
-        return <Table sortable celled  >
+        return <Table sortable celled >
             <Table.Header>
                 <Table.Row>
                     {columnsHeader}

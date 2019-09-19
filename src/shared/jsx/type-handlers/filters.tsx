@@ -258,24 +258,31 @@ function getFilters(props: IFiltersComponentProps & RouteComponentProps<{}>) {
         .filter((res) => res.comp != null);
 }
 
-export const FilterSidebar : React.SFC<IFiltersComponentProps & RouteComponentProps<{}>> = (props) => {
+export class FilterSidebar extends React.Component<IFiltersComponentProps & RouteComponentProps<{}>> {
 
-    let _ = props.messages;
+    constructor(props:IFiltersComponentProps & RouteComponentProps<{}>) {
+        super(props);
+    }
 
-    return <div>
-        <Header as="h3">{_.filters}</Header>
-    {getFilters(props).map( item =>
-        <Segment>
-            <Header as="h4">
-                {ellipsis(attrLabel(item.attr))}
-            </Header>
-            <Divider/>
-            <div key={item.attr.name} >
-                { item.comp }
-            </div>
-        </Segment>
-    )}
-    </div>
+    render() {
+        let props = this.props;
+        let _ = props.messages;
+
+        return <div>
+            <Header as="h3">{_.filters}</Header>
+            {getFilters(props).map( item =>
+                <Segment>
+                    <Header as="h4">
+                        {ellipsis(attrLabel(item.attr, _))}
+                    </Header>
+                    <Divider/>
+                    <div key={item.attr.name} >
+                        { item.comp }
+                    </div>
+                </Segment>
+            )}
+        </div>
+    }
 }
 
 /* Filter popup */
@@ -305,7 +312,7 @@ export const FiltersPopup : React.SFC<IFiltersComponentProps & RouteComponentPro
             {getFilters(props).map( item =>
                 <Grid.Column mobile={12} tablet={6} computer={4}>
                     <Header as="h4">
-                        {ellipsis(attrLabel(item.attr))}
+                        {ellipsis(attrLabel(item.attr, _))}
                     </Header>
                     <Divider/>
                     <div key={item.attr.name} >

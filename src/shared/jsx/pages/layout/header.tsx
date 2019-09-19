@@ -6,7 +6,7 @@ import {GlobalContextProps} from "../../context/global-context";
 import {Link} from "react-router-dom";
 
 /** Common header : showing language switch and login */
-export class Header extends  React.PureComponent<GlobalContextProps>  {
+export class Header extends  React.Component<GlobalContextProps>  {
 
     constructor(props : GlobalContextProps) {
         super(props);

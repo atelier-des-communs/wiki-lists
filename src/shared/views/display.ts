@@ -13,7 +13,7 @@ function attrNameToQueryParam(attrName: string) {
 }
 
 function defaultDisplay(attr:Attribute) {
-    return attr.system ? AttributeDisplay.HIDDEN : AttributeDisplay.MEDIUM;
+    return attr.system || attr.hidden ? AttributeDisplay.HIDDEN : AttributeDisplay.MEDIUM;
 }
 
 // Extract display parameters from URL

@@ -12,34 +12,42 @@ import {recordName} from "../utils/utils";
 
 type CardsProps = RecordsProps & ReduxEventsProps & RouteComponentProps<DbPathParams> & GlobalContextProps;
 
-export const CardsComponent : React.SFC<CardsProps> = (props) => {
+export class CardsComponent extends React.Component<CardsProps> {
 
-    let recordURL = (id:string) => {
-        return singleRecordLink(props.match.params.db_name, id);
-    };
+    constructor(props: CardsProps) {
+        super(props);
+    }
 
-    return <Grid fluid stackable >
+    render() {
+        let props = this.props;
 
-        {props.records.map(record =>
-            <Grid.Column mobile={16} tablet={8} computer={4}>
-                <Card fluid className="hoverable">
-                    <Card.Content  >
-                        <Card.Header >
+        let recordURL = (id:string) => {
+            return singleRecordLink(props.match.params.db_name, id);
+        };
 
-                            <Link to={recordURL(record._id)}>
-                            {recordName(props.db.schema, record)}
-                            </Link>
-                            <div style={{float:"right"}} className="super-shy" >
-                                <EditButtons {...props} record={record} />
-                            </div>
-                        </Card.Header>
-                    </Card.Content>
-                    <Card.Content>
-                        <SingleRecordComponent
-                            {...props}
-                            record={record} />
-                    </Card.Content>
-                </Card>
-            </Grid.Column>)}
-    </Grid>
-};
+        return <Grid fluid stackable >
+
+            {props.records.map(record =>
+                <Grid.Column mobile={16} tablet={8} computer={4}>
+                    <Card fluid className="hoverable">
+                        <Card.Content  >
+                            <Card.Header >
+
+                                <Link to={recordURL(record._id)}>
+                                    {recordName(props.db.schema, record)}
+                                </Link>
+                                <div style={{float:"right"}} className="super-shy" >
+                                    <EditButtons {...props} record={record} />
+                                </div>
+                            </Card.Header>
+                        </Card.Content>
+                        <Card.Content>
+                            <SingleRecordComponent
+                                {...props}
+                                record={record} />
+                        </Card.Content>
+                    </Card>
+                </Grid.Column>)}
+        </Grid>
+    }
+}

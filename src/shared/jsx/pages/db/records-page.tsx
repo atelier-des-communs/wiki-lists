@@ -6,8 +6,6 @@ import {attributesMap, Types} from "../../../model/types";
 import {goTo, intToStr, mapMap, mapValues, parseParams, strToInt} from "../../../utils";
 import {SafeClickWrapper, SafePopup} from "../../utils/ssr-safe";
 import {DispatchProp} from "react-redux";
-import {isEqual} from "lodash";
-import * as Immutable from "seamless-immutable";
 import * as QueryString from "querystring";
 import {RouteComponentProps} from "react-router"
 import {Record} from "../../../model/instances";
@@ -34,10 +32,9 @@ import {GlobalContextProps} from "../../context/global-context";
 import {AccessRight, hasRight} from "../../../access";
 import {attrLabel} from "../../utils/utils";
 import {
-    createAddItemAction, createAddItemsAction,
+    createAddItemsAction,
     createUpdateCountAction,
     createUpdatePageAction,
-    ISortedPages,
     IState
 } from "../../../redux";
 import {connectComponent} from "../../context/redux-helpers";
@@ -45,6 +42,7 @@ import {ResponsiveButton} from "../../components/responsive";
 import {safeStorage} from "../../utils/storage";
 import {toAnnotatedJson} from "../../../serializer";
 import {extractSort} from "../../../views/sort";
+import {Map, TileLayer, Marker, Popup} from "react-leaflet";
 
 
 type RecordsPageProps =
@@ -75,7 +73,7 @@ function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: Vie
         }
     };
 
-    let nothingHere = <div style={{textAlign:"center"}}>
+    const NothingHere = () => <div style={{textAlign:"center"}}>
         <Header>{_.no_element}</Header>
         {addItemButton(props)}
         {hasFiltersOrSearch(db.schema, props) &&
@@ -90,7 +88,7 @@ function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: Vie
             return null;
         }
         return <div style={{marginTop:"1em", marginRight:"1em"}}>
-            {records.length == 0 ? nothingHere
+            {records.length == 0 ? <NothingHere />
                 : recordsSwitch(records)}
         </div>
     };
@@ -109,7 +107,7 @@ function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: Vie
                         as="span"
                         size="medium" >
 
-                        {attrLabel(attr)} :
+                        {attrLabel(attr, _)} :
                             <ValueHandler
                                 {...props}
                                 type={attr.type}
@@ -122,8 +120,7 @@ function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: Vie
             </div>);
 
         return <>{
-                sections.length == 0 ?
-                nothingHere : sections}
+                sections.length == 0 ? <NothingHere /> : sections}
             </>
     } else {
         return recordsComponent(props.records);
@@ -148,7 +145,7 @@ const SIDEBAR_LS_KEY = "filtersSidebar";
 
 
 // Main component
-class _RecordsPage extends React.PureComponent<RecordsPageProps> {
+class _RecordsPage extends React.Component<RecordsPageProps> {
 
     state : {
         filtersSidebar : boolean;
@@ -156,6 +153,7 @@ class _RecordsPage extends React.PureComponent<RecordsPageProps> {
 
     constructor(props:RecordsPageProps) {
         super(props);
+        console.debug("Records page created");
         this.state = {filtersSidebar:safeStorage.getBool(SIDEBAR_LS_KEY, true)};
     }
 
@@ -176,7 +174,7 @@ class _RecordsPage extends React.PureComponent<RecordsPageProps> {
             .filter(attr => attr.type.tag == Types.ENUM  || attr.type.tag ==  Types.BOOLEAN)
             .map(attr => (
                 {value:attr.name,
-                    text:attrLabel(attr)} as DropdownItemProps));
+                    text:attrLabel(attr, _)} as DropdownItemProps));
 
         // No attributes elligible for grouping ? => show nothing
         if (groupOptions.length == 0) return null;
@@ -279,6 +277,9 @@ class _RecordsPage extends React.PureComponent<RecordsPageProps> {
             title={_.toggle_filters}
             icon={this.state.filtersSidebar ? "angle double left" : "angle double right"} />
 
+        let position : [number, number] = [46, 2];
+        let zoom = 6;
+
         return <>
 
             <div style={{float: "right"}} className="no-print">
@@ -317,20 +318,34 @@ class _RecordsPage extends React.PureComponent<RecordsPageProps> {
                     <FilterSidebar {...props} schema={db.schema} />
                 </div>
                 }
-                <div style={{
-                    flexGrow:1,
-                    paddingTop: "1em"}}>
+
+                <div style={{flexGrow:1, paddingTop: "1em"}}>
 
                     <div className="no-print">
                         {!this.state.filtersSidebar && sideBarButton(null)}
                         {addItemButton(this.props)}
                     </div>
+
+                    <Map center={position} zoom={zoom} style={{height:'500px', width:'100%'}} scrollWheelZoom={false} >
+                        <TileLayer
+                            attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        <Marker position={position}>
+                            <Popup>
+                                A pretty CSS3 popup. <br /> Easily customizable.
+                            </Popup>
+                        </Marker>
+                    </Map>
+
                     {props.nbPages > 1 ? <Pagination
                         totalPages={props.nbPages}
                         activePage={props.page}
                         onPageChange={(e, {activePage}) => {this.goToPage(activePage)}}
                     /> : null }
+
                     {groupedRecords(groupAttr, props, viewType)}
+
                 </div>
             </div>
         </>;
@@ -347,14 +362,14 @@ const mapStateToProps =(state : IState, props?: RouteComponentProps<{}> & Global
     let page : number = (strToInt(queryParams.page) || 1);
 
     // Not fetched yet ?
-    if (!state.sortedPages.count || !((page -1) in state.sortedPages.pages)) {
+    if (!state.sortedPages.count || !(page in state.sortedPages.pages)) {
         return {nbPages :null, records:null, page}
     }
 
     let nbPages = Math.floor(state.sortedPages.count / ITEMS_PER_PAGE) +1;
 
     // Get record for given page
-    let records = state.sortedPages.pages[page-1].map(id => state.items[id]);
+    let records = state.sortedPages.pages[page].map(id => state.items[id]);
 
     // Flatten map of records
     return {
@@ -379,8 +394,12 @@ function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>)
     // Sort and filter params, serialized
     let sortFilterParams = QueryString.stringify(serializeSortAndFilters(sort, filters, search));
 
+    console.debug("Checking records are present. Query : ", query);
+
     // Query params are different ? Or nothing fetched yet ?
     if (state.sortedPages.count == null || sortFilterParams != state.sortedPages.queryParams) {
+
+        console.debug("Count records ", query);
 
         // Fetch count
         return props.dataFetcher.countRecords(
@@ -392,13 +411,15 @@ function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>)
             props.store.dispatch(createUpdateCountAction({
                 count:count,
                 queryParams:sortFilterParams,
-                pages:{}
+                pages:{},
+                markers: null,
             }));
         })
     }
 
     let page : number = strToInt(query.page) || 1;
-    page = page - 1;
+
+    console.debug("page in pages ?", page, Object.keys(state.sortedPages.pages));
 
     // Is page present ?
     if (!(page in state.sortedPages.pages)) {

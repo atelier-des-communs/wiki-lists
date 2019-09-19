@@ -42,7 +42,7 @@ export const AttributeDisplayComponent : React.SFC<AttributeDisplayComponent> = 
                         onClick={() => setDisplay(attr.name, AttributeDisplay.HIDDEN)} />
             </Button.Group>
 
-            <span style={{marginLeft:"1em"}} ><b>{ellipsis(attrLabel(attr))}</b></span>
+            <span style={{marginLeft:"1em"}} ><b>{ellipsis(attrLabel(attr, _))}</b></span>
 
         </div>}
 

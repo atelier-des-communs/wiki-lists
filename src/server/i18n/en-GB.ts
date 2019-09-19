@@ -118,6 +118,7 @@ export let messages : IMessages = {
     should_not_be_empty : "Should not be empty",
     slug_regexp_no_match : "Slug should only be composed of 0-9, a-z, '-' and '_' ",
     db_not_available : "Name is already taken",
+    invalid_value : "Value is invalid",
     powered_by : "powered by",
 
     db_created : "Collection successfully created",

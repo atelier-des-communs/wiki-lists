@@ -94,6 +94,7 @@ export interface IMessages {
 
     no_element : string;
     unknown_attribute : string;
+    invalid_value : string;
     mandatory_attribute : string;
 
     // System attributes

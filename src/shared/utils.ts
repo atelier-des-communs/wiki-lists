@@ -64,9 +64,7 @@ export function arrayToMap<T>(arr : T[], keyFunc : (item:T) => string): Map<T> {
     return res;
 }
 
-export function deepClone<T>(value: T) : T {
-    return cloneDeep(value);
-}
+
 
 export function isIn(arr: string[], el:string) {
     return arr.indexOf(el) > -1;
@@ -171,8 +169,23 @@ export function strToInt(value:string) {
     return parseInt(value);
 }
 
+export function strToFloat(value:string) {
+    if (empty(value)) {
+        return null;
+    }
+    return parseFloat(value);
+}
+
+
 
 export function intToStr(value:number) {
+    if (typeof(value) == "undefined" || value == null ||  isNaN(value)) {
+        return null;
+    }
+    return value + "";
+}
+
+export function floatToStr(value:number) {
     if (typeof(value) == "undefined" || value == null ||  isNaN(value)) {
         return null;
     }

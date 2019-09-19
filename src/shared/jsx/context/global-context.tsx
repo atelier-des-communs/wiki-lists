@@ -49,7 +49,6 @@ export interface GlobalContextProps  {
 
 const GlobalContext: React.Context<GlobalContextProps> = React.createContext(null);
 
-
 /** Global provider */
 export class GlobalContextProvider extends React.Component<GlobalContextProps>{
 

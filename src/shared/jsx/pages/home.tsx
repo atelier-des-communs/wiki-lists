@@ -1,27 +1,33 @@
 import * as React from "react";
 import {GlobalContextProps, withGlobalContext} from "../context/global-context";
 import {Button, Container} from "semantic-ui-react";
-import {RouteComponentProps} from "react-router";
 import {Link} from "react-router-dom";
 import {CREATE_DB_PATH} from "../../api";
 import {MainLayout} from "./layout/main-layout";
-import {PageSFC} from "../common-props";
+import {PageProps} from "../common-props";
 
-const HomePageInternal : PageSFC<{}> = (props) => {
+class HomePageInternal extends React.Component<PageProps<{}>> {
 
-    let _ = props.messages;
+    constructor(props: PageProps<{}>) {
+        super(props);
+    }
 
-    props.head.setTitle(`${_.site_name} | ${_.site_title}`);
+    render(){
+        let props = this.props;
+        let _ = props.messages;
 
-    return <MainLayout {...props} >
-        <Container>
-            <Button
-                as={Link}
-                to={CREATE_DB_PATH}
-                content={_.create_db}
-                icon="add" />
-        </Container>
-    </MainLayout>
+        props.head.setTitle(`${_.site_name} | ${_.site_title}`);
+
+        return <MainLayout {...props} >
+            <Container>
+                <Button
+                    as={Link}
+                    to={CREATE_DB_PATH}
+                    content={_.create_db}
+                    icon="add" />
+            </Container>
+        </MainLayout>
+    }
 }
 
 // Inject global context

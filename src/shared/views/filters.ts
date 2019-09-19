@@ -1,9 +1,23 @@
-import {empty, eqSet, goTo, intToStr, isIn, Map, mapMap, mapValues, parseParams, sortBy, strToInt} from "../utils";
+import {
+    empty,
+    eqSet, floatToStr,
+    goTo,
+    intToStr,
+    isIn,
+    Map,
+    mapMap,
+    mapValues,
+    parseParams,
+    sortBy,
+    strToFloat,
+    strToInt
+} from "../utils";
 import {Attribute, attributesMap, EnumType, StructType, Types} from "../model/types";
 import {Record} from "../model/instances";
 // import normalize from "normalize-text";
 import {extractSort, ISort, serializeSort} from "./sort";
 import {RouteComponentProps} from "react-router"
+import {ICoord} from "../model/geo";
 
 function queryParamName(attrName: string) {
     return `${attrName}.f`;
@@ -275,7 +289,7 @@ export class NumberFilter implements IFilter<number> {
         if (this.max != null) {
             res['$lte'] = this.max;
         }
-        return res;
+        return {[this.attr.name] :res};
     }
 }
 
@@ -295,8 +309,110 @@ function serializeNumberFilter(attrName:string, filter:NumberFilter) {
     }
 }
 
+function paramMinLon(attrName: string) {
+    return `${attrName}.fx`
+}
+function paramMaxLon(attrName: string) {
+    return `${attrName}.tx`
+}
+function paramMinLat(attrName: string) {
+    return `${attrName}.fy`
+}
+function paramMaxLat(attrName: string) {
+    return `${attrName}.ty`
+}
 
-export type Filter = BooleanFilter | EnumFilter | TextFilter | NumberFilter;
+export class LocationFilter implements IFilter<ICoord> {
+
+    tag = Types.LOCATION;
+    attr: Attribute;
+    minlon:number = null;
+    maxlon:number = null;
+    minlat:number = null;
+    maxlat:number = null;
+
+    // No filter : accepting all
+    constructor(attr:Attribute, queryParams : Map<string> = {}) {
+        this.attr = attr;
+
+        let minlon = strToFloat(queryParams[paramMinLon(attr.name)]);
+        let maxlon = strToFloat(queryParams[paramMaxLon(attr.name)]);
+        let minlat = strToFloat(queryParams[paramMinLat(attr.name)]);
+        let maxlat = strToFloat(queryParams[paramMaxLat(attr.name)]);
+
+        if (minlon != null) {
+            this.minlon = minlon;
+        }
+        if (maxlon != null) {
+            this.maxlon = maxlon;
+        }
+        if (minlat != null) {
+            this.minlat = minlat;
+        }
+        if (maxlat != null) {
+            this.maxlat = maxlat;
+        }
+    }
+
+    isAll() {
+        return (
+            this.minlon == null
+            && this.minlat == null
+            && this.maxlon == null
+            && this.maxlat == null)
+    }
+
+    filter(value:ICoord) {
+        if (this.isAll()) {
+            return true;
+        }
+        if (typeof (value) == "undefined" || value == null) {
+            return false;
+        }
+        return (this.minlon <= value.lon) &&
+            (this.maxlon >= value.lon) &&
+            (this.minlat <= value.lat) &&
+            (this.maxlat >= value.lat);
+    }
+    mongoFilter(): any {
+        if (this.isAll()) {
+            return null;
+        }
+        return {
+            [this.attr.name] : {
+                $geoWithin : {
+                    $box : [
+                        [this.minlon, this.minlat],
+                        [this.maxlon, this.maxlat],
+                ]}}};
+    }
+}
+
+function serializeLocationFilter(attrName:string, filter:LocationFilter) {
+
+    let minlon = paramMinLon(attrName);
+    let maxlon = paramMaxLon(attrName);
+    let minlat = paramMinLat(attrName);
+    let maxlat = paramMaxLat(attrName);
+    if (!filter || filter.isAll()) {
+        return {
+            [minlon]: null,
+            [maxlon]: null,
+            [minlat]: null,
+            [maxlat]: null}
+    }
+    return {
+        [minlon]: floatToStr(filter.minlon),
+        [maxlon]: floatToStr(filter.maxlon),
+        [minlat]: floatToStr(filter.minlat),
+        [maxlat]: floatToStr(filter.maxlat)
+    }
+}
+
+
+
+
+export type Filter = BooleanFilter | EnumFilter | TextFilter | NumberFilter | LocationFilter;
 
 /** Serialize to an object with single attribute, ready to be merged with queryParams */
 export function serializeFilter(attr:Attribute, filter:Filter | null) : Map<string> {
@@ -309,6 +425,8 @@ export function serializeFilter(attr:Attribute, filter:Filter | null) : Map<stri
             return serializeTextFilter(attr.name, filter as TextFilter);
         case Types.NUMBER :
             return serializeNumberFilter(attr.name, filter as NumberFilter);
+        case Types.LOCATION :
+            return serializeLocationFilter(attr.name, filter as LocationFilter);
         default:
             throw new Error(`Type ${attr.type.tag} not supported`);
     }
@@ -331,6 +449,8 @@ export function extractFilters(schema: StructType, queryParams: Map<any>) : Map<
             case Types.NUMBER :
                 filter = new NumberFilter(attr, queryParams);
                 break;
+            case Types.LOCATION :
+                filter = new LocationFilter(attr, queryParams);
         }
         if (filter && !filter.isAll()) {
             res[attr.name] = filter;

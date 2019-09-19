@@ -2,7 +2,7 @@ import * as React from "react";
 import {withGlobalContext} from "../context/global-context";
 import {Button, Container, Form, Input, TextArea} from "semantic-ui-react";
 import {BASE_DB_PATH, RECORDS_PATH} from "../../api";
-import {deepClone, slug} from "../../utils";
+import {slug} from "../../utils";
 import {Attribute, StructType, TextType} from "../../model/types";
 import {IMessages} from "../../i18n/messages";
 import {AddButtonPosition, AttributeList} from "../dialogs/parts/attribute-list";
@@ -20,6 +20,7 @@ import {MainLayout} from "./layout/main-layout";
 import {ErrorPlaceholder} from "../utils/validation-errors";
 import {PageProps} from "../common-props";
 import {toPromiseWithErrors} from "../../../client/rest/common";
+import {cloneDeep} from "lodash";
 
 const SLUG_REG = new RegExp(/^[1-9a-zA-Z\-_]*$/);
 
@@ -42,7 +43,7 @@ export class AddDbPageInternal extends React.Component<PageProps<{}>> {
             description:"",
             slug:"",
             name:"",
-            schema : deepClone(this.templates[0].schema),
+            schema : cloneDeep(this.templates[0].schema),
             selectedTemplate: 0};
     }
 
@@ -65,7 +66,7 @@ export class AddDbPageInternal extends React.Component<PageProps<{}>> {
     selectTemplate(idx:number) {
         this.setState({
             selectedTemplate:idx,
-            schema:deepClone(this.templates[idx].schema)});
+            schema:cloneDeep(this.templates[idx].schema)});
     }
 
     goToNewDb() {

@@ -3,35 +3,43 @@ import "../../../img/logo.png";
 import {Header} from "./header";
 import {GlobalContextProps} from "../../context/global-context";
 
-export const MainLayout : React.SFC<GlobalContextProps> = (props) => {
+export class MainLayout extends React.Component<GlobalContextProps> {
 
-    let _ = props.messages;
+    constructor(props: GlobalContextProps) {
+        super(props);
+    }
 
-    function goToHome() {
+    goToHome() {
         window.location.href = "/";
     }
 
-    let pointerCursor = {cursor:'pointer'};
+    render() {
 
-    return <>
-    <Header {...props}>
+        let props = this.props;
+        let _ = props.messages;
 
-            <div style={{textAlign:"center"}}>
-                <img
-                    src="/static/img/logo.png"
-                    width="300"
-                    style={pointerCursor}
-                    onClick={() => goToHome()} />
-                <br/>
-                <span
-                    onClick={() => goToHome()}
-                    style={{...pointerCursor, fontSize:"large"}}>
+        let pointerCursor = {cursor: 'pointer'};
+
+        return <>
+            <Header {...props}>
+
+                <div style={{textAlign: "center"}}>
+                    <img
+                        src="/static/img/logo.png"
+                        width="300"
+                        style={pointerCursor}
+                        onClick={() => this.goToHome()}/>
+                    <br/>
+                    <span
+                        onClick={() => this.goToHome()}
+                        style={{...pointerCursor, fontSize: "large"}}>
                     {_.site_title}</span>
-            </div>
+                </div>
 
-    </Header>
+            </Header>
 
-    {props.children}
+            {props.children}
 
-    </>
-};
+        </>
+    }
+}

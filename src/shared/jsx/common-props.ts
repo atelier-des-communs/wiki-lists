@@ -22,11 +22,8 @@ export interface SingleRecordPathParams extends DbPathParams {
 /** Generic params for any root page : GlobalContext + Route properties */
 export type PageProps<RouteProps> = GlobalContextProps & RouteComponentProps<RouteProps>
 
-export class PageComponent<RouteProps> extends React.Component<PageProps<RouteProps>> {
 
-}
 
-export type PageSFC<RouteProps> = React.SFC<PageProps<RouteProps>>;
 
 
 /** Props for components acting on a specific DB */

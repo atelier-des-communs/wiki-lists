@@ -44,7 +44,7 @@ export const SortPopup : React.SFC<SortProps> = (props) => {
                         active={sort.key == attr.name && !sort.asc}
                         onClick={() => setSort(attr.name, false)} />
             </Button.Group>
-        <span style={{marginLeft:"1em"}} ><b>{ellipsis(attrLabel(attr))}</b></span>
+        <span style={{marginLeft:"1em"}} ><b>{ellipsis(attrLabel(attr, _))}</b></span>
     </div>;
 
     return <SafePopup wide="very"
@@ -57,7 +57,7 @@ export const SortPopup : React.SFC<SortProps> = (props) => {
             icon="sort amount down" >
             <Icon name="sort amount down" />
             <span>
-                {ellipsis(attrLabel(sortAttr))} <Icon name={sort.asc ? "angle up" : "angle down"} />
+                {ellipsis(attrLabel(sortAttr, _))} <Icon name={sort.asc ? "angle up" : "angle down"} />
             </span>
         </Button>} >
 

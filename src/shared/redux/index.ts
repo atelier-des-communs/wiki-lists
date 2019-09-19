@@ -7,6 +7,9 @@ import {DbDefinition} from "../model/db-def";
 import {Map} from "../utils";
 import {toAnnotatedJson} from "../serializer";
 import {IUser} from "../model/user";
+import {MarkerOrCluster} from "../model/geo";
+
+
 
 
 export interface ISortedPages {
@@ -18,6 +21,9 @@ export interface ISortedPages {
 
     /** Map<pageIdx => [recordid]> */
     pages : Map<string[]>;
+
+    /** Geographic markers */
+    markers : MarkerOrCluster[];
 
 }
 export interface IState {

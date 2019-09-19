@@ -1,7 +1,7 @@
 import {Attribute, DatetimeType, NumberType, StructType, TextType} from "./types";
-import {deepClone} from "../utils";
 import {IMessages} from "../i18n/messages";
 import {classTag} from "../serializer";
+import {cloneDeep} from "lodash";
 
 @classTag("Record")
 export class Record {
@@ -16,44 +16,48 @@ export class Record {
 }
 
 // Definition of system attributes, as StructType
-export function systemType(_: IMessages) {
+export function systemType() {
     let res = new StructType();
     res.attributes.push({
         name: "_id",
         system: true,
+        readonly: true,
         type: new TextType(),
-        label: _.id_attr
+        label: "@id_attr"
     });
 
     res.attributes.push({
         name: "_creationTime",
         system: true,
+        readonly: true,
         type: new DatetimeType(),
-        label: _.creation_time_attr
+        label: "@creation_time_attr"
     });
 
     res.attributes.push({
         name: "_updateTime",
         system: true,
+        readonly: true,
         type: new DatetimeType(),
-        label: _.update_time_attr
+        label: "@update_time_attr"
     });
 
     res.attributes.push({
         name: "_pos",
         system: true,
+        readonly: true,
         hidden: true,
         type: new NumberType(),
-        label: _.pos_attr
+        label: "@pos_attr"
     });
     return res;
 }
 
 /** Prepend system attributes to a schema */
-export function withSystemAttributes(schema:StructType, _:IMessages) {
-    let res = deepClone(schema);
+export function withSystemAttributes(schema:StructType) {
+    let res = cloneDeep(schema);
     res.attributes = [
-        ...systemType(_).attributes.filter(attr => ! attr.hidden),
+        ...systemType().attributes,
         ...schema.attributes];
     return res
 }

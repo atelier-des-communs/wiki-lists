@@ -42,6 +42,16 @@ export function mergeErrors(it : IterableIterator<ValidationErrors>) : Validatio
     return res;
 }
 
+// To be thrown for any request exception
+export class BadRequestException extends Error {
+
+    error : any;
+
+    constructor(error: any) {
+        super(JSON.stringify(error));
+        this.error =error;
+    }
+}
 export class ValidationException extends Error {
     validationErrors : ValidationErrors;
 

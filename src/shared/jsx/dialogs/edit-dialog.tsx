@@ -67,7 +67,7 @@ export class EditDialog extends ValidatingDialog<EditDialogProps> {
             return <Grid.Column mobile={16} computer={typeIsWide(attr.type) ? 16 : 8}>
             <Form.Field key={attr.name} >
                 <Header size="small" title={attr.isMandatory && _.mandatory_attribute}>
-                    {attrLabel(attr)}
+                    {attrLabel(attr, _)}
                     {attr.isMandatory && <Label circular color="red" size="tiny" empty />}
                     </Header>
                 <ValueHandler

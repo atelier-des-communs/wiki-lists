@@ -16,27 +16,37 @@ const AddDbPageAsync = withAsyncImport(() => {
 });
 
 /** Global app for single db  */
-export const App : React.SFC<GlobalContextProps> = (props) => {
+export class App extends React.Component<GlobalContextProps> {
 
-    let _ = props.messages;
+    constructor(props: GlobalContextProps) {
+        super(props);
+    }
 
-    return <Provider store={props.store} >
+    render(){
+
+        let props = this.props;
+        let _ = props.messages;
+
+        return <Provider store={props.store} >
 
             <GlobalContextProvider {...props}>
 
-                    <Switch>
+                <Switch>
 
-                        <Route exact path="/" component={HomePage} />
-                        <Route exact path={CREATE_DB_PATH} component={AddDbPageAsync} />
-                        <Route exact path={LOGIN_PAGE_PATH} component={LoginPage} />
-                        <Route path={RECORDS_PATH} component={DbPageSwitch} />
+                    <Route exact path="/" component={HomePage} />
+                    <Route exact path={CREATE_DB_PATH} component={AddDbPageAsync} />
+                    <Route exact path={LOGIN_PAGE_PATH} component={LoginPage} />
+                    <Route path={RECORDS_PATH} component={DbPageSwitch} />
 
-                        <Route component={NotFoundPage} />
+                    <Route component={NotFoundPage} />
 
-                    </Switch>
+                </Switch>
 
             </GlobalContextProvider>
 
         </Provider>
+    }
+
+
 };
 

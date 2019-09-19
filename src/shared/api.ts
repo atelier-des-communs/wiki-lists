@@ -6,6 +6,7 @@ import {Language} from "./i18n/messages";
 import {Map} from "./utils";
 import {Filter} from "./views/filters";
 import {ISort} from "./views/sort";
+import {Cluster} from "./model/geo";
 
 
 // HTML
@@ -42,6 +43,7 @@ export const UPDATE_ITEM_URL = "/api/:db_name/update";
 export const DELETE_ITEM_URL = "/api/:db_name/delete/:id";
 export const GET_ITEM_URL = "/api/:db_name/item/:id";
 export const GET_ITEMS_URL = "/api/:db_name/items";
+export const GET_ITEMS_GEO_URL = "/api/:db_name/items-coords";
 export const COUNT_ITEMS_URL = "/api/:db_name/count";
 export const GET_DB_DEFINITION_URL = "/api/:db_name/definition";
 
@@ -76,6 +78,10 @@ export interface IMarshalledContext {
 export interface DataFetcher {
     getRecord(dbName: string, id : string) : Promise<Record>;
     getRecords(dbName: string, filters?: Map<Filter>, search?:string, sort?: ISort, from?:number, limit?:number) : Promise<Record[]>;
+
+    // Get records location, potentially grouped by clusters
+    getRecordsGeo(dbName: string, filters?: Map<Filter>, search?:string, sort?: ISort) : Promise<(Record | Cluster)[]>;
+
     countRecords(dbName: string, filters?: Map<Filter>, search?:string) : Promise<number>;
     getDbDefinition(dbName:string) : Promise<DbDefinition>;
 }

@@ -51,6 +51,7 @@ export let messages : IMessages = {
     attribute_name_mandatory : "Le nom d'attribut est requis",
     attribute_name_format : "Les noms d'attribut doivent être composés de : a-Z, 0-9, _",
     missing_type : "Type manquant",
+    invalid_value : "Valeur invalide",
     duplicate_attribute_name : "Nom d'attribut dupliqué",
     missing_enum_values : "Vous devez proposer au moins deux options",
     empty_enum_value : "Une option ne doit pas être vide",

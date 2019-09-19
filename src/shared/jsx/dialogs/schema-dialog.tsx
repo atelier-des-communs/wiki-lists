@@ -1,14 +1,13 @@
 import * as React from "react";
 import {Attribute, StructType} from "../../model/types";
 import {Button, Form, Header, Icon, Message, Modal,} from "semantic-ui-react";
-import {deepClone} from "../../utils";
 import {ValidationErrors} from "../../validators/validators";
 import {CloseableDialog, ValidatingDialog} from "./common-dialog";
 import {nonSystemAttributes} from "../../model/instances";
 import {IMessages} from "../../i18n/messages";
 import {AddButtonPosition, AttributeList} from "./parts/attribute-list";
 import {RemainingErrorsPlaceholder, ErrorsContext} from "../utils/validation-errors";
-
+import {cloneDeep} from "lodash";
 
 interface SchemaDialogProps extends CloseableDialog {
     messages:IMessages;
@@ -33,7 +32,7 @@ export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
             errors:{},
 
             // Clone the input object : not modify it until we validate
-            attributes: nonSystemAttributes(deepClone(this.props.schema.attributes))};
+            attributes: nonSystemAttributes(cloneDeep(this.props.schema.attributes))};
     }
 
     forceRedraw() {
@@ -44,12 +43,12 @@ export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
 
         // Remove "new"
         let attributes = this.state.attributes.map(attr => {
-           let res = deepClone(attr) as any;
+           let res = cloneDeep(attr) as any;
            delete res.new;
            return res;
         });
 
-        let schema = deepClone(this.props.schema);
+        let schema = cloneDeep(this.props.schema);
         schema.attributes = attributes;
 
         await this.props.onUpdateSchema(schema);

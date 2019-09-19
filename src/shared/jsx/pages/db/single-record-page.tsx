@@ -21,27 +21,37 @@ type SingleRecordPageProps =
     RouteComponentProps<SingleRecordPathParams> &
     DispatchProp<any>;
 
-export const SingleRecordPageInternal : React.SFC<SingleRecordPageProps>  = (props) => {
+class _SingleRecordPage extends React.Component<SingleRecordPageProps> {
 
-    let {db, record, head} = props;
-    let _ = props.messages;
+    constructor(props:SingleRecordPageProps) {
+        super(props);
+    }
 
-    // Set html HEAD
-    head.setTitle(recordNameStr(db.schema, record));
+    render() {
 
-    return <Container>
-        <Link to={recordsLink(db.name)} > « {_.back_to_list}</Link>
-        <Segment className="hoverable" >
-            <Header as="h2">{ recordName(db.schema, record)}
-                <div style={{float:"right"}} className="super-shy" >
-                    <EditButtons {...props} hideViewButton={true} />
-                </div>
-            </Header>
-            <SingleRecordComponent {...props} />
-        </Segment>
-    </Container>
+        let props = this.props;
+        let {db, record, head} = props;
+        let _ = props.messages;
 
-};
+        // Set html HEAD
+        head.setTitle(recordNameStr(db.schema, record));
+
+        return <Container>
+            <Link to={recordsLink(db.name)} > « {_.back_to_list}</Link>
+            <Segment className="hoverable" >
+                <Header as="h2">{ recordName(db.schema, record)}
+                    <div style={{float:"right"}} className="super-shy" >
+                        <EditButtons {...props} hideViewButton={true} />
+                    </div>
+                </Header>
+                <SingleRecordComponent {...props} />
+            </Segment>
+        </Container>
+    }
+
+
+
+}
 
 // Fetch data from Redux store and map it to props
 const mapStateToProps =(state : IState, props?: RouteComponentProps<SingleRecordPathParams> & GlobalContextProps) : SingleRecordPropsOnly => {
@@ -67,7 +77,6 @@ function fetchData(props:GlobalContextProps & RouteComponentProps<SingleRecordPa
 
 export let SingleRecordPage = connectComponent(
     mapStateToProps,
-    fetchData)(
-        SingleRecordPageInternal);
+    fetchData)(_SingleRecordPage);
 
 

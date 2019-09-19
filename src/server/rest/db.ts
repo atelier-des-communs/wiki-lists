@@ -5,7 +5,7 @@ import {
     CREATE_DB_URL,
     DELETE_ITEM_URL,
     GET_DB_DEFINITION_URL,
-    GET_ITEM_URL,
+    GET_ITEM_URL, GET_ITEMS_GEO_URL,
     GET_ITEMS_URL,
     SECRET_COOKIE,
     UPDATE_ITEM_URL,
@@ -14,7 +14,7 @@ import {
 import {
     checkAvailability,
     createDb,
-    createRecordDb,
+    createRecordsDb,
     DbDataFetcher,
     deleteRecordDb,
     updateRecordDb,
@@ -32,16 +32,25 @@ import {toAnnotatedJson, toTypedObjects} from "../../shared/serializer";
 import {DbDefinition} from "../../shared/model/db-def";
 import * as mung from "express-mung";
 import {extractSort} from "../../shared/views/sort";
-import {sortBy, strToInt} from "../../shared/utils";
+import {oneToArray, sortBy, strToInt} from "../../shared/utils";
 import {extractFilters, extractSearch} from "../../shared/views/filters";
 
-async function addItemAsync(req:Request) : Promise<Record> {
-    let record = req.body as Record;
+async function addItemsAsync(req:Request) : Promise<Record[] | Record> {
+    let records = req.body as Record | Record[];
     await requiresRight(req, AccessRight.EDIT);
-    return createRecordDb(
-        req.params.db_name,
-        record,
-        selectLanguage(req).messages);
+
+    if (records instanceof Array) {
+        return createRecordsDb(
+            req.params.db_name,
+            records,
+            selectLanguage(req).messages);
+    } else {
+        return createRecordsDb(
+            req.params.db_name,
+            oneToArray(records),
+            selectLanguage(req).messages).then(records => records[0]);
+    }
+
 }
 
 async function updateItemAsync(req:Request) : Promise<Record>{
@@ -90,7 +99,7 @@ function sanitizeJson(input:any) {
     return input;
 }
 
-/** Add prototypes to incomming JSON, based on annotation, and remove it in output.
+/** Add prototypes to incomming JSON, based on annotation.
  * Add XSS safety */
 let safeInput : RequestHandler = (req, res, next) => {
     req.body = toTypedObjects(sanitizeJson(req.body));
@@ -110,7 +119,7 @@ export function setUp(server:Express) {
 
     // Routes
     server.post(ADD_ITEM_URL, function (req: Request, res: Response) {
-        returnPromise(res, addItemAsync(req));
+        returnPromise(res, addItemsAsync(req));
     });
 
     server.post(UPDATE_ITEM_URL, function (req: Request, res: Response) {
@@ -149,8 +158,6 @@ export function setUp(server:Express) {
         let from = strToInt(req.query.from);
         let limit = strToInt(req.query.limit);
 
-        console.debug(req.query);
-
         returnPromise(res, fetcher.getRecords(
             req.params.db_name,
             filters,
@@ -158,6 +165,24 @@ export function setUp(server:Express) {
             sort,
             from,
             limit));
+    });
+
+    server.get(GET_ITEMS_GEO_URL, async function (req: Request, res: Response) {
+
+        let fetcher = new DbDataFetcher(req);
+        let schema = await fetcher.getDbDefinition(req.params.db_name);
+
+        // Extract filters
+        let sort = extractSort(req.query);
+        let search = extractSearch(req.query);
+        let filters = extractFilters(schema.schema, req.query);
+
+
+        returnPromise(res, fetcher.getRecordsGeo(
+            req.params.db_name,
+            filters,
+            search,
+            sort));
     });
 
     server.get(COUNT_ITEMS_URL, async function (req: Request, res: Response) {

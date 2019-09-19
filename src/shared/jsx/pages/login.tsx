@@ -3,11 +3,11 @@ import {withGlobalContext} from "../context/global-context";
 import {Button, Container, Form, Input} from "semantic-ui-react";
 import {MainLayout} from "./layout/main-layout";
 import {Map} from "../../utils";
-import {PageComponent, PageProps} from "../common-props";
+import {PageProps} from "../common-props";
 import {ErrorLabel} from "../utils/validation-errors";
 import {ValidationErrors} from "../../validators/validators";
 
-class _LoginPage extends PageComponent<{}> {
+class _LoginPage extends React.Component<PageProps<{}>> {
 
     state: {
         email: string,

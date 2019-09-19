@@ -2,7 +2,7 @@
  * Serializer adding type information to JSON (with @class attribute) enabling to attach prototype to it on client side.
  * All Classes should be registered with the decorator @classTag(tag)
  */
-import {deepClone, Map, mapMap} from "./utils";
+import {Map} from "./utils";
 
 
 // Custom serializers, to / from JSON object, in order to be able to add the @class property on it
@@ -28,6 +28,8 @@ export function registerClass<T>(type: { new (...args:any[]): T}, tag:string = n
         throw new Error(`Missing type tag for class '${type}'`);
     }
     if (tag in classRegistry) throw new Error(`Class '${type}' already registered`);
+
+    // Store the tag to the class
     (type as any).tag = tag;
 
     if (serializer) {
@@ -88,24 +90,24 @@ export function toAnnotatedJson<T>(obj:T, path:string="") : T {
 }
 
 /** Walks a JSON tree and replace "@class" tag with proper __proto__ */
-export function toTypedObjects<T>(json:T) : T {
+export function toTypedObjects<T>(json:T, classProp:string = CLASS_PROP, removeTag=true) : T {
 
     if (json == null) {
         return null;
     }
 
     if (Array.isArray(json)) {
-        return (json as any).map(toTypedObjects);
+        return (json as any).map((val:any) => toTypedObjects(val, classProp, removeTag));
     } else if (typeof(json) == "object") {
 
         // Walk the tree
         let res : any = {};
         for (let key of Object.keys(json)) {
-            res[key] = toTypedObjects((json as any)[key]);
+            res[key] = toTypedObjects((json as any)[key], classProp, removeTag);
         }
 
         // Get class tag
-        let tag = (json as any)[CLASS_PROP];
+        let tag = (json as any)[classProp];
 
         // No class tag : nothing to do
         if (!tag) return res;
@@ -119,7 +121,9 @@ export function toTypedObjects<T>(json:T) : T {
             return (classHandler as Serializer<T>).fromJson(json);
         } else {
             res.__proto__ = classHandler.prototype;
-            delete res[CLASS_PROP];
+            if (removeTag) {
+                delete res[classProp];
+            }
             return res;
         }
     } else {

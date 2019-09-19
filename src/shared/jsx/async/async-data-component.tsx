@@ -9,28 +9,49 @@ import {Loader, Dimmer} from "semantic-ui-react";
 
 export abstract class AsyncDataComponent<T extends GlobalContextProps> extends React.Component<T> {
 
+    className : string;
+
     state : {loading:boolean};
 
-    constructor(props: T) {
+    constructor(props: T, className:string=null) {
         super(props);
+        this.className = className;
         this.state = {loading:false};
+        console.debug("Instantiated " + (this.className), this.props);
     }
 
     /** Should look at props / state, and return null if no loading is required */
-    abstract fetchData() :  Promise<{}>;
+    abstract fetchData(props: T) :  Promise<{}>;
 
-    componentWillMount() {
-        let promise  = this.fetchData();
+    doFetch(props:T): void {
+        // Don't fetch data twice
+        if (this.state.loading) {
+            return;
+        }
+
+        let promise = this.fetchData(props);
+
+        console.debug("Getting promise for " + this.className, promise);
+
         if (promise) {
-
             this.setState({loading:true});
 
             this.props.promises.push(
                 promise.then(() => {
+                    console.debug("Async data fetch finished for " + this.className);
                     this.setState({loading:false});
                 }));
         }
     }
+
+    componentWillMount(): void {
+        this.doFetch(this.props);
+    }
+
+    componentWillUpdate(nextProps: Readonly<T>, nextState: Readonly<{}>, nextContext: any): void {
+        this.doFetch(nextProps);
+    }
+
 
     render() {
         let child = this.renderLoaded();
@@ -50,12 +71,18 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps> extends R
 export function withAsyncData<P>(
     fetchData:(props: Readonly<P & GlobalContextProps>) => Promise<any>)
 {
-    return (WrappedComponent: React.ComponentType<P>): React.ComponentClass<P> => {
+    return (WrappedComponent: React.ComponentType<P>, name:string=null): React.ComponentClass<P> => {
 
-        let resClass = class extends AsyncDataComponent<P & GlobalContextProps> {
+        class WithAsyncData extends AsyncDataComponent<P & GlobalContextProps> {
 
-            fetchData() {
-                return fetchData(this.props);
+
+            constructor(props: P & GlobalContextProps) {
+                super(props, name || (WrappedComponent as any).name + "#async");
+            }
+
+
+            fetchData(props:P & GlobalContextProps) {
+                return fetchData(props);
             }
 
             public renderLoaded() {
@@ -63,6 +90,6 @@ export function withAsyncData<P>(
             }
         }
 
-        return withGlobalContext(resClass);
+        return withGlobalContext(WithAsyncData);
     }
 }

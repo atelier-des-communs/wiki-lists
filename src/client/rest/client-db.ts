@@ -7,7 +7,7 @@ import {
     DataFetcher,
     DELETE_ITEM_URL,
     GET_DB_DEFINITION_URL,
-    GET_ITEM_URL,
+    GET_ITEM_URL, GET_ITEMS_GEO_URL,
     GET_ITEMS_URL,
     UPDATE_ITEM_URL,
     UPDATE_SCHEMA_URL,
@@ -21,6 +21,7 @@ import {post, get, del} from "./common";
 import {Filter, serializeFilters, serializeSearch, serializeSortAndFilters} from "../../shared/views/filters";
 import {ISort} from "../../shared/views/sort";
 import * as QueryString from "querystring";
+import {Cluster} from "../../shared/model/geo";
 
 /** Return the full item with new _id */
 export async function createItem(dbName: string, item : Record) : Promise<Record> {
@@ -89,6 +90,14 @@ export let restDataFetcher : DataFetcher = {
         let url = GET_ITEMS_URL.replace(":db_name", dbName)
             + "?" + QueryString.stringify(params);
 
+        return await get<Record[]>(url);
+    },
+
+    async getRecordsGeo(dbName:string, filters: Map<Filter> = {}, search: string=null, sort:ISort) : Promise<(Record | Cluster)[]> {
+
+        let params = serializeSortAndFilters(sort, filters, search);
+        let url = GET_ITEMS_GEO_URL.replace(":db_name", dbName)
+            + "?" + QueryString.stringify(params);
         return await get<Record[]>(url);
     },
 

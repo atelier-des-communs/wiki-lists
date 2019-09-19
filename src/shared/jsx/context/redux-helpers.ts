@@ -66,7 +66,8 @@ export function connectComponent<PathParams extends DbPathParams, TStateProps>(
     return (component: React.ComponentClass<TComponentType> | React.SFC<TComponentType>) :
         React.ComponentClass<RouteComponentProps<PathParams>> | React.SFC<RouteComponentProps<PathParams>> =>
     {
+        let name = (component as any).name
         let withRedux =  connect<TStateProps, ReduxEventsProps, TOwnProps>(stateMapper, matchDispatchToProps)(component);
-        return withAsyncData<RouteComponentProps<PathParams>>(fetchData)(withRedux);
+        return withAsyncData<RouteComponentProps<PathParams>>(fetchData)(withRedux, name);
     }
 }

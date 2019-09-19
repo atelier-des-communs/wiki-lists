@@ -3,7 +3,6 @@ var MiniCssExtractPlugin = require('mini-css-extract-plugin');
 var nodeExternals = require('webpack-node-externals');
 const { StatsWriterPlugin } = require("webpack-stats-plugin");
 
-
 exports.CLIENT_BUILD_DIR = path.resolve(__dirname, "..", "dist", "client");
 exports.SERVER_BUILD_DIR = path.resolve(__dirname, "..", "dist", "server");
 exports.APP_DIR = path.resolve(__dirname, "..", "src");
@@ -110,9 +109,9 @@ var mkconfig = (loaders, name) => ({
     },
     plugins: [
         new MiniCssExtractPlugin("[name].css"),
-        //new StatsWriterPlugin({
-        //    fields : null,
-        //    filename: "./reports/" + name + "-stats.json"})
+        new StatsWriterPlugin({
+            fields : null,
+            filename: "./reports/" + name + "-stats.json"})
     ],
     node : {
         __dirname : true
@@ -127,7 +126,7 @@ exports.server_config= (mode, name) => {
         {
             "react-dom/server": true
         }
-    ],
+    ];
     res.target = "node";
     res.entry = {
         "server.bundle": exports.APP_DIR + "/server"
@@ -136,7 +135,7 @@ exports.server_config= (mode, name) => {
     res.output.path = exports.SERVER_BUILD_DIR;
 
     return res;
-}
+};
 
 exports.client_config = (mode, name) => {
     var res = mkconfig(client_loaders, name);

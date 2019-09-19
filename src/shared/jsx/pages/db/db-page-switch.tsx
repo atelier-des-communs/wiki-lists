@@ -2,7 +2,7 @@
 // Displays a common header (title and description) and handle route switching to other pages
 
 import * as React from 'react';
-import {DbPathParams, DbProps, PageProps, ReduxEventsProps} from "../../common-props";
+import {DbPathParams, DbProps, PageProps, ReduxEventsProps, SingleRecordPathParams} from "../../common-props";
 import {GlobalContextProps} from "../../context/global-context";
 import {Route, RouteComponentProps, Switch} from "react-router"
 import {createUpdateDbAction, IState} from "../../../redux";
@@ -27,7 +27,7 @@ type DbPageProps =
 
 const HIDE_LINKS_COOKIE = (db_name:string) => {return `${COOKIE_PREFIX}${db_name}_hide_links`};
 
-export class DbPageSwitchInternal extends React.PureComponent<DbPageProps>{
+class _DbPageSwitch extends React.Component<DbPageProps>{
 
     hideLinks() {
         this.props.cookies.set(HIDE_LINKS_COOKIE(this.props.db.name), "true");
@@ -38,16 +38,14 @@ export class DbPageSwitchInternal extends React.PureComponent<DbPageProps>{
     render() {
         let props = this.props;
         let _ = props.messages;
-        let db = props.db
+        let db = props.db;
+
+        console.debug("Rendering db page switch with props : ", props)
 
         if (!db) {
+            console.debug("Waiting fetch of schema ...")
             return null;
         }
-
-        // Pass down schema and rights to sub components
-        let singleRecordPage = (otherProps: any) => <SingleRecordPage {...props} {...otherProps} />
-        let recordsPage = (otherProps: any) => <RecordsPage {...props} {...otherProps} />
-
 
         let base_url = location.protocol + '//' + location.host;
 
@@ -111,8 +109,8 @@ export class DbPageSwitchInternal extends React.PureComponent<DbPageProps>{
                 </Message>}
 
                 <Switch>
-                    <Route path={SINGLE_RECORD_PATH} component={singleRecordPage}/>
-                    <Route path={RECORDS_PATH} component={recordsPage}/>
+                    <Route path={SINGLE_RECORD_PATH} render={(props: RouteComponentProps<SingleRecordPathParams>) => <SingleRecordPage  {...this.props} {...props} />}/>
+                    <Route path={RECORDS_PATH} render={(props:RouteComponentProps<DbPathParams>) => <RecordsPage {...this.props} {...props}  />}/>
                 </Switch>
             </div>
         </>
@@ -131,7 +129,7 @@ const mapStateToProps = (state : IState, props?: RouteComponentProps<{}> & Globa
     let db = toTypedObjects(state.dbDefinition);
 
     // FIXME : Might not be the right place to add system properties to schema
-    db.schema = withSystemAttributes(db.schema, props.messages);
+    db.schema = withSystemAttributes(db.schema);
     return {db}
 };
 
@@ -153,4 +151,4 @@ function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>)
 // Connect to Redux
 export let DbPageSwitch = connectComponent(
     mapStateToProps,
-    fetchData)(DbPageSwitchInternal);
+    fetchData)(_DbPageSwitch);

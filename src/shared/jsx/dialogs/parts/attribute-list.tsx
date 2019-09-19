@@ -1,14 +1,15 @@
 import * as React from "react";
 import {Attribute, newType, StructType, Type, Types} from "../../../model/types";
 import {Button, Checkbox, Dropdown, Grid, Header, Icon, Label, Segment, SegmentGroup} from "semantic-ui-react";
-import {deepClone, Map, slug} from "../../../utils";
+import {Map, slug} from "../../../utils";
 import {EditableText} from "../../components/editable-text";
 import {typeExtraSwitch} from "../parts/attribute-extra-components";
-import {Info} from "../../utils/utils";
+import {attrLabel, Info} from "../../utils/utils";
 import {nonSystemAttributes} from "../../../model/instances";
 import {IMessages} from "../../../i18n/messages";
 import {ErrorPlaceholder} from "../../utils/validation-errors";
 import * as shortid from "shortid";
+import {cloneDeep} from "lodash";
 
 
 export enum AddButtonPosition {
@@ -34,7 +35,7 @@ export class AttributeList extends React.Component<AttributeListProps> {
 
         // Clone the input object : not modify it until we validate
         this.state =  {
-            attributes: nonSystemAttributes(deepClone(this.props.schema.attributes)),
+            attributes: nonSystemAttributes(cloneDeep(this.props.schema.attributes)),
             expanded: {}};
     }
 
@@ -191,7 +192,7 @@ export class AttributeList extends React.Component<AttributeListProps> {
                                 <EditableText
                                     {...this.props}
                                     forceEdit={attr.new}
-                                    value={attr.label}
+                                    value={attrLabel(attr, _)}
                                     placeholder={ _.attribute_name}
                                     onChange={ (value) => this.changeLabel(index, value)} />
                                 {attr.isName &&

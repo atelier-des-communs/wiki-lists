@@ -10,19 +10,27 @@ type SingleRecordComponentProps = SingleRecordProps & RouteComponentProps<{}> & 
 
 const NAME_ELLIPSIS = 20;
 
-export const SingleRecordComponent : React.SFC<SingleRecordComponentProps> = (props) => {
+export class SingleRecordComponent extends  React.Component<SingleRecordComponentProps>  {
 
-    // Filter out attributes that are part of the name (already shown)
-    let filterAttributeFunc = (attr:Attribute) => filterAttribute(props, props.db.schema)(attr) && !attr.isName;
+    constructor(props:SingleRecordComponentProps) {
+        super(props);
+    }
 
-    return <>
+    render()  {
+
+        let props = this.props;
+
+        // Filter out attributes that are part of the name (already shown)
+        let filterAttributeFunc = (attr:Attribute) => filterAttribute(props, props.db.schema)(attr) && !attr.isName;
+        let _ = props.messages;
+        return <>
         {props.db.schema.attributes
             .filter(filterAttributeFunc).map((attr : Attribute) =>
                 <div style={{marginBottom: "0.5em"}}>
                     <b>{
                         props.large ?
-                            attrLabel(attr) :
-                            ellipsis(attrLabel(attr), NAME_ELLIPSIS)} </b>
+                            attrLabel(attr, _) :
+                            ellipsis(attrLabel(attr, _), NAME_ELLIPSIS)} </b>
 
                     &nbsp;
 
@@ -34,5 +42,8 @@ export const SingleRecordComponent : React.SFC<SingleRecordComponentProps> = (pr
                         value={props.record[attr.name]}
                         type={attr.type} />
                 </div>)}
-    </>
+        </>
+    }
+
+
 };

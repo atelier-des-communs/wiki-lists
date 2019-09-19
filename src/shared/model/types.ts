@@ -1,9 +1,23 @@
 import {arrayToMap, Map} from "../utils";
 import {classTag} from "../serializer";
-import {extend} from "lodash";
+import {extend, includes} from "lodash";
+import {ICoord} from "./geo";
+import {encode as geohash} from "ngeohash";
 
-export interface Type<T> {
+export abstract class Type<T> {
     tag: string;
+    abstract isValid (value:any) : boolean;
+
+    // FIXME :should be on SS only
+
+    // By default we store values as is
+    toMongo(value : T) : any {
+        return value;
+    }
+
+    fromMongo(value : any) : T {
+        return value;
+    }
 }
 
 export enum Types {
@@ -13,29 +27,76 @@ export enum Types {
     STRUCT = "struct",
     ENUM = "enum",
     DATETIME = "datetime",
+    LOCATION="location"
 }
 
 @classTag(Types.BOOLEAN)
-export class BooleanType implements Type<boolean> {
+export class BooleanType extends Type<boolean> {
     tag = Types.BOOLEAN;
+    isValid(value: any): boolean {
+        return (value === true || value === null || value === false)
+    }
 }
 
 @classTag(Types.NUMBER)
-export class NumberType implements Type<number> {
+export class NumberType extends Type<number> {
     tag =  Types.NUMBER;
+    isValid(value: any): boolean {
+        return (value === null || !isNaN(value))
+    }
 }
 
 @classTag(Types.DATETIME)
-export class DatetimeType implements Type<Date> {
+export class DatetimeType extends Type<Date> {
     tag =  Types.DATETIME;
+    isValid(value: any): boolean {
+        return (value === null || value instanceof Date)
+    }
+}
+
+@classTag(Types.LOCATION)
+export class LocationType extends Type<ICoord> {
+    tag =  Types.LOCATION;
+
+    isValid(value: any): boolean {
+        return (value === null || ('lat' in value && 'lon' in value));
+    }
+
+    toMongo(value:ICoord) : any {
+        if (value == null || value.lon == null) {
+            return null;
+        }
+        return {
+            type: "Point",
+            coordinates : [value.lon, value.lat],
+            properties : {
+                "hash" : geohash(value.lat, value.lon, 10)
+            }
+        }
+    }
+    fromMongo(value : any) : ICoord {
+        if (value == null) {
+            return null;
+        }
+        return {
+            lon: value['coordinates'][0],
+            lat: value['coordinates'][1],
+        }
+    }
 }
 
 @classTag(Types.TEXT)
-export class TextType implements Type<string> {
+export class TextType extends Type<string> {
+
     tag = Types.TEXT;
     rich:boolean = false;
+
     constructor(rich:boolean = false) {
+        super()
         this.rich = rich;
+    }
+    isValid(value: any): boolean {
+        return (value === null || typeof(value) === "string");
     }
 }
 
@@ -57,9 +118,14 @@ export class EnumValue {
 }
 
 @classTag(Types.ENUM)
-export class EnumType implements Type<string> {
+export class EnumType extends Type<string> {
     tag = Types.ENUM;
     values : EnumValue[] = [];
+
+    isValid(value: any): boolean {
+       let values = this.values.map(enumVal => enumVal.value);
+       return (value == null || includes(values, value) );
+    }
 }
 
 export function newType(typeTag:string) {
@@ -95,18 +161,44 @@ export class Attribute {
     isMandatory?: boolean = false;
     system ?:boolean = false;
     hidden ?:boolean = false;
+    readonly? : boolean = false;
     constructor(init:Attribute) {
         extend(this, init);
     }
 }
 
 @classTag(Types.STRUCT)
-export class StructType implements Type<Map<any>> {
+export class StructType extends Type<Map<any>> {
+
     tag: Types.STRUCT;
     attributes : Attribute[] = [];
+
     constructor(attributes:Attribute[] = []) {
+        super()
         this.attributes = attributes;
     }
+
+    isValid(value: any): boolean {
+
+        // FIXME put in a computed field not to be serialized
+        let attrMap : Map<Attribute> = arrayToMap(this.attributes, attr => attr.name);
+
+        if (value == null) {
+            return true;
+        }
+        for (let key in value) {
+            if (!(key in attrMap)) {
+                return false;
+            }
+            let attr = attrMap[key];
+            if (!attr.type.isValid(value[key])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // FIXME : recursively transform value to / from mongo ?
 }
 
 export function attributesMap(schema:StructType) : Map<Attribute> {

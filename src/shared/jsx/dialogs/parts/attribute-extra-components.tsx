@@ -2,7 +2,7 @@
  *  Components showing extra parameters when editing schema attributes
  */
 import {EnumType, EnumValue, TextType, Type, Types} from "../../../model/types";
-import {deepClone, slug} from "../../../utils";
+import {slug} from "../../../utils";
 import * as React from "react";
 import {Button, Form, Grid, Header, Label} from "semantic-ui-react";
 import {SafePopup} from "../../utils/ssr-safe";
@@ -10,6 +10,7 @@ import {default as SketchPicker, SketchPickerProps} from "react-color/lib/compon
 import {EditableText} from "../../components/editable-text";
 import {IMessages} from "../../../i18n/messages";
 import {ErrorPlaceholder} from "../../utils/validation-errors";
+import {cloneDeep} from "lodash";
 
 
 const DEFAULT_ENUM_COLOR="#e8e8e8";
@@ -33,7 +34,7 @@ const TextExtra: TypeExtraComponent<TextType> = (props) => {
             label={_.rich_edit}
             checked={props.type.rich}
             onChange={(e, val) => {
-                let type = deepClone(props.type);
+                let type = cloneDeep(props.type);
                 type.rich = val.checked;
                 props.onUpdate(type);
             }}/>
@@ -45,7 +46,7 @@ const EnumExtra: TypeExtraComponent<EnumType> = (props) => {
     let errorPrefix = props.errorPrefix || "";
 
     // Local copy of type
-    let type = deepClone(props.type);
+    let type = cloneDeep(props.type);
 
     let editLabel = (label: string, index: number) => {
         type.values[index].label = label;

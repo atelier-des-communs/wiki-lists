@@ -6,7 +6,7 @@ import {IMessages} from "../i18n/messages";
 
 export function * validateRecord(record: Record, schema:StructType, _:IMessages, isNew:boolean) : IterableIterator<ValidationErrors> {
     let attrMap = attributesMap(schema);
-    let sysAttrMap = attributesMap(systemType(_));
+    let sysAttrMap = attributesMap(systemType());
 
     // No extra attributes ?
     for (let name in record) {
@@ -18,15 +18,16 @@ export function * validateRecord(record: Record, schema:StructType, _:IMessages,
             let attr = attrMap[name];
             let val = record [name];
 
-            // Validate the value
-            // TODO
+            if (!attr.type.isValid(val)) {
+                yield validationError(name, _.invalid_value + ": " + name + " : " + val);
+            }
         }
     }
 
     for (let name in attrMap) {
         let attr = attrMap[name];
 
-        if (!(name in record) && isNew) {
+        if (!(name in record) && isNew && ! attr.readonly) {
             yield validationError(name, _.missing_attribute);
         }
 

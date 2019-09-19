@@ -23,7 +23,7 @@ export default function initServer(dist_paths:string[]) : express.Express {
 
     var server = express();
     server.use(compression());
-    server.use(bodyParser.json());
+    server.use(bodyParser.json({limit: '100mb'}));
     server.use(cookieParser());
     server.use(session({
         secret: config.SECRET,
