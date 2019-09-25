@@ -16,7 +16,7 @@ import {
 import {StructType} from "../../shared/model/types";
 import {ValidationErrors} from "../../shared/validators/validators";
 import {DbDefinition} from "../../shared/model/db-def";
-import {empty, Map} from "../../shared/utils";
+import {empty, Map, mapValues} from "../../shared/utils";
 import {post, get, del} from "./common";
 import {Filter, serializeFilters, serializeSearch, serializeSortAndFilters} from "../../shared/views/filters";
 import {ISort} from "../../shared/views/sort";
@@ -93,17 +93,22 @@ export let restDataFetcher : DataFetcher = {
         return await get<Record[]>(url);
     },
 
-    async getRecordsGeo(dbName:string, filters: Map<Filter> = {}, search: string=null, sort:ISort) : Promise<(Record | Cluster)[]> {
+    async getRecordsGeo(dbName:string, zoom:number, filters: Map<Filter> = {}, search: string=null, extraFields : string[]=[]) : Promise<(Record | Cluster)[]> {
 
-        let params = serializeSortAndFilters(sort, filters, search);
-        let url = GET_ITEMS_GEO_URL.replace(":db_name", dbName)
-            + "?" + QueryString.stringify(params);
+        let params = serializeSortAndFilters(null, filters, search);
+        params['zoom'] = zoom;
+        params['fields'] = extraFields;
+
+        let url = GET_ITEMS_GEO_URL.replace(":db_name", dbName) + "?" + QueryString.stringify(params);
+
+        console.debug("fetch coords records", url);
+
         return await get<Record[]>(url);
     },
 
     async countRecords(dbName: string, filters?: Map<Filter>, search?: string): Promise<number> {
         let params = {
-            ...serializeFilters(filters),
+            ...serializeFilters(mapValues(filters)),
             ...serializeSearch(search)
         };
 

@@ -7,7 +7,7 @@ import {DbDefinition} from "../model/db-def";
 import {Map} from "../utils";
 import {toAnnotatedJson} from "../serializer";
 import {IUser} from "../model/user";
-import {MarkerOrCluster} from "../model/geo";
+import {Cluster, MarkerOrCluster} from "../model/geo";
 
 
 
@@ -22,15 +22,14 @@ export interface ISortedPages {
     /** Map<pageIdx => [recordid]> */
     pages : Map<string[]>;
 
-    /** Geographic markers */
-    markers : MarkerOrCluster[];
-
 }
 export interface IState {
     /** id => Rescord */
     items : {[key:string] : Record};
 
     sortedPages : ISortedPages;
+
+    geoMarkers : Map<MarkerOrCluster[]>;
 
     // Definition of DB
     dbDefinition : DbDefinition;
@@ -46,7 +45,8 @@ export enum ActionType {
     UPDATE_DB = "UPDATE_DB",
     UPDATE_USER = "UPDATE_USER",
     UPDATE_COUNT = "UPDATE_COUNT",
-    UPDATE_PAGE = "UPDATE_PAGE"
+    UPDATE_PAGE = "UPDATE_PAGE",
+    UPDATE_MARKERS = "UPDATE_MARKERS"
 }
 
 interface ActionWithRecord extends Action {
@@ -102,6 +102,12 @@ export class UpdatePageAction {
     public page:string[];
 }
 
+export class UpdateMarkersAction {
+    public type = ActionType.UPDATE_MARKERS;
+    public query : string;
+    public markers : (Cluster | Record)[];
+}
+
 
 
 export function createAddItemAction(record: Record) : AddItemAction {
@@ -132,6 +138,9 @@ export function createUpdateCountAction(sortedPages: ISortedPages) : UpdateCount
 export function createUpdatePageAction(idx:number, page: string[]) : UpdatePageAction {
     return {type:ActionType.UPDATE_PAGE, idx, page}
 }
+export function createUpdateMarkersAction(query:string, markers: (Cluster | Record)[]) : UpdateMarkersAction {
+    return {type:ActionType.UPDATE_MARKERS, query, markers}
+}
 
 export type TAction  =
     UpdateSchemaAction |
@@ -142,7 +151,8 @@ export type TAction  =
     DeleteItemAction |
     UpdateUserAction |
     UpdateCountAction |
-    UpdatePageAction;
+    UpdatePageAction |
+    UpdateMarkersAction;
 
 
 function itemsReducer(items:Immutable.ImmutableObject<Map<Record>> = null, action:TAction) {
@@ -201,11 +211,21 @@ function sortedPagesReducer(state: Immutable.ImmutableObject<ISortedPages>= null
     }
 }
 
+function markersReducer(state: Immutable.ImmutableObject<Map<MarkerOrCluster[]>> = null, action : TAction) {
+    if (action.type == ActionType.UPDATE_MARKERS) {
+        let updateAction = action as UpdateMarkersAction;
+        return state.set(updateAction.query, updateAction.markers);
+    } else {
+        return state;
+    }
+}
+
 /** Combine reducers */
 export let reducers : Reducer<IState> = combineReducers ({
     items: itemsReducer,
     dbDefinition: dbDefReducer,
     sortedPages : sortedPagesReducer,
+    geoMarkers : markersReducer,
     user:userReducer
 });
 

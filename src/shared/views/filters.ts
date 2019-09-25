@@ -18,6 +18,7 @@ import {Record} from "../model/instances";
 import {extractSort, ISort, serializeSort} from "./sort";
 import {RouteComponentProps} from "react-router"
 import {ICoord} from "../model/geo";
+import {decode_bbox, encode} from "ngeohash";
 
 function queryParamName(attrName: string) {
     return `${attrName}.f`;
@@ -330,28 +331,34 @@ export class LocationFilter implements IFilter<ICoord> {
     maxlon:number = null;
     minlat:number = null;
     maxlat:number = null;
+    geohash:string = null;
 
     // No filter : accepting all
     constructor(attr:Attribute, queryParams : Map<string> = {}) {
         this.attr = attr;
 
-        let minlon = strToFloat(queryParams[paramMinLon(attr.name)]);
-        let maxlon = strToFloat(queryParams[paramMaxLon(attr.name)]);
-        let minlat = strToFloat(queryParams[paramMinLat(attr.name)]);
-        let maxlat = strToFloat(queryParams[paramMaxLat(attr.name)]);
 
-        if (minlon != null) {
-            this.minlon = minlon;
+        console.debug("Loc filter parsing, query params", queryParams);
+
+        if (!queryParams) {
+            return
         }
-        if (maxlon != null) {
-            this.maxlon = maxlon;
+
+        // Direct hash ?
+        if (queryParams[attr.name]) {
+            this.geohash = queryParams[attr.name];
+            let box = decode_bbox(this.geohash);
+            this.minlat = box[0];
+            this.minlon = box[1];
+            this.maxlat = box[2];
+            this.maxlon = box[3];
+        } else {
+            this.minlon = strToFloat(queryParams[paramMinLon(attr.name)]);
+            this.maxlon = strToFloat(queryParams[paramMaxLon(attr.name)]);
+            this.minlat = strToFloat(queryParams[paramMinLat(attr.name)]);
+            this.maxlat = strToFloat(queryParams[paramMaxLat(attr.name)]);
         }
-        if (minlat != null) {
-            this.minlat = minlat;
-        }
-        if (maxlat != null) {
-            this.maxlat = maxlat;
-        }
+
     }
 
     isAll() {
@@ -399,13 +406,18 @@ function serializeLocationFilter(attrName:string, filter:LocationFilter) {
             [minlon]: null,
             [maxlon]: null,
             [minlat]: null,
-            [maxlat]: null}
+            [maxlat]: null,
+            [attrName] : null}
     }
-    return {
-        [minlon]: floatToStr(filter.minlon),
-        [maxlon]: floatToStr(filter.maxlon),
-        [minlat]: floatToStr(filter.minlat),
-        [maxlat]: floatToStr(filter.maxlat)
+    if (filter.geohash) {
+        return {[attrName] : filter.geohash}
+    } else {
+        return {
+            [minlon]: floatToStr(filter.minlon),
+            [maxlon]: floatToStr(filter.maxlon),
+            [minlat]: floatToStr(filter.minlat),
+            [maxlat]: floatToStr(filter.maxlat)
+        }
     }
 }
 
@@ -521,9 +533,9 @@ export function hasFiltersOrSearch(schema: StructType, props: RouteComponentProp
     return (Object.keys(filters).length > 0) || search;
 }
 
-export function serializeFilters(filters: Map<Filter>) {
+export function serializeFilters(filters: Filter[]) {
     let res= {};
-    mapMap(filters, function(key:string, filter:Filter) {
+    filters.map(function(filter:Filter) {
         res = {...res, ...serializeFilter(filter.attr, filter)};
     });
     return res;
@@ -531,7 +543,7 @@ export function serializeFilters(filters: Map<Filter>) {
 
 export function serializeSortAndFilters(sort: ISort, filters: Map<Filter>, search:string) : Map<any>{
     return {
-        ...serializeFilters(filters),
+        ...serializeFilters(mapValues(filters)),
         ...serializeSort(sort),
         ...serializeSearch(search)};
 }

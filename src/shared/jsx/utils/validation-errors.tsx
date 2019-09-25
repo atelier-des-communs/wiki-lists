@@ -8,7 +8,8 @@ import {ValidationErrors, Validator, ValueValidator} from "../../validators/vali
 import {applyRec} from "./utils";
 import {Label, Message} from "semantic-ui-react";
 import {IMessages} from "../../i18n/messages";
-import {empty, emptyList, flatMap, mapMap, OneOrMany, oneToArray} from "../../utils";
+import {empty, emptyList, OneOrMany, oneToArray} from "../../utils";
+import {flatMap} from "lodash";
 
 
 interface ErrorContextProps {

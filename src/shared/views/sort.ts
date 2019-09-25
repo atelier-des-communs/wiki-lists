@@ -22,5 +22,8 @@ export function extractSort(queryParams:Map<string>) : ISort {
 }
 
 export function serializeSort(sort:ISort) : Map<string> {
+    if (sort == null) {
+        return {};
+    }
     return {sort: sort.key + "." + (sort.asc ? "asc" : "desc")}
 }

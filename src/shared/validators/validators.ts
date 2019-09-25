@@ -42,16 +42,7 @@ export function mergeErrors(it : IterableIterator<ValidationErrors>) : Validatio
     return res;
 }
 
-// To be thrown for any request exception
-export class BadRequestException extends Error {
-
-    error : any;
-
-    constructor(error: any) {
-        super(JSON.stringify(error));
-        this.error =error;
-    }
-}
+// This exception is shared between server and client : it's unserialized on client side
 export class ValidationException extends Error {
     validationErrors : ValidationErrors;
 

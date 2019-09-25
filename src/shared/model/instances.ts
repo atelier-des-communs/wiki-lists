@@ -56,9 +56,12 @@ export function systemType() {
 /** Prepend system attributes to a schema */
 export function withSystemAttributes(schema:StructType) {
     let res = cloneDeep(schema);
-    res.attributes = [
-        ...systemType().attributes,
-        ...schema.attributes];
+    let names = res.attributes.map(attr => attr.name);
+    for (let attr of systemType().attributes) {
+        if (names.indexOf(attr.name) == -1) {
+            res.attributes.push(attr);
+        }
+    }
     return res
 }
 

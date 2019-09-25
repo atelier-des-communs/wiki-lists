@@ -6,6 +6,8 @@ import {encode as geohash} from "ngeohash";
 
 export abstract class Type<T> {
     tag: string;
+    abstract sortable:boolean;
+
     abstract isValid (value:any) : boolean;
 
     // FIXME :should be on SS only
@@ -18,6 +20,10 @@ export abstract class Type<T> {
     fromMongo(value : any) : T {
         return value;
     }
+
+    // Value to be used for mongo index creation
+    abstract mongoIndex() : (number|string)[];
+
 }
 
 export enum Types {
@@ -33,30 +39,52 @@ export enum Types {
 @classTag(Types.BOOLEAN)
 export class BooleanType extends Type<boolean> {
     tag = Types.BOOLEAN;
+    sortable = true;
+
     isValid(value: any): boolean {
         return (value === true || value === null || value === false)
+    }
+
+    mongoIndex(): (1|string)[] {
+        return [1];
     }
 }
 
 @classTag(Types.NUMBER)
 export class NumberType extends Type<number> {
+
     tag =  Types.NUMBER;
+    sortable = true;
+
     isValid(value: any): boolean {
         return (value === null || !isNaN(value))
+    }
+
+    mongoIndex(): (1|string)[] {
+        return [1];
     }
 }
 
 @classTag(Types.DATETIME)
 export class DatetimeType extends Type<Date> {
+
     tag =  Types.DATETIME;
+    sortable = true;
+
     isValid(value: any): boolean {
         return (value === null || value instanceof Date)
+    }
+
+    mongoIndex() {
+        return [1];
     }
 }
 
 @classTag(Types.LOCATION)
 export class LocationType extends Type<ICoord> {
+
     tag =  Types.LOCATION;
+    sortable = false;
 
     isValid(value: any): boolean {
         return (value === null || ('lat' in value && 'lon' in value));
@@ -83,6 +111,10 @@ export class LocationType extends Type<ICoord> {
             lat: value['coordinates'][1],
         }
     }
+
+    mongoIndex() {
+        return ["2dsphere"];
+    }
 }
 
 @classTag(Types.TEXT)
@@ -91,13 +123,26 @@ export class TextType extends Type<string> {
     tag = Types.TEXT;
     rich:boolean = false;
 
+    get sortable() {
+        return ! this.rich;
+    }
+
     constructor(rich:boolean = false) {
-        super()
+        super();
         this.rich = rich;
     }
     isValid(value: any): boolean {
         return (value === null || typeof(value) === "string");
     }
+
+    mongoIndex() {
+        if (this.rich) {
+            return ["text"];
+        } else {
+            return [1, "text"];
+        }
+    }
+
 }
 
 @classTag("EnumValue")
@@ -115,16 +160,23 @@ export class EnumValue {
         this.color = color;
         this.saved = saved;
     }
+
+
 }
 
 @classTag(Types.ENUM)
 export class EnumType extends Type<string> {
     tag = Types.ENUM;
     values : EnumValue[] = [];
+    sortable = true;
 
     isValid(value: any): boolean {
        let values = this.values.map(enumVal => enumVal.value);
        return (value == null || includes(values, value) );
+    }
+
+    mongoIndex() {
+        return [1];
     }
 }
 
@@ -172,6 +224,7 @@ export class StructType extends Type<Map<any>> {
 
     tag: Types.STRUCT;
     attributes : Attribute[] = [];
+    sortable : false;
 
     constructor(attributes:Attribute[] = []) {
         super()
@@ -196,6 +249,10 @@ export class StructType extends Type<Map<any>> {
             }
         }
         return true;
+    }
+
+    mongoIndex() : (number | string)[]{
+        return [];
     }
 
     // FIXME : recursively transform value to / from mongo ?

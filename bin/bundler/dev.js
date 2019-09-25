@@ -16,6 +16,4 @@ var compiler = webpack(config[1]);
 compiler.run(function(err, stats) {
 	if(err)
 		return console.error(err.message);
-
-	console.log(stats.toString(options));
 });

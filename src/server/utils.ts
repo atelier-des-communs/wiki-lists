@@ -4,8 +4,8 @@ import {AccessRight} from "../shared/access";
 import {getDbDef} from "./db/db";
 import {isIn} from "../shared/utils";
 import {Request} from "express-serve-static-core"
-import {toAnnotatedJson} from "../shared/serializer";
-import {BadRequestException} from "../shared/validators/validators";
+import {ValidationException} from "../shared/validators/validators";
+import {BadRequestException, HttpError} from "./exceptions";
 
 export interface ContentWithStatus {
     statusCode:number,
@@ -26,26 +26,21 @@ export async function returnPromiseWithCode(res: Express.Response, promise: Prom
         res.status(result.statusCode).send(result.content);
     } catch (error) {
         console.error("Error occured in promise : ", error);
-        if (error instanceof BadRequestException) {
-            res.status(400).send(error.error)
-        } else  if (error.validationErrors) {
+
+        if (error instanceof ValidationException) {
+
             // Send list of errors back to client, with custom error codes
             res.status(VALIDATION_ERROR_STATUS_CODE).send(error.validationErrors);
-        } else if (error.code) {
+
+        } else if (error instanceof HttpError) {
+
             res.status(error.code).send(error.message);
+
         } else {
+
             res.status(501).send(error);
+
         }
-    }
-}
-
-export class HttpError {
-    code : number;
-    message: string;
-
-    constructor(code:number, message:string) {
-        this.code = code;
-        this.message = message;
     }
 }
 
@@ -70,7 +65,6 @@ export async function getAccessRights(dbStr: string, pass:string) {
 }
 
 export async function requiresRight(req:Request, right : AccessRight) {
-
     let rights = await getAccessRights(
         req.params.db_name,
         req.cookies[SECRET_COOKIE(req.params.db_name)]);
@@ -79,8 +73,8 @@ export async function requiresRight(req:Request, right : AccessRight) {
     } else {
         throw new HttpError(403, "Forbidden");
     }
-
 }
+
 
 // Resursively applies a function on a JSON tree
 export function traverse(o: any, fn: (obj: any, prop: string, value: any) => void) {

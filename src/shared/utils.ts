@@ -157,9 +157,6 @@ export function itToArray<T>(it: IterableIterator<T>) : T[] {
     return res;
 }
 
-export function flatMap<T, U>(array: T[], callbackfn: (value: T, index: number, array: T[]) => U[]): U[] {
-    return Array.prototype.concat(...array.map(callbackfn));
-}
 
 
 export function strToInt(value:string) {

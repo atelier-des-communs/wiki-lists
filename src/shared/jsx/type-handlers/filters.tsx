@@ -269,17 +269,16 @@ export class FilterSidebar extends React.Component<IFiltersComponentProps & Rout
         let _ = props.messages;
 
         return <div>
-            <Header as="h3">{_.filters}</Header>
-            {getFilters(props).map( item =>
-                <Segment>
-                    <Header as="h4">
-                        {ellipsis(attrLabel(item.attr, _))}
-                    </Header>
-                    <Divider/>
+            {getFilters(props).map( item => <>
+                <Header  attached="top" as="h5">
+                    {ellipsis(attrLabel(item.attr, _))}
+                </Header>
+                <Segment attached >
                     <div key={item.attr.name} >
                         { item.comp }
                     </div>
                 </Segment>
+                </>
             )}
         </div>
     }

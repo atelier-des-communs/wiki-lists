@@ -6,7 +6,7 @@ import {
     DELETE_ITEM_URL,
     GET_DB_DEFINITION_URL,
     GET_ITEM_URL, GET_ITEMS_GEO_URL,
-    GET_ITEMS_URL,
+    GET_ITEMS_URL, INIT_INDEXES_URL,
     SECRET_COOKIE,
     UPDATE_ITEM_URL,
     UPDATE_SCHEMA_URL
@@ -16,7 +16,7 @@ import {
     createDb,
     createRecordsDb,
     DbDataFetcher,
-    deleteRecordDb,
+    deleteRecordDb, getDbDef, setUpIndexesDb,
     updateRecordDb,
     updateSchemaDb
 } from "../db/db";
@@ -35,6 +35,7 @@ import {extractSort} from "../../shared/views/sort";
 import {oneToArray, sortBy, strToInt} from "../../shared/utils";
 import {extractFilters, extractSearch} from "../../shared/views/filters";
 
+
 async function addItemsAsync(req:Request) : Promise<Record[] | Record> {
     let records = req.body as Record | Record[];
     await requiresRight(req, AccessRight.EDIT);
@@ -50,7 +51,12 @@ async function addItemsAsync(req:Request) : Promise<Record[] | Record> {
             oneToArray(records),
             selectLanguage(req).messages).then(records => records[0]);
     }
+}
 
+async function setupIndexes(req:Request) : Promise<boolean> {
+    await requiresRight(req, AccessRight.ADMIN);
+    setUpIndexesDb(req.params.db_name);
+    return true;
 }
 
 async function updateItemAsync(req:Request) : Promise<Record>{
@@ -134,6 +140,10 @@ export function setUp(server:Express) {
         returnPromise(res, updateSchemaAsync(req));
     });
 
+    server.post(INIT_INDEXES_URL, function (req: Request, res: Response) {
+        returnPromise(res, setupIndexes(req));
+    });
+
     server.post(CREATE_DB_URL, function (req: Request, res: Response) {
         returnPromise(res, createDbAsync(req, res));
     });
@@ -173,16 +183,18 @@ export function setUp(server:Express) {
         let schema = await fetcher.getDbDefinition(req.params.db_name);
 
         // Extract filters
-        let sort = extractSort(req.query);
         let search = extractSearch(req.query);
         let filters = extractFilters(schema.schema, req.query);
+        let zoom = parseInt(req.query.zoom);
 
+        let fields = oneToArray(req.query.fields);
 
         returnPromise(res, fetcher.getRecordsGeo(
             req.params.db_name,
+            zoom,
             filters,
             search,
-            sort));
+            fields));
     });
 
     server.get(COUNT_ITEMS_URL, async function (req: Request, res: Response) {

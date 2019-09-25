@@ -99,8 +99,9 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
             queryParams: null,
             count: null,
             pages: {},
-            markers : null
+
         },
+        geoMarkers : {},
         dbDefinition: null, // Will be fetched asynchronously
         user: req.user as IUser};
 

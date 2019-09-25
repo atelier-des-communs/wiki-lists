@@ -116,3 +116,9 @@ body {
     font-weight: bold;
     padding-right: 1em;
 }
+
+.leaflet-tooltip.count-tooltip {
+    background-color: transparent;
+    border:None;
+    box-shadow: None;
+}

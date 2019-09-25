@@ -3,24 +3,28 @@ import config from "../config"
 import {MongoClient, Cursor} from "mongodb";
 import {Record, withSystemAttributes} from "../../shared/model/instances";
 import {validateSchemaAttributes} from "../../shared/validators/schema-validators";
-import {BadRequestException, dieIfErrors, ValidationException} from "../../shared/validators/validators";
+import {dieIfErrors, ValidationException} from "../../shared/validators/validators";
 import {validateRecord} from "../../shared/validators/record-validator";
 import {DataFetcher, SECRET_COOKIE} from "../../shared/api";
-import {arrayToMap, isIn, Map, mapMap, mapValues} from "../../shared/utils";
+import {arrayToMap, isIn, Map, mapMap, mapValues, oneToArray} from "../../shared/utils";
 import {IMessages} from "../../shared/i18n/messages";
 import {AccessRight} from "../../shared/access";
-import {getAccessRights, HttpError} from "../utils";
+import {getAccessRights} from "../utils";
 import {Request} from "express-serve-static-core"
 import * as shortid from "shortid";
 import {DbDefinition} from "../../shared/model/db-def";
 import {Filter, LocationFilter} from "../../shared/views/filters";
 import {ISort} from "../../shared/views/sort";
 import {toTypedObjects} from "../../shared/serializer";
-import {Cluster} from "../../shared/model/geo";
-import {encode as geohash} from "ngeohash";
+import {Cluster, findBestHashPrecision} from "../../shared/model/geo";
+import {encode as geohash, decode} from "ngeohash";
+import {BadRequestException, HttpError} from "../exceptions";
+import {flatMap} from "lodash";
 
 const SCHEMAS_COLLECTION = "schemas";
 const DB_COLLECTION_TEMPLATE = (name:string) => {return `db.${name}`};
+
+const MARKERS_PER_CLUSTER = 20;
 
 /* Singleton instance */
 class  Connection {
@@ -116,9 +120,34 @@ function fromMongo(record : Record, attrMap: Map<Attribute>) {
     // Loop on keys
     for (let key in record) {
         let attr = attrMap[key];
+        if (!attr) {
+            throw new Error("Attribute not found " + key);
+        }
         res[key] = attr.type.fromMongo(record[key]);
     }
     return res;
+}
+
+export async function setUpIndexesDb(dbName: string) {
+    let col = await Connection.getDbCollection(dbName);
+    let dbDef = await getDbDef(dbName);
+
+    let textIndex : Map<string> = {};
+
+    // Extract text index to single index with all text fields
+    for (let attr of dbDef.schema.attributes) {
+        for (let index of attr.type.mongoIndex()) {
+            if (index == "text") {
+                textIndex[attr.name] = index;
+            } else {
+                await col.createIndex({[attr.name]:index});
+            }
+        }
+    }
+
+    if (textIndex) {
+        await col.createIndex(textIndex, {"name" : "text_index"});
+    }
 }
 
 export async function updateRecordDb(dbName: string, record : Record, _:IMessages) : Promise<Record> {
@@ -205,9 +234,6 @@ export async function getDbDef(dbName: string) : Promise<DbDefinition> {
     let res = toTypedObjects(schema, "tag", false);
 
     res.schema = withSystemAttributes(res.schema);
-
-    console.log(JSON.stringify(res, null, "  "))
-
     return res;
 }
 
@@ -301,12 +327,16 @@ export class DbDataFetcher implements DataFetcher {
 
 
     async getRecordsGeo(dbName: string,
+                        zoom:number,
                         filters?: Map<Filter>,
                         search?:string,
-                        sort?: ISort) : Promise<(Record | Cluster)[]>
+                        extraFields:string[]=[]) : Promise<(Record | Cluster)[]>
     {
         let col = await Connection.getDbCollection(dbName);
+        let dbDef = await this.getDbDefinition(dbName);
         let query = this.baseQuery(dbName, filters, search);
+
+        let attrMap = arrayToMap(dbDef.schema.attributes, attr => attr.name);
 
         let locFilters = mapValues(filters).filter(filter => filter instanceof LocationFilter);
         if (locFilters.length != 1) {
@@ -314,46 +344,73 @@ export class DbDataFetcher implements DataFetcher {
         }
 
         let locFilter : LocationFilter = locFilters[0] as LocationFilter;
-        let hash1 = geohash(locFilter.minlat, locFilter.minlon);
-        let hash2 = geohash(locFilter.maxlat, locFilter.maxlon);
 
-        let commonLength = 0;
-        for (commonLength = 0; commonLength < hash1.length; commonLength++) {
-            if (hash1[commonLength] !== hash2[commonLength]) break;
+
+        let hashsize = findBestHashPrecision(zoom, 100);
+
+        console.debug("zoom", zoom, "hash size", hashsize);
+
+        let locAttr = locFilter.attr.name;
+
+        let project = {
+            _id: 1,
+            "geohash": {
+                "$substr": [
+                    "$location.properties.hash",
+                    // Slice current records geohash for required length
+                    0, hashsize + 1]
+            },
+            "record._id": "$_id",
+            ["record." + locAttr] : "$" + locAttr,
+        };
+
+        // FIXME security issue : filter fields upon user rights
+        for (let field of extraFields) {
+            project["record." + field] = "$" + field;
         }
 
-        const SUB_PRECISION = 3;
+        console.debug("Project", project);
 
+        // We group twice because $slice is not avail on $group stage
+        // and gathering all records for each group may exceed RAM
+        // We use "$first" for single records and then group again at higher scale for having several samples in a group
         let cursor = col.aggregate([{$match: query},
             {
-                $project: {
-                    _id: 1,
-                    "geohash": {
-                        "$substr": [
-                            "$location.properties.hash",
-                            // Slice current records geohash for required length
-                            0, commonLength + SUB_PRECISION]
-                    },
-                    "properties": 1,
-                    "location": 1
-
-                }
+                $project: project
             },
-
             {
                 $group: {
                     _id: "$geohash",
                     "count": {
                         $sum: 1
                     },
-                    "items": {
-                        $push: {
-                            coordinates: "$location"
-                        }
-                    }
+                    "record": {$first: "$record"},
                 }
-            }]);
-        return cursor.toArray();
+            },{
+                $group: {
+                    _id : {"$substr": ["$_id", 0, hashsize]},
+                    "count": {$sum:"$count"},
+                    "records" :  { $push : "$record"}
+                }
+            }
+        ]);
+
+        let clusters = await cursor.toArray();
+        
+        return flatMap(clusters, function (cluster) : Record | Cluster{
+            if (cluster.count <= MARKERS_PER_CLUSTER) {
+                return cluster.records.map((record : Record) => fromMongo(record, attrMap));
+            } else {
+                // Cluster id is the hash
+                let coord = decode(cluster._id)
+
+                return [{
+                    lat : coord.latitude,
+                    lon : coord.longitude,
+                    count : cluster.count
+                }]
+            }
+        })
     }
 
     async countRecords(dbName: string, filters: Map<Filter> = {}, search:string=null) : Promise<number> {

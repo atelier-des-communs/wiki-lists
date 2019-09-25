@@ -13,7 +13,7 @@ export function unwrapAxiosResponse<T>(promise : AxiosPromise<T>) : Promise<T> {
         return toTypedObjects(response.data);
 
     }).catch(error => {
-        console.info("Server error happened", error);
+        console.error("Server error happened", error);
 
         // In case of validation error, wrap the errors into proper ValidationException
         if (error.response && error.response.status == VALIDATION_ERROR_STATUS_CODE) {

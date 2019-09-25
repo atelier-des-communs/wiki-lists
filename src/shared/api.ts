@@ -58,6 +58,8 @@ export const CHECK_DB_NAME = "/api/check-db/:db_name";
 export const UPDATE_DB_URL = "/api/update-db/:db_name";
 export const UPDATE_SCHEMA_URL = "/api/update-schema/:db_name";
 
+// Admin setup
+export const INIT_INDEXES_URL = "/api/create_indexes/:db_name";
 
 export const DOWNLOAD_XLS_URL  = "/xls/:db_name";
 export const DOWNLOAD_JSON_URL  = "/json/:db_name";
@@ -80,7 +82,7 @@ export interface DataFetcher {
     getRecords(dbName: string, filters?: Map<Filter>, search?:string, sort?: ISort, from?:number, limit?:number) : Promise<Record[]>;
 
     // Get records location, potentially grouped by clusters
-    getRecordsGeo(dbName: string, filters?: Map<Filter>, search?:string, sort?: ISort) : Promise<(Record | Cluster)[]>;
+    getRecordsGeo(dbName: string, zoom:number, filters?: Map<Filter>, search?:string, extraFields?:string[]) : Promise<(Record | Cluster)[]>;
 
     countRecords(dbName: string, filters?: Map<Filter>, search?:string) : Promise<number>;
     getDbDefinition(dbName:string) : Promise<DbDefinition>;

@@ -17,48 +17,45 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps> extends R
         super(props);
         this.className = className;
         this.state = {loading:false};
-        console.debug("Instantiated " + (this.className), this.props);
+        console.debug("Instantiated " + (this.className));
     }
 
     /** Should look at props / state, and return null if no loading is required */
-    abstract fetchData(props: T) :  Promise<{}>;
+    abstract fetchData(nextProps: T, nextState:{}) :  Promise<{}>;
 
-    doFetch(props:T): void {
+    doFetch(props:T, state:{}): void {
         // Don't fetch data twice
         if (this.state.loading) {
             return;
         }
 
-        let promise = this.fetchData(props);
+        let promise = this.fetchData(props, state);
 
         console.debug("Getting promise for " + this.className, promise);
 
         if (promise) {
-            this.setState({loading:true});
+            this.state.loading = true;
 
             this.props.promises.push(
                 promise.then(() => {
                     console.debug("Async data fetch finished for " + this.className);
-                    this.setState({loading:false});
+                    this.state.loading = false;
                 }));
         }
     }
 
     componentWillMount(): void {
-        this.doFetch(this.props);
+        this.doFetch(this.props, this.state);
     }
 
     componentWillUpdate(nextProps: Readonly<T>, nextState: Readonly<{}>, nextContext: any): void {
-        this.doFetch(nextProps);
+        this.doFetch(nextProps, nextState);
     }
 
 
     render() {
         let child = this.renderLoaded();
         return <div>
-                <Dimmer active={this.state.loading}>
-                   <Loader />
-                </Dimmer>
                 {child}
             </div>
     }

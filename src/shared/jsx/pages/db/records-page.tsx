@@ -42,7 +42,8 @@ import {ResponsiveButton} from "../../components/responsive";
 import {safeStorage} from "../../utils/storage";
 import {toAnnotatedJson} from "../../../serializer";
 import {extractSort} from "../../../views/sort";
-import {Map, TileLayer, Marker, Popup} from "react-leaflet";
+import {RecordsMap} from "./map";
+
 
 
 type RecordsPageProps =
@@ -75,7 +76,9 @@ function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: Vie
 
     const NothingHere = () => <div style={{textAlign:"center"}}>
         <Header>{_.no_element}</Header>
-        {addItemButton(props)}
+
+        <AddItemButton {...props} />
+
         {hasFiltersOrSearch(db.schema, props) &&
         <Button icon="delete"
                 onClick={() => clearFiltersOrSearch(db.schema, props)} >
@@ -127,7 +130,7 @@ function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: Vie
     }
 }
 
-function addItemButton(props: RecordsPageProps) {
+function AddItemButton(props: RecordsPageProps) {
     let _ = props.messages;
     return hasRight(props, AccessRight.EDIT) && <SafeClickWrapper  trigger={
         <Button primary style={{marginBottom:"1em"}} icon="plus" content={_.add_item} />
@@ -142,6 +145,8 @@ function addItemButton(props: RecordsPageProps) {
 }
 
 const SIDEBAR_LS_KEY = "filtersSidebar";
+
+
 
 
 // Main component
@@ -163,33 +168,7 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
         this.setState({filtersSidebar:newVal});
     }
 
-    groupByButton(groupAttr:string) {
-        let props = this.props;
-        let db = props.db;
-        let _ = props.messages;
 
-        let groupOptions = db.schema.attributes
-
-        // FIXME find declarative way to handle types that can support grouping
-            .filter(attr => attr.type.tag == Types.ENUM  || attr.type.tag ==  Types.BOOLEAN)
-            .map(attr => (
-                {value:attr.name,
-                    text:attrLabel(attr, _)} as DropdownItemProps));
-
-        // No attributes elligible for grouping ? => show nothing
-        if (groupOptions.length == 0) return null;
-
-        groupOptions = [{value:null, text:_.empty_group_by} as DropdownItemProps].concat(groupOptions);
-
-        return <Dropdown
-            inline title={_.group_by}
-            button className="icon" icon="plus square outline"
-            labeled
-            placeholder={_.group_by}
-            options={groupOptions}
-            value={groupAttr}
-            onChange={(e, update) => goTo(props, updatedGroupBy(update.value as string))} />
-    }
 
     goToPage(pageNum : number | string) {
         if (typeof pageNum  != 'number') {
@@ -197,6 +176,8 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
         }
         goTo(this.props, {page: intToStr(pageNum)});
     }
+
+
 
     render() {
         let props = this.props;
@@ -214,7 +195,7 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
             DOWNLOAD_JSON_URL.replace(":db_name", dbName)
             + props.location.search;
 
-        let DownloadButton= <SafePopup  trigger={<Button icon="download" title={_.download} basic />} >
+        let DownloadButton = () => <SafePopup  trigger={<Button icon="download" title={_.download} basic />} >
             <>
                 <a href={xls_link}><b>Excel</b></a>
                 <br/>
@@ -223,25 +204,60 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
             </SafePopup>;
 
 
-        let sortByDropdown = <SortPopup {...props} schema={db.schema} />
+        let SortByDropdown = () => <SortPopup {...props} schema={db.schema} />
 
-        let updateSchemaButton = hasRight(props, AccessRight.ADMIN) &&
-            <SafeClickWrapper trigger={
-            <ResponsiveButton icon="configure"
-                    color="teal"
-                    content={_.edit_attributes} />} >
+        let UpdateSchemaButton = () => {
+            if (!hasRight(props, AccessRight.ADMIN)) {
+                return null;
+            }
+            return <SafeClickWrapper trigger={
+                <ResponsiveButton icon="configure"
+                                  color="teal"
+                                  content={_.edit_attributes} />} >
                 <SchemaDialog
                     {...props}
                     onUpdateSchema={props.onUpdateSchema}
                     schema={db.schema}
-            />
-        </SafeClickWrapper>;
+                />
+            </SafeClickWrapper>;
+        };
 
         let setViewType = (viewType: ViewType) => {
             goTo(props, serializeViewType(viewType));
-        }
+        };
+
+        //
         let viewType = extractViewType(params);
-        let viewTypeButtons = <Button.Group basic>
+
+        let GroupByButton = () => {
+            let props = this.props;
+            let db = props.db;
+            let _ = props.messages;
+
+            let groupOptions = db.schema.attributes
+
+            // FIXME find declarative way to handle types that can support grouping
+                .filter(attr => attr.type.tag == Types.ENUM  || attr.type.tag ==  Types.BOOLEAN)
+                .map(attr => (
+                    {value:attr.name,
+                        text:attrLabel(attr, _)} as DropdownItemProps));
+
+            // No attributes elligible for grouping ? => show nothing
+            if (groupOptions.length == 0) return null;
+
+            groupOptions = [{value:null, text:_.empty_group_by} as DropdownItemProps].concat(groupOptions);
+
+            return <Dropdown
+                inline title={_.group_by}
+                button className="icon" icon="plus square outline"
+                labeled
+                placeholder={_.group_by}
+                options={groupOptions}
+                value={groupAttr}
+                onChange={(e, update) => goTo(props, updatedGroupBy(update.value as string))} />
+        }
+
+        let ViewTypeButtons = () => <Button.Group basic>
             <Button icon="table"
                     title={`${_.view_type} : ${_.table_view}`}
                     active={viewType == ViewType.TABLE}
@@ -252,8 +268,20 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
                     onClick={() => setViewType(ViewType.CARDS)}/>
         </Button.Group>;
 
+        let Paging : React.SFC<{}> = () => {
+            if (props.nbPages > 1) {
+                return <Pagination
+                    totalPages={props.nbPages}
+                    activePage={props.page}
+                    style={{marginTop:"1em"}}
+                    onPageChange={(e, {activePage}) => {this.goToPage(activePage)}}
+                />
+            } else {
+                return null;
+            }};
 
-        let attributeDisplayButton = <SafePopup position="bottom left" trigger={
+
+        let AttributeDisplayButton = () => <SafePopup position="bottom left" trigger={
             <ResponsiveButton
                 icon="unhide"
                 title={_.select_columns}
@@ -268,44 +296,42 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
         props.head.setTitle(db.label);
         props.head.setDescription(db.description);
 
-        let sideBarButton = (floated:"left" | "right" | null) =><Button
+        let SideBarButton = (props: {floated : "left" | "right" | null}) => <Button
             className="large-screen-only"
             compact
             size="mini"
-            floated={floated}
+            floated={props.floated}
             onClick={() => this.toggleFilterSidebar()}
             title={_.toggle_filters}
             icon={this.state.filtersSidebar ? "angle double left" : "angle double right"} />
 
-        let position : [number, number] = [46, 2];
-        let zoom = 6;
+
 
         return <>
 
             <div style={{float: "right"}} className="no-print">
                 <SearchComponent {...props} schema={db.schema} />
-                {DownloadButton}
+                <DownloadButton />
             </div>
 
             <div className="no-print">
-                {updateSchemaButton}
+                <UpdateSchemaButton/>
             </div>
 
-            <div className="no-print" style={{marginBottom: "0.2em", marginTop: "0.2em"}}>
-                <span className="inline-label mobile hidden">
-                    {_.view_type}
-                </span>
-                {viewTypeButtons}
-            </div>
             <div>
-                <span className="inline-label mobile hidden">
-                    {_.selection}
-                </span>
-                {sortByDropdown}
-                {this.groupByButton(groupAttr)}
-                {<FiltersPopup {...props} schema={db.schema}/>}
+
+
+                <SortByDropdown />
+
+                {
+                    // <GroupByButton />
+                }
+
+                <FiltersPopup {...props} schema={db.schema}/>
+
                 &nbsp;
-                {attributeDisplayButton}
+
+                <AttributeDisplayButton/>
             </div>
 
             <div style={{display:"flex"}}>
@@ -314,37 +340,26 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
                      style={{
                          paddingTop: "1em",
                          paddingRight: "1em"}}>
-                    {sideBarButton("right")}
+                    <SideBarButton floated={"right"} />
                     <FilterSidebar {...props} schema={db.schema} />
                 </div>
                 }
 
                 <div style={{flexGrow:1, paddingTop: "1em"}}>
 
-                    <div className="no-print">
-                        {!this.state.filtersSidebar && sideBarButton(null)}
-                        {addItemButton(this.props)}
+                    <div className="no-print" style={{ marginBottom: "0.5em" }} >
+                        {!this.state.filtersSidebar && <SideBarButton floated={null} />}
+                        <AddItemButton {...this.props} />
+                        <ViewTypeButtons />
                     </div>
 
-                    <Map center={position} zoom={zoom} style={{height:'500px', width:'100%'}} scrollWheelZoom={false} >
-                        <TileLayer
-                            attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        />
-                        <Marker position={position}>
-                            <Popup>
-                                A pretty CSS3 popup. <br /> Easily customizable.
-                            </Popup>
-                        </Marker>
-                    </Map>
+                    <RecordsMap {...props} />
 
-                    {props.nbPages > 1 ? <Pagination
-                        totalPages={props.nbPages}
-                        activePage={props.page}
-                        onPageChange={(e, {activePage}) => {this.goToPage(activePage)}}
-                    /> : null }
+                    <Paging />
 
                     {groupedRecords(groupAttr, props, viewType)}
+
+                    <Paging />
 
                 </div>
             </div>
@@ -412,7 +427,6 @@ function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>)
                 count:count,
                 queryParams:sortFilterParams,
                 pages:{},
-                markers: null,
             }));
         })
     }
