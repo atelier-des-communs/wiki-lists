@@ -4,7 +4,7 @@ export default {
     DB_HOST : getEnv("DB_HOST", "localhost"),
     DB_NAME : getEnv("DB_NAME", "wikilist"),
     DB_PORT : getEnv("DB_PORT", "27017"),
-    LANGS : getEnv("LANG", ""),
+    LANGS : getEnv("LANGS", ""),
 };
 
 function getEnv(key:string, def:any = null) {

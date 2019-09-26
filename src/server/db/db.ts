@@ -282,7 +282,11 @@ export class DbDataFetcher implements DataFetcher {
         let mongoFilters = mapValues(filters).map(f => f.mongoFilter()).filter(f => f !== null);
 
         if (search) {
-           mongoFilters.push({$text: {$search: search}});
+            // Eech word need to be quoted for AND behavior
+            let words = search.split(" ");
+            let quotedSearch = words.map(word => '\"' + word + '\"').join(" ")
+            console.debug("quoted search", quotedSearch)
+            mongoFilters.push({$text: {$search: quotedSearch}});
         }
 
         if (mongoFilters.length == 1) {

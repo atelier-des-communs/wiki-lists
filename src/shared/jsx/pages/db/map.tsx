@@ -1,9 +1,10 @@
 /** */
 import * as React from 'react';
-import {GlobalContextProps} from "../../context/global-context";
+import {GlobalContextProps, GlobalContextProvider} from "../../context/global-context";
 import {DbPathParams, DbProps, PageProps} from "../../common-props";
 import {AsyncDataComponent} from "../../async/async-data-component";
 import {Cluster, findBestHashPrecision, ICoord} from "../../../model/geo";
+import {Link} from 'react-router-dom'
 import {Record} from "../../../model/instances";
 import {Map as MapEl, TileLayer, MapControl, Tooltip, Viewport, CircleMarker} from "react-leaflet";
 import {LatLngBounds, LatLng} from "leaflet";
@@ -19,11 +20,69 @@ import {Attribute, EnumType, EnumValue, LocationType, Types} from "../../../mode
 import {encode, bboxes} from "ngeohash";
 import * as QueryString from "querystring";
 import {DispatchProp} from "react-redux";
-import {createUpdateMarkersAction} from "../../../redux";
+import {createUpdateItemAction, createUpdateMarkersAction} from "../../../redux";
 import {cloneDeep} from "lodash";
 import Control from 'react-leaflet-control';
-import {Button} from 'semantic-ui-react';
+import {Button, Modal} from 'semantic-ui-react';
 import {isEqual} from "lodash";
+import {SingleRecordComponent} from "../../components/single-record-component";
+import {MessagesProps} from "../../../i18n/messages";
+import {EditDialog} from "../../dialogs/edit-dialog";
+import {RouteComponentProps} from "react-router";
+import {recordName} from "../../utils/utils";
+import {singleRecordLink} from "../../../api";
+
+
+
+type RecordPopupProps = GlobalContextProps & MessagesProps & RouteComponentProps<{}> & DbProps & {
+    recordId:string,
+    onClose : () => void};
+
+export class RecordPopup extends AsyncDataComponent<RecordPopupProps> {
+
+    state : {
+        record : Record;
+    };
+
+    constructor(props: RecordPopupProps) {
+        super(props);
+        this.state = {record:null};
+    }
+
+    fetchData(nextProps: RecordPopupProps, nextState: {}): Promise<any> {
+        let record = this.props.store.getState().items[this.props.recordId];
+        if (record) {
+            this.state.record = record;
+            return null;
+        } else {
+            return this.props.dataFetcher.getRecord(this.props.db.name, nextProps.recordId).then(
+                (record) => {
+                    this.props.store.dispatch(createUpdateItemAction(record));
+                    this.setState({record});
+                });
+        }
+    }
+
+    renderLoaded() {
+        return <Modal open={true} onClose={this.props.onClose} >
+            <Modal.Header>
+                {(this.state.record) ?
+                    <Link to={singleRecordLink(this.props.db.name, this.state.record._id)}>
+                    {recordName(this.props.db.schema, this.state.record)}
+                    </Link> : null}
+            </Modal.Header>
+
+            <Modal.Content>
+            {(this.state.record) ?
+                <SingleRecordComponent
+                    {...this.props}
+                    record={this.state.record}
+                /> : null}
+            </Modal.Content>
+
+        </Modal>
+    }
+}
 
 type MapProps = GlobalContextProps & DbProps & PageProps<DbPathParams> & DispatchProp<{}>;
 
@@ -39,6 +98,7 @@ const DEFAULT_BOUNDS = new LatLngBounds(
 export class RecordsMap extends AsyncDataComponent<MapProps> {
 
     state : {
+        popupRecordId:string,
         bounds : LatLngBounds,
         markers : (Record | Cluster)[],
         viewport:Viewport};
@@ -50,6 +110,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps> {
     constructor(props: MapProps) {
         super(props);
         this.state = {
+            popupRecordId:null,
             markers:null,
             bounds : DEFAULT_BOUNDS,
             viewport:DEFAULT_VIEWPORT}
@@ -76,6 +137,13 @@ export class RecordsMap extends AsyncDataComponent<MapProps> {
             bound.getSouth(), bound.getWest(),
             bound.getNorth(), bound.getEast() ,
             hashsize);
+    }
+
+    openPopup(recordId:string) {
+        this.setState({popupRecordId:recordId});
+    }
+    closePopup() {
+        this.setState({popupRecordId:null});
     }
 
     boundsToFilter(bounds:LatLngBounds) {
@@ -230,13 +298,12 @@ export class RecordsMap extends AsyncDataComponent<MapProps> {
                 let coord = record[this.locAttr.name] as ICoord;
                 let latln =  new LatLng(coord.lat, coord.lon);
 
-
-
                 let colorVal = record[this.colorAttr.name]
                 let color = colorVal ? this.colorMap[colorVal].color : "white";
 
                 return <CircleMarker
                     center={latln}
+                    onClick={() => this.openPopup((item as Record)._id)}
                     fillOpacity={1}
                     fillColor={color}
                     strokeColor="black"
@@ -270,7 +337,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps> {
             </>
         };
 
-        return<MapEl
+        return <><MapEl
 
             viewport={this.state.viewport}
             onViewportChanged={this.onViewportChanged}
@@ -291,6 +358,13 @@ export class RecordsMap extends AsyncDataComponent<MapProps> {
             <Markers />
 
         </MapEl>
+            {this.state.popupRecordId ?
+                <RecordPopup
+                    {...this.props}
+                    recordId={this.state.popupRecordId}
+                    onClose={() => this.closePopup()}
+                /> : null}
+            </>
     }
 
 }

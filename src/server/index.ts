@@ -8,7 +8,7 @@ import {setUp as setUpRest} from "./rest/db";
 import {setUp as setUpHtml} from "./html";
 import {setUp as setUpExport} from "./export";
 import {setUp as setUpAuth} from "./rest/auth";
-import {supportedLanguages} from "./i18n/messages";
+import {LANGUAGES} from "./i18n/messages";
 import {LANG_COOKIE, COOKIE_DURATION} from "../shared/api";
 import * as mongoose from "mongoose";
 import '../shared/model';
@@ -37,7 +37,7 @@ export default function initServer(dist_paths:string[]) : express.Express {
     // Pretty print JSON result
     server.set('json spaces', 2);
 
-    // TODO : Use nginx to serve sttic files instead of NodeJS
+    // TODO : Use nginx to serve static files instead of NodeJS
     for (let path of dist_paths) {
         server.use('/static', express.static(path, {maxAge: MAX_AGE}));
     }
@@ -53,13 +53,6 @@ export default function initServer(dist_paths:string[]) : express.Express {
     return server;
 }
 
-let languages = supportedLanguages;
-
-if (config.LANGS) {
-    let langs = config.LANGS.split(",")
-    languages = supportedLanguages.filter(lang => lang.key in langs);
-}
-
 let langSettings =  {
-    languages : supportedLanguages.map(lang => lang.key),
+    languages : LANGUAGES.map(lang => lang.key),
     cookie: {name: LANG_COOKIE}};

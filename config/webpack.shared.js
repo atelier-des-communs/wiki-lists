@@ -1,6 +1,8 @@
 var path = require("path");
 var MiniCssExtractPlugin = require('mini-css-extract-plugin');
 var nodeExternals = require('webpack-node-externals');
+const WebpackCdnPlugin = require('webpack-cdn-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { StatsWriterPlugin } = require("webpack-stats-plugin");
 
 exports.CLIENT_BUILD_DIR = path.resolve(__dirname, "..", "dist", "client");
@@ -109,6 +111,17 @@ var mkconfig = (loaders, name) => ({
     },
     plugins: [
         new MiniCssExtractPlugin("[name].css"),
+        /** new HtmlWebpackPlugin (),
+        new WebpackCdnPlugin({
+            modules: [
+                {
+                    name: 'leaflet',
+                    var: 'L',
+                    path: 'dist/leaflet.js'
+                },
+            ],
+            publicPath: '/node_modules'
+        }), */
         new StatsWriterPlugin({
             fields : null,
             filename: "./reports/" + name + "-stats.json"})

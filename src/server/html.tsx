@@ -12,11 +12,13 @@ import {ContentWithStatus, returnPromiseWithCode} from "./utils";
 import {Request, Response} from "express-serve-static-core"
 import {COOKIE_DURATION, IMarshalledContext, RECORDS_ADMIN_PATH, SECRET_COOKIE} from "../shared/api";
 import {GlobalContextProps, HeadSetter, ICookies} from "../shared/jsx/context/global-context";
-import {selectLanguage, supportedLanguages} from "./i18n/messages";
+import {selectLanguage, LANGUAGES} from "./i18n/messages";
 import * as escapeHtml from "escape-html";
 import {toAnnotatedJson} from "../shared/serializer";
 import {cloneDeep} from "lodash";
 import {IUser} from "../shared/model/user";
+import {cache, getCache} from "./cache";
+import * as md5 from "md5";
 
 const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '/static' : 'http://localhost:8081/static';
 
@@ -74,6 +76,7 @@ function renderHtml(head:SSRHeadSetter, html:string, context:IMarshalledContext=
 				<script>
 					window.__MARSHALLED_CONTEXT__ = ${JSON.stringify(toAnnotatedJson(context))};
 				</script>
+				
 				<script src="${BUNDLE_ROOT}/lang-${context.lang}.js"></script>
 				<script src="${BUNDLE_ROOT}/client.bundle.js"></script>
 			</body>
@@ -87,93 +90,101 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
 
     let lang = selectLanguage(req);
 
-    // Copy supported languages without the messages : they are retrieved from separate JS file
-    let supportedLang = supportedLanguages.map((lang) => {
-        let res = cloneDeep(lang);
-        delete res.messages;
-        return res;
-    });
+    let baseurl = req.url.split("?")[0];
+    let key = baseurl + ":" + md5(JSON.stringify(req.query));
 
-    let initialState : IState= {
-        items: null, // Will be fetched asynchronously
-        sortedPages : {
-            queryParams: null,
-            count: null,
-            pages: {},
+    return getCache(key, async () => {
+        
+        // Copy supported languages without the messages : they are retrieved from separate JS file
+        let supportedLang = LANGUAGES.map((lang) => {
+            let res = cloneDeep(lang);
+            delete res.messages;
+            return res;
+        });
 
-        },
-        geoMarkers : {},
-        dbDefinition: null, // Will be fetched asynchronously
-        user: req.user as IUser};
+        let initialState : IState= {
+            items: null, // Will be fetched asynchronously
+            sortedPages : {
+                queryParams: null,
+                count: null,
+                pages: {},
 
-    const store = createStore(
-        reducers,
-        toImmutable(initialState));
+            },
+            geoMarkers : {},
+            dbDefinition: null, // Will be fetched asynchronously
+            user: req.user as IUser};
+
+        const store = createStore(
+            reducers,
+            toImmutable(initialState));
 
 
-    let serverCookies : ICookies = {
-        get : (name:string) => {
-            return req.cookies[name];
-        },
+        let serverCookies : ICookies = {
+            get : (name:string) => {
+                return req.cookies[name];
+            },
 
-        set : () => {
-            // Ignore : we should not set cookies on server side
-        }
-    };
-
-    // Render HTML several time, until all async promises have been resolved
-    // This is the way we do async data fetching on SSR
-    // The Redux Store will accumulate state and eventually make the component to render synchronously
-    // @BlackMagic
-    let appHTML : string;
-    let nbRender = 0;
-    do {
-        let globalContext: GlobalContextProps = {
-            store,
-            dataFetcher: new DbDataFetcher(req),
-            lang:lang.key,
-            messages:lang.messages,
-            cookies:serverCookies,
-            promises: [],
-            head,
-            supportedLanguages:supportedLang
+            set : () => {
+                // Ignore : we should not set cookies on server side
+            }
         };
 
-        appHTML = renderToString(<StaticRouter
-            location={req.url}
-            context={{}}>
-            <App {...globalContext} />
-        </StaticRouter>);
+        // Render HTML several time, until all async promises have been resolved
+        // This is the way we do async data fetching on SSR
+        // The Redux Store will accumulate state and eventually make the component to render synchronously
+        // @BlackMagic
+        let appHTML : string;
+        let nbRender = 0;
+        do {
+            let globalContext: GlobalContextProps = {
+                store,
+                dataFetcher: new DbDataFetcher(req),
+                lang:lang.key,
+                messages:lang.messages,
+                cookies:serverCookies,
+                promises: [],
+                head,
+                supportedLanguages:supportedLang
+            };
 
-        if (globalContext.promises.length == 0) {
-            break;
-        } else {
-            await Promise.all(globalContext.promises);
+            appHTML = renderToString(<StaticRouter
+                location={req.url}
+                context={{}}>
+                <App {...globalContext} />
+            </StaticRouter>);
+
+            if (globalContext.promises.length == 0) {
+                break;
+            } else {
+                await Promise.all(globalContext.promises);
+            }
+
+            nbRender++;
+            if (nbRender > MAX_RENDER_DEPTH) {
+                console.error(`Exceeded max depth of SSR data fetching ${MAX_RENDER_DEPTH}: returning current HTML`, req.url);
+                break;
+            }
+
+        } while (true);
+
+        // Object serialized and embedded into final HTML, for passing to client
+        let context : IMarshalledContext = {
+            state : store.getState(),
+            env: process.env.NODE_ENV,
+            lang:lang.key,
+            supportedLanguages:supportedLang};
+
+        let html = renderHtml(
+            head,
+            appHTML,
+            context);
+        return {
+            content:html,
+            statusCode:head.statusCode
         }
+    });
 
-        nbRender++;
-        if (nbRender > MAX_RENDER_DEPTH) {
-            console.error(`Exceeded max depth of SSR data fetching ${MAX_RENDER_DEPTH}: returning current HTML`, req.url);
-            break;
-        }
 
-    } while (true);
-
-    // Object serialized and embedded into final HTML, for passing to client
-    let context : IMarshalledContext = {
-        state : store.getState(),
-        env: process.env.NODE_ENV,
-        lang:lang.key,
-        supportedLanguages:supportedLang};
-
-    let html = renderHtml(
-        head,
-        appHTML,
-        context);
-    return {
-        content:html,
-        statusCode:head.statusCode
-    }
 }
 
 
