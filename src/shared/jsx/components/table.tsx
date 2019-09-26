@@ -47,10 +47,10 @@ class _TableComponent extends React.Component<TableProps> {
         let sort = extractSort(queryParams);
         let _ = props.messages;
 
-        let filterAttributeFunc = filterAttribute(props, props.db.schema);
+        let filterAttributeFunc = filterAttribute(props, props.db.schema, "summary");
 
         // First header cell : the menu toolbox
-        let columnsHeader = hasRight(props, AccessRight.EDIT) && <Table.HeaderCell className="no-print" collapsing key="menu" >
+        let columnsHeader = <Table.HeaderCell className="no-print" collapsing key="menu" >
             <SafePopup position="bottom left" trigger={
                 <Button
                     icon="columns"
@@ -91,32 +91,19 @@ class _TableComponent extends React.Component<TableProps> {
         /* Table rows */
         const rows  = props.records.map(record =>
 
-            <Table.Row key={record["_id"] as string}>
+            <Table.Row key={record["_id"] as string} >
 
-                {hasRight(props, AccessRight.EDIT) &&
                 <Table.Cell collapsing key="actions" className="no-print" >
                     <EditButtons {...props} record={record} />
-                </Table.Cell>}
+                </Table.Cell>
 
                 {attrs.filter(filterAttributeFunc).map(attr => {
-
-                    let valueEl = <ValueHandler
-                        {...props}
-                        editMode={false}
-                        type={attr.type}
-                        value={record[attr.name]}/>;
-
-
                     return <Table.Cell key={attr.name} >
-                        {
-                            /* Attribute part of the name ? => wrap it in a link */
-                            attr.isName ?
-                                <Link to={recordUrl(record._id)} >
-                                    {valueEl}
-                                </Link> :
-                                valueEl
-                        }
-
+                        <ValueHandler
+                            {...props}
+                            editMode={false}
+                            type={attr.type}
+                            value={record[attr.name]}/>
                     </Table.Cell>
                 })}
 

@@ -1,6 +1,6 @@
 import {DOWNLOAD_JSON_URL, DOWNLOAD_XLS_URL} from "../shared/api";
 import {Express} from "express";
-import {AttributeDisplay, extractDisplays} from "../shared/views/display";
+import {extractDisplays} from "../shared/views/display";
 import {Record} from "../shared/model/instances";
 import {applySearchAndFilters, extractFilters, extractSearch} from "../shared/views/filters";
 import {DbDataFetcher} from "./db/db";
@@ -10,6 +10,7 @@ import {Request, Response} from "express-serve-static-core"
 import {attrLabel} from "../shared/jsx/utils/utils";
 import {extractSort} from "../shared/views/sort";
 import {cloneDeep} from "lodash";
+import {AttributeDisplay} from "../shared/model/types";
 
 enum ExportType {
     JSON = "json",
@@ -36,10 +37,10 @@ async function getAllWithFilters(req:Request, db_name:string, query:Map<string>)
 }
 
 /** Filter out hidden attributes on a JSON object  */
-function filterObj(obj : Map<any>, displays : Map<AttributeDisplay>) {
+function filterObj(obj : Map<any>, displays : Map<boolean>) {
     let res = cloneDeep(obj) as Map<any>;
     for (let key in res) {
-        if (displays[key] == AttributeDisplay.HIDDEN) {
+        if (!displays[key]) {
             delete res[key];
         }
     }
@@ -50,7 +51,7 @@ function filterObj(obj : Map<any>, displays : Map<AttributeDisplay>) {
 async function exportAs(db_name:string, req:Request, res:Response, exportType: ExportType) {
 
     let dbDef = await new DbDataFetcher(req).getDbDefinition(db_name);
-    let displays = extractDisplays(dbDef.schema, req.query);
+    let displays = extractDisplays(dbDef.schema, req.query, "summary");
     let records = await getAllWithFilters(req, db_name, req.query);
     records = records.map(record => filterObj(record, displays));
 
@@ -62,7 +63,10 @@ async function exportAs(db_name:string, req:Request, res:Response, exportType: E
         var workbook = new Workbook();
         let worksheet = workbook.addWorksheet("main");
         worksheet.columns = dbDef.schema.attributes
-            .filter(attr => displays[attr.name] != AttributeDisplay.HIDDEN)
+
+            // Filter visible attributes only
+            .filter(attr => displays[attr.name])
+
             .map(attr => ({header:attrLabel(attr, null), key:attr.name}));
         for (let record  of records) {
             worksheet.addRow(filterObj(record, displays));

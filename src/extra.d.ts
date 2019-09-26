@@ -19,3 +19,21 @@ declare module "short-unique-id" {
     function ShortUniqueId(): _ShortUniqueId;
     export = ShortUniqueId;
 }
+
+declare module "react-leaflet-control" {
+    interface ControlProps {
+        position:string;
+    }
+    export class Control extends React.Component<ControlProps> {
+    }
+    export default Control;
+}
+
+declare module "redis-lru" {
+
+    class Cache  {
+        getOrSet<T>(key:string, func:() => T, maxAge:number) : Promise<T>;
+    }
+
+    export default function lru(redis:any, nbitems:number) : Cache;
+}

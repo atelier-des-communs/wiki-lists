@@ -104,8 +104,7 @@ export class UpdatePageAction {
 
 export class UpdateMarkersAction {
     public type = ActionType.UPDATE_MARKERS;
-    public query : string;
-    public markers : (Cluster | Record)[];
+    public markersByKey : Map<(Cluster | Record)[]>;
 }
 
 
@@ -138,8 +137,8 @@ export function createUpdateCountAction(sortedPages: ISortedPages) : UpdateCount
 export function createUpdatePageAction(idx:number, page: string[]) : UpdatePageAction {
     return {type:ActionType.UPDATE_PAGE, idx, page}
 }
-export function createUpdateMarkersAction(query:string, markers: (Cluster | Record)[]) : UpdateMarkersAction {
-    return {type:ActionType.UPDATE_MARKERS, query, markers}
+export function createUpdateMarkersAction(markersByKey : Map<(Cluster | Record)[]>) : UpdateMarkersAction {
+    return {type:ActionType.UPDATE_MARKERS, markersByKey}
 }
 
 export type TAction  =
@@ -214,7 +213,10 @@ function sortedPagesReducer(state: Immutable.ImmutableObject<ISortedPages>= null
 function markersReducer(state: Immutable.ImmutableObject<Map<MarkerOrCluster[]>> = null, action : TAction) {
     if (action.type == ActionType.UPDATE_MARKERS) {
         let updateAction = action as UpdateMarkersAction;
-        return state.set(updateAction.query, updateAction.markers);
+        for (let key in updateAction.markersByKey) {
+            state = state.set(key, updateAction.markersByKey[key]);
+        }
+        return state;
     } else {
         return state;
     }

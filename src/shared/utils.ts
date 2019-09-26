@@ -206,3 +206,7 @@ export function oneToArray<T>(elem : OneOrMany<T>) : T[]  {
     }
 }
 
+
+export function parseBool(value : any) {
+    return value == "true" || value == 1 || value=="1" || !!value;
+}

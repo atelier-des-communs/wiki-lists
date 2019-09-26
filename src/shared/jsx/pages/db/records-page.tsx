@@ -381,7 +381,7 @@ const mapStateToProps =(state : IState, props?: RouteComponentProps<{}> & Global
         return {nbPages :null, records:null, page}
     }
 
-    let nbPages = Math.floor(state.sortedPages.count / ITEMS_PER_PAGE) +1;
+    let nbPages = Math.ceil(state.sortedPages.count / ITEMS_PER_PAGE);
 
     // Get record for given page
     let records = state.sortedPages.pages[page].map(id => state.items[id]);
@@ -441,7 +441,7 @@ function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>)
         return props.dataFetcher.getRecords(
             props.match.params.db_name,
             filters, search, sort,
-            page * ITEMS_PER_PAGE,
+            (page -1) * ITEMS_PER_PAGE,
             ITEMS_PER_PAGE)
         .then((records) => {
 

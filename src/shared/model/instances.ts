@@ -22,6 +22,7 @@ export function systemType() {
         name: "_id",
         system: true,
         readonly: true,
+        display: {details:false, summary:false},
         type: new TextType(),
         label: "@id_attr"
     });
@@ -30,6 +31,7 @@ export function systemType() {
         name: "_creationTime",
         system: true,
         readonly: true,
+        display: {details:false, summary:false},
         type: new DatetimeType(),
         label: "@creation_time_attr"
     });
@@ -38,6 +40,7 @@ export function systemType() {
         name: "_updateTime",
         system: true,
         readonly: true,
+        display: {details:false, summary:false},
         type: new DatetimeType(),
         label: "@update_time_attr"
     });
@@ -46,7 +49,7 @@ export function systemType() {
         name: "_pos",
         system: true,
         readonly: true,
-        hidden: true,
+        display: {details:false, summary:false},
         type: new NumberType(),
         label: "@pos_attr"
     });

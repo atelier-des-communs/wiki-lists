@@ -122,3 +122,7 @@ body {
     border:None;
     box-shadow: None;
 }
+
+table.table tr:hover {
+    background-color: lightyellow;
+}

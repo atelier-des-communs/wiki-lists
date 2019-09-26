@@ -132,8 +132,9 @@ export let messages : IMessages = {
         login: "Login",
         userNotFound : "User not found",
         wrongPassword : "Wrong password",
-    }
+    },
 
+    update_list_from_map : "Filter list for this area"
 
 };
 

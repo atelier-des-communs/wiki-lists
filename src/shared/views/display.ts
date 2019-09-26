@@ -1,59 +1,37 @@
 import {Attribute, attributesMap, StructType} from "../model/types";
-import {Map} from "../utils";
+import {Map, parseBool} from "../utils";
 
-export enum AttributeDisplay {
-    HIDDEN = "hidden",
-    SMALL = "small",
-    MEDIUM = "medium",
-    FULL = "full",
-}
+
 
 function attrNameToQueryParam(attrName: string) {
     return  `${attrName}.d`;
 }
 
-function defaultDisplay(attr:Attribute) {
-    return attr.system || attr.hidden ? AttributeDisplay.HIDDEN : AttributeDisplay.MEDIUM;
-}
-
 // Extract display parameters from URL
-export function extractDisplays(schema:StructType, queryParams: Map<string>) : Map<AttributeDisplay> {
-    let res : Map<AttributeDisplay> = {};
+export function extractDisplays(schema:StructType, queryParams: Map<string>, context : "details" | "summary") : Map<boolean> {
+    let res : Map<boolean> = {};
     for (let attr of schema.attributes) {
         let paramName = attrNameToQueryParam(attr.name);
-        let display = queryParams[paramName];
-        if (display) {
-            switch (display) {
-                case "h" :
-                    res[attr.name] = AttributeDisplay.HIDDEN; break;
-                case "s" :
-                    res[attr.name] = AttributeDisplay.SMALL; break;
-                case "m" :
-                    res[attr.name] = AttributeDisplay.MEDIUM; break;
-                case "f" :
-                    res[attr.name] = AttributeDisplay.FULL; break;
-                default:
-                    throw new Error(`Display type not recognized : ${display}`)
-
-            }
+        if (paramName in queryParams) {
+            res[attr.name] = parseBool(queryParams[paramName]);
         } else {
-            res[attr.name] = defaultDisplay(attr);
+            // Default value
+            res[attr.name] = attr.display[context];
         }
     }
     return res;
 }
 
 // Serialize display state into queryParams
-export function serializeDisplay(displays : Map<AttributeDisplay>, schema:StructType) : Map<string> {
+export function serializeDisplay(displays : Map<boolean>, schema:StructType, context : "details" | "summary" = "summary") : Map<string> {
     let res : Map<string> = {};
     let attrMap = attributesMap(schema);
     for (let attrName in displays) {
         let attr = attrMap[attrName];
-        let defDisp = defaultDisplay(attr);
+        let defaultDisp = attr.display[context];
         let paramName = attrNameToQueryParam(attrName);
-        res[paramName] =
-            (displays[attrName] == defDisp) ?
-                null : displays[attrName].charAt(0);
+        let val = parseBool(displays[attrName])
+        res[paramName] = (val == defaultDisp) ? null : (val ? "1" : "0");
     }
     return res;
 }

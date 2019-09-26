@@ -253,7 +253,7 @@ function getFilters(props: IFiltersComponentProps & RouteComponentProps<{}>) {
     let filters = extractFilters(props.schema, queryParams);
 
     return props.schema.attributes
-        .filter(attr => !attr.system && !attr.hidden)
+        .filter(attr => !attr.system && attr.display.summary)
         .map((attr) => ({attr, comp:singleFilter(props, attr, filters[attr.name])}))
         .filter((res) => res.comp != null);
 }

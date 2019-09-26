@@ -1,7 +1,7 @@
 import * as React from "react";
 import {extractGroupBy} from "../../views/group";
 import {Attribute, EnumValue, StructType, TextType, Type, Types} from "../../model/types";
-import {AttributeDisplay, extractDisplays} from "../../views/display";
+import {extractDisplays} from "../../views/display";
 import {RouteComponentProps} from "react-router"
 import {Label, Popup} from "semantic-ui-react";
 import {parseParams} from "../../utils";
@@ -22,14 +22,14 @@ export function ellipsis(text:string, maxWidth:number= 15) {
 
 
 // Return a function filtering visible attributes for all kind of views
-export function filterAttribute(props: RouteComponentProps<{}>, schema:StructType) {
+export function filterAttribute(props: RouteComponentProps<{}>, schema:StructType, context : "details" | "summary") {
 
     let queryParams = parseParams(props.location.search);
-    let displays = extractDisplays(schema, queryParams);
+    let displays = extractDisplays(schema, queryParams, context);
     let groupBy = extractGroupBy(queryParams);
 
     return (attr:Attribute) => {
-        return attr.name != groupBy && (displays[attr.name] != AttributeDisplay.HIDDEN);
+        return attr.name != groupBy && displays[attr.name];
     }
 }
 

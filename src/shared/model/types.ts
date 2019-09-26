@@ -202,6 +202,11 @@ export function newType(typeTag:string) {
     }
 }
 
+export interface AttributeDisplay {
+    details:boolean;
+    summary:boolean;
+}
+
 @classTag("attribute")
 export class Attribute {
     new? : boolean;
@@ -212,7 +217,7 @@ export class Attribute {
     isName?: boolean = false;
     isMandatory?: boolean = false;
     system ?:boolean = false;
-    hidden ?:boolean = false;
+    display?:AttributeDisplay = {details:true, summary:true};
     readonly? : boolean = false;
     constructor(init:Attribute) {
         extend(this, init);

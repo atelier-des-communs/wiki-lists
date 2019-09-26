@@ -21,7 +21,7 @@ export class SingleRecordComponent extends  React.Component<SingleRecordComponen
         let props = this.props;
 
         // Filter out attributes that are part of the name (already shown)
-        let filterAttributeFunc = (attr:Attribute) => filterAttribute(props, props.db.schema)(attr) && !attr.isName;
+        let filterAttributeFunc = (attr:Attribute) => filterAttribute(props, props.db.schema, props.large ? "details" : "summary")(attr) && !attr.isName;
         let _ = props.messages;
         return <>
         {props.db.schema.attributes

@@ -20,6 +20,7 @@ import {Cluster, findBestHashPrecision} from "../../shared/model/geo";
 import {encode as geohash, decode} from "ngeohash";
 import {BadRequestException, HttpError} from "../exceptions";
 import {flatMap} from "lodash";
+import {cache} from "../cache";
 
 const SCHEMAS_COLLECTION = "schemas";
 const DB_COLLECTION_TEMPLATE = (name:string) => {return `db.${name}`};
@@ -279,19 +280,21 @@ export class DbDataFetcher implements DataFetcher {
 
         // Build mongo filters
         let mongoFilters = mapValues(filters).map(f => f.mongoFilter()).filter(f => f !== null);
-        let filter:{} = null;
 
-        if (mongoFilters.length == 1) {
-            filter = mongoFilters[0]
-        } else if (mongoFilters.length >= 1) {
-            filter = {$and : mongoFilters}
+        if (search) {
+           mongoFilters.push({$text: {$search: search}});
         }
 
-        // TODO : add text search
-
-        return filter
+        if (mongoFilters.length == 1) {
+            return mongoFilters[0]
+        } else if (mongoFilters.length >= 1) {
+            return {$and : mongoFilters}
+        } else {
+            return {};
+        }
     }
 
+    @cache
     async getRecords(
         dbName: string,
         filters: Map<Filter> = {},
@@ -325,7 +328,7 @@ export class DbDataFetcher implements DataFetcher {
     }
 
 
-
+    @cache
     async getRecordsGeo(dbName: string,
                         zoom:number,
                         filters?: Map<Filter>,
@@ -413,6 +416,7 @@ export class DbDataFetcher implements DataFetcher {
         })
     }
 
+    @cache
     async countRecords(dbName: string, filters: Map<Filter> = {}, search:string=null) : Promise<number> {
         let col = await Connection.getDbCollection(dbName);
         let query = this.baseQuery(dbName, filters);

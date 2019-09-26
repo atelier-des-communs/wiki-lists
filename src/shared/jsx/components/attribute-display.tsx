@@ -3,7 +3,7 @@ import * as React from "react";
 import {RouteComponentProps} from "react-router"
 import {Attribute, StructType} from "../../model/types";
 import {Button, Header} from "semantic-ui-react"
-import {AttributeDisplay, extractDisplays, serializeDisplay} from "../../views/display";
+import {extractDisplays, serializeDisplay} from "../../views/display";
 import {goTo, parseParams} from "../../utils";
 import {attrLabel, ellipsis} from "../utils/utils";
 import {IMessages} from "../../i18n/messages";
@@ -18,9 +18,9 @@ export const AttributeDisplayComponent : React.SFC<AttributeDisplayComponent> = 
     let {schema} = props;
     let _ = props.messages;
     let queryParams = parseParams(props.location.search);
-    let displays = extractDisplays(props.schema, queryParams);
+    let displays = extractDisplays(props.schema, queryParams, "summary");
 
-    let setDisplay = (attrName : string, display:AttributeDisplay) => {
+    let setDisplay = (attrName : string, display:boolean) => {
         let params = serializeDisplay({[attrName]:display}, schema);
         goTo(props, params);
     };
@@ -33,13 +33,13 @@ export const AttributeDisplayComponent : React.SFC<AttributeDisplayComponent> = 
                 <Button icon="unhide"
                         compact size="small"
                         title={_.show_attribute}
-                        active={display == AttributeDisplay.MEDIUM}
-                        onClick={() => setDisplay(attr.name, AttributeDisplay.MEDIUM)} />
+                        active={display}
+                        onClick={() => setDisplay(attr.name, true)} />
                 <Button icon="hide"
                         compact size="small"
                         title={_.hide_attribute}
-                        active={display == AttributeDisplay.HIDDEN}
-                        onClick={() => setDisplay(attr.name, AttributeDisplay.HIDDEN)} />
+                        active={!display}
+                        onClick={() => setDisplay(attr.name, false)} />
             </Button.Group>
 
             <span style={{marginLeft:"1em"}} ><b>{ellipsis(attrLabel(attr, _))}</b></span>

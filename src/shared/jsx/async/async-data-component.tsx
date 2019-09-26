@@ -11,12 +11,11 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps> extends R
 
     className : string;
 
-    state : {loading:boolean};
+    loading:boolean;
 
     constructor(props: T, className:string=null) {
         super(props);
         this.className = className;
-        this.state = {loading:false};
         console.debug("Instantiated " + (this.className));
     }
 
@@ -25,7 +24,7 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps> extends R
 
     doFetch(props:T, state:{}): void {
         // Don't fetch data twice
-        if (this.state.loading) {
+        if (this.loading) {
             return;
         }
 
@@ -34,12 +33,12 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps> extends R
         console.debug("Getting promise for " + this.className, promise);
 
         if (promise) {
-            this.state.loading = true;
+            this.loading = true;
 
             this.props.promises.push(
                 promise.then(() => {
                     console.debug("Async data fetch finished for " + this.className);
-                    this.state.loading = false;
+                    this.loading = false;
                 }));
         }
     }
