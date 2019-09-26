@@ -6,11 +6,17 @@ import {empty, intToStr, strToInt} from "../../utils";
 import {enumLabel} from "../utils/utils";
 import {MessagesProps} from "../../i18n/messages";
 import {format, parse} from "date-fns";
-import ReactQuill from "react-quill";
-import 'react-quill/dist/quill.snow.css';
+import {withAsyncImport} from "../async/async-import-component";
+
+// import 'react-quill/dist/quill.snow.css';
 
 
 const DATE_FORMAT="D MMM YYYY HH:mm";
+
+const AsyncQuill = withAsyncImport(() => {
+    return import(/* webpackChunkName: "quill" */ "react-quill").then((module) => module.default);
+});
+
 
 interface ValueHandlerProps<T, TypeT extends Type<T>> extends MessagesProps {
 
@@ -130,7 +136,7 @@ class RichTextHandler extends ControlledValueHandler<string, TextType> {
     }
 
     renderEdit() {
-        return <ReactQuill
+        return <AsyncQuill
             value={this.state.innerValue || ""}
             onChange={(content, delta, source, editor) => this.onChange(editor.getHTML())} />
     }

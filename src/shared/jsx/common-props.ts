@@ -22,10 +22,6 @@ export interface SingleRecordPathParams extends DbPathParams {
 /** Generic params for any root page : GlobalContext + Route properties */
 export type PageProps<RouteProps> = GlobalContextProps & RouteComponentProps<RouteProps>
 
-
-
-
-
 /** Props for components acting on a specific DB */
 export interface DbProps {
     db: DbDefinition;

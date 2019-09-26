@@ -22,20 +22,25 @@ export class Header extends  React.Component<GlobalContextProps>  {
         let props = this.props;
         let _ = props.messages;
 
-        let langSelector = <Button.Group compact size="mini" floated="right" style={{margin:"5px"}}>
+        let LangSelector = () => {
+            if (props.supportedLanguages.length == 1) {
+                return null;
+            }
+            return <Button.Group compact size="mini" floated="right" style={{margin:"5px"}}>
 
-            {props.supportedLanguages.map(lang =>
-                <Button
-                    key={lang.key}
-                    compact size="small"
-                    active={props.lang == lang.key}
-                    onClick={() => this.changeLang(lang.key)}>
+                {props.supportedLanguages.map(lang =>
+                    <Button
+                        key={lang.key}
+                        compact size="small"
+                        active={props.lang == lang.key}
+                        onClick={() => this.changeLang(lang.key)}>
 
-                    <Flag name={lang.flag} />
+                        <Flag name={lang.flag} />
 
-                </Button>
-            )}
-        </Button.Group >;
+                    </Button>
+                )}
+            </Button.Group >;
+        }
 
         return <>
 
@@ -46,7 +51,7 @@ export class Header extends  React.Component<GlobalContextProps>  {
                     compact primary size="small"
                     content={_.auth.login} />
 
-            {langSelector}
+            <LangSelector />
 
             <div style={{
                 padding:"3em",

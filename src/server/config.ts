@@ -3,7 +3,8 @@ export default {
     SECRET : getEnv("SECRET"),
     DB_HOST : getEnv("DB_HOST", "localhost"),
     DB_NAME : getEnv("DB_NAME", "wikilist"),
-    DB_PORT : getEnv("DB_PORT", "27017")
+    DB_PORT : getEnv("DB_PORT", "27017"),
+    LANGS : getEnv("LANG", ""),
 };
 
 function getEnv(key:string, def:any = null) {

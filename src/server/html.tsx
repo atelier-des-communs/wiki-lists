@@ -64,6 +64,7 @@ function renderHtml(head:SSRHeadSetter, html:string, context:IMarshalledContext=
 				<link rel="shortcut icon" type="image/png" href="/static/img/favicon.png"/>
 				<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.css" />
 				<link rel="stylesheet" href="${BUNDLE_ROOT}/client.bundle.css" />
+				
 				<!-- FIXME include only for DB with coordinates -->
 				<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.css" />
 			</head>

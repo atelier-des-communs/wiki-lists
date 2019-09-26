@@ -53,6 +53,13 @@ export default function initServer(dist_paths:string[]) : express.Express {
     return server;
 }
 
+let languages = supportedLanguages;
+
+if (config.LANGS) {
+    let langs = config.LANGS.split(",")
+    languages = supportedLanguages.filter(lang => lang.key in langs);
+}
+
 let langSettings =  {
     languages : supportedLanguages.map(lang => lang.key),
     cookie: {name: LANG_COOKIE}};
