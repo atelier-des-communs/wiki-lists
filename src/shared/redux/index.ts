@@ -7,29 +7,24 @@ import {DbDefinition} from "../model/db-def";
 import {Map} from "../utils";
 import {toAnnotatedJson} from "../serializer";
 import {IUser} from "../model/user";
-import {Cluster, MarkerOrCluster} from "../model/geo";
+import {Cluster} from "../model/geo";
+import {Marker} from "../api";
 
 
+export type Pages = Map<string[]>;
 
-
-export interface ISortedPages {
-
-    count:number;
-
-    /** Filters sort and search */
-    queryParams : any;
-
-    /** Map<pageIdx => [recordid]> */
-    pages : Map<string[]>;
-
-}
 export interface IState {
     /** id => Rescord */
     items : {[key:string] : Record};
 
-    sortedPages : ISortedPages;
+    // Indexed by filters
+    geoMarkers : Map<Marker[]>;
 
-    geoMarkers : Map<MarkerOrCluster[]>;
+    // Indexed by filters
+    counts : Map<number>;
+
+    // Indexed by filters and sort
+    pages : Map<Pages>;
 
     // Definition of DB
     dbDefinition : DbDefinition;
@@ -93,12 +88,14 @@ export class UpdateUserAction implements Action {
 // SortedPages actions
 export class UpdateCountAction {
     public type = ActionType.UPDATE_COUNT;
-    public sortedPages : ISortedPages;
+    public queryKey: string;
+    public count:number;
 }
 
 export class UpdatePageAction {
     public type = ActionType.UPDATE_PAGE;
-    public idx : number;
+    public querySortKey: string;
+    public num : number;
     public page:string[];
 }
 
@@ -131,13 +128,13 @@ export function createUpdateDbAction(dbDef:DbDefinition) : UpdateDbAction {
 export function createUpdateUserAction(user:IUser) : UpdateUserAction {
     return {type:ActionType.UPDATE_USER, user:toImmutableJson(user)};
 }
-export function createUpdateCountAction(sortedPages: ISortedPages) : UpdateCountAction {
-    return {type:ActionType.UPDATE_COUNT, sortedPages:toImmutableJson(sortedPages)}
+export function createUpdateCountAction(queryKey: string, count:number) : UpdateCountAction {
+    return {type:ActionType.UPDATE_COUNT, queryKey, count}
 }
-export function createUpdatePageAction(idx:number, page: string[]) : UpdatePageAction {
-    return {type:ActionType.UPDATE_PAGE, idx, page}
+export function createUpdatePageAction(querySortKey:string, num: number, page: string[]) : UpdatePageAction {
+    return {type:ActionType.UPDATE_PAGE, querySortKey, page, num}
 }
-export function createUpdateMarkersAction(markersByKey : Map<(Cluster | Record)[]>) : UpdateMarkersAction {
+export function createUpdateMarkersAction(markersByKey : Map<Marker[]>) : UpdateMarkersAction {
     return {type:ActionType.UPDATE_MARKERS, markersByKey}
 }
 
@@ -169,7 +166,7 @@ function itemsReducer(items:Immutable.ImmutableObject<Map<Record>> = null, actio
             }
             let records = (action as AddItemsAction).records;
 
-            for (record of records) {
+            for (let record of records) {
                 items = items.set(record._id, record);
             }
             return items;
@@ -199,18 +196,27 @@ function userReducer(user: Immutable.ImmutableObject<IUser> = null, action : TAc
     }
 }
 
-function sortedPagesReducer(state: Immutable.ImmutableObject<ISortedPages>= null, action : TAction) {
-    if (action.type == ActionType.UPDATE_COUNT) {
-        return (action as UpdateCountAction).sortedPages;
-    } else if (action.type == ActionType.UPDATE_PAGE) {
+function pagesReducer(state: Immutable.ImmutableObject<Map<Pages>> = null, action : TAction) {
+    if (action.type == ActionType.UPDATE_PAGE) {
         let updatePageAction = action as UpdatePageAction;
-        return state.setIn(['pages', updatePageAction.idx], updatePageAction.page);
+        let pages = Immutable.from(state[updatePageAction.querySortKey] || {});
+        pages = pages.set(updatePageAction.num, updatePageAction.page);
+        return state.set(updatePageAction.querySortKey, pages);
     } else {
         return state;
     }
 }
 
-function markersReducer(state: Immutable.ImmutableObject<Map<MarkerOrCluster[]>> = null, action : TAction) {
+function countReducer(state:Immutable.ImmutableObject<Map<number>> = null, action: TAction) {
+    if (action.type == ActionType.UPDATE_COUNT) {
+        let updateCount = action as UpdateCountAction;
+        return state.set(updateCount.queryKey, updateCount.count);
+    } else {
+        return state;
+    }
+}
+
+function markersReducer(state: Immutable.ImmutableObject<Map<Marker[]>> = null, action : TAction) {
     if (action.type == ActionType.UPDATE_MARKERS) {
         let updateAction = action as UpdateMarkersAction;
         for (let key in updateAction.markersByKey) {
@@ -226,7 +232,8 @@ function markersReducer(state: Immutable.ImmutableObject<Map<MarkerOrCluster[]>>
 export let reducers : Reducer<IState> = combineReducers ({
     items: itemsReducer,
     dbDefinition: dbDefReducer,
-    sortedPages : sortedPagesReducer,
+    pages : pagesReducer,
+    counts : countReducer,
     geoMarkers : markersReducer,
     user:userReducer
 });

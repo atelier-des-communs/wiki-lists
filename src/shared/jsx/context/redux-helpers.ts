@@ -56,18 +56,18 @@ interface MapStateToPropsFunction<TStateProps, PathParams> {
  * - redux props and events, routes
  */
 // @BlackMagic
-export function connectComponent<PathParams extends DbPathParams, TStateProps>(
+export function connectComponent<PathParams extends DbPathParams, TStateProps, AsyncProps>(
     stateMapper : MapStateToPropsFunction<TStateProps, PathParams>,
-    fetchData : (props:GlobalContextProps & RouteComponentProps<PathParams>) => Promise<any>) {
+    fetchData : (props:GlobalContextProps & RouteComponentProps<PathParams>) => Promise<AsyncProps> | AsyncProps) {
 
-    type TOwnProps = GlobalContextProps & RouteComponentProps<PathParams>;
-    type TComponentType = TStateProps & GlobalContextProps & RouteComponentProps<PathParams> & ReduxEventsProps;
+    type TOwnProps = GlobalContextProps & RouteComponentProps<PathParams> & AsyncProps;
+    type TComponentType = TStateProps & GlobalContextProps & RouteComponentProps<PathParams> & ReduxEventsProps & AsyncProps;
 
     return (component: React.ComponentClass<TComponentType> | React.SFC<TComponentType>) :
         React.ComponentClass<RouteComponentProps<PathParams>> | React.SFC<RouteComponentProps<PathParams>> =>
     {
         let name = (component as any).name
         let withRedux =  connect<TStateProps, ReduxEventsProps, TOwnProps>(stateMapper, matchDispatchToProps)(component);
-        return withAsyncData<RouteComponentProps<PathParams>>(fetchData)(withRedux, name);
+        return withAsyncData<RouteComponentProps<PathParams>, AsyncProps>(fetchData)(withRedux, name);
     }
 }

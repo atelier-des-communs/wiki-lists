@@ -31,7 +31,8 @@ export class SsrSafe extends React.Component<NoSSRProps> {
 }
 
 export interface SafeWrapperProps {
-    trigger: JSX.Element;
+    trigger: (onOpen : () => void) => JSX.Element;
+    render : (onClose :() => void) => JSX.Element;
 }
 
 /** A Dialog, safe to render on server side, without Portals, since it only render the "dialog" part when clicked */
@@ -42,30 +43,23 @@ export class SafeClickWrapper extends React.Component<SafeWrapperProps> {
         this.state = {open: false};
     }
 
-    open = () => {
+    open() {
         this.setState({open:true});
     }
 
-    close = () => {
+    close() {
         this.setState({open:false});
     }
 
     render() {
-        let trigger = React.cloneElement(
-            this.props.trigger,
-            {onClick: (e:Event) => {e.stopPropagation(); this.open()}});
 
-        let children = this.state.open ?
-            React.Children.map(this.props.children,
-                child => React.cloneElement(
-                    child as React.ReactElement<any>,
-                    {close: () => this.close()})) : null;
-
+        let open = this.open.bind(this);
+        let close = this.close.bind(this);
 
         // Placeholder, shown anyway
         return  <>
-            {trigger}
-            {this.state.open ? children: null}
+            {this.props.trigger(open)}
+            {this.state.open ? this.props.render(close): null}
         </>;
 
     }

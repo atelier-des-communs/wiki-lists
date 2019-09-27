@@ -168,21 +168,19 @@ class NumberHandler extends ControlledValueHandler<number, NumberType> {
 class EnumHandler extends ControlledValueHandler<string, EnumType> {
     renderView() {
 
-        let {type, size, ...otherProps} = this.props;
+        let {type, style} = this.props;
         let _ = this.props.messages;
 
         let enumMap = enumValuesMap(type);
         let enumValue = enumMap[this.state.innerValue];
         let text = enumValue && enumValue.label ? enumValue.label : this.state.innerValue;
 
-        let style = otherProps.style ? otherProps.style : {};
+        style = style || {};
         if (enumValue && enumValue.color) {
             style = {...style, backgroundColor:enumValue.color};
         }
         return text ?
-            <Label
-                {...otherProps}
-                style={style} >
+            <Label style={style} >
                 {text}
             </Label>
             :

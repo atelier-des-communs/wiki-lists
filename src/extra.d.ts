@@ -37,3 +37,7 @@ declare module "redis-lru" {
 
     export default function lru(redis:any, nbitems:number) : Cache;
 }
+
+declare module "json-stringify-deterministic" {
+    export default function stringify(value:any) : string;
+}

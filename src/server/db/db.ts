@@ -5,7 +5,7 @@ import {Record, withSystemAttributes} from "../../shared/model/instances";
 import {validateSchemaAttributes} from "../../shared/validators/schema-validators";
 import {dieIfErrors, ValidationException} from "../../shared/validators/validators";
 import {validateRecord} from "../../shared/validators/record-validator";
-import {DataFetcher, SECRET_COOKIE} from "../../shared/api";
+import {DataFetcher, Marker, SECRET_COOKIE} from "../../shared/api";
 import {arrayToMap, isIn, Map, mapMap, mapValues, oneToArray} from "../../shared/utils";
 import {IMessages} from "../../shared/i18n/messages";
 import {AccessRight} from "../../shared/access";
@@ -337,7 +337,7 @@ export class DbDataFetcher implements DataFetcher {
                         zoom:number,
                         filters?: Map<Filter>,
                         search?:string,
-                        extraFields:string[]=[]) : Promise<(Record | Cluster)[]>
+                        extraFields:string[]=[]) : Promise<Marker[]>
     {
         let col = await Connection.getDbCollection(dbName);
         let dbDef = await this.getDbDefinition(dbName);
@@ -365,7 +365,7 @@ export class DbDataFetcher implements DataFetcher {
                 "$substr": [
                     "$location.properties.hash",
                     // Slice current records geohash for required length
-                    0, hashsize + 1]
+                    0, hashsize + 2]
             },
             "record._id": "$_id",
             ["record." + locAttr] : "$" + locAttr,
@@ -404,7 +404,7 @@ export class DbDataFetcher implements DataFetcher {
 
         let clusters = await cursor.toArray();
         
-        return flatMap(clusters, function (cluster) : Record | Cluster{
+        return flatMap(clusters, function (cluster) : Marker {
             if (cluster.count <= MARKERS_PER_CLUSTER) {
                 return cluster.records.map((record : Record) => fromMongo(record, attrMap));
             } else {

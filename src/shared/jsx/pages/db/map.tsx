@@ -4,11 +4,10 @@ import {GlobalContextProps, GlobalContextProvider} from "../../context/global-co
 import {DbPathParams, DbProps, PageProps} from "../../common-props";
 import {AsyncDataComponent} from "../../async/async-data-component";
 import {Cluster, findBestHashPrecision, ICoord} from "../../../model/geo";
-import {Link} from 'react-router-dom'
 import {Record} from "../../../model/instances";
 import {Map as MapEl, TileLayer, MapControl, Tooltip, Viewport, CircleMarker} from "react-leaflet";
 import {LatLngBounds, LatLng} from "leaflet";
-import {arrayToMap, goTo, Map, mapValues, parseParams, updatedParams} from "../../../utils";
+import {arrayToMap, goTo, goToResettingPage, Map, mapValues, parseParams, updatedParams} from "../../../utils";
 import {
     extractFilters,
     extractSearch,
@@ -28,61 +27,13 @@ import {isEqual} from "lodash";
 import {SingleRecordComponent} from "../../components/single-record-component";
 import {MessagesProps} from "../../../i18n/messages";
 import {EditDialog} from "../../dialogs/edit-dialog";
-import {RouteComponentProps} from "react-router";
 import {recordName} from "../../utils/utils";
-import {singleRecordLink} from "../../../api";
+import {Marker, singleRecordLink} from "../../../api";
+import stringify from "json-stringify-deterministic";
+import {EditButtons} from "../../components/edit-button";
+import {RecordPopup} from "../../components/record-popup";
 
 
-
-type RecordPopupProps = GlobalContextProps & MessagesProps & RouteComponentProps<{}> & DbProps & {
-    recordId:string,
-    onClose : () => void};
-
-export class RecordPopup extends AsyncDataComponent<RecordPopupProps> {
-
-    state : {
-        record : Record;
-    };
-
-    constructor(props: RecordPopupProps) {
-        super(props);
-        this.state = {record:null};
-    }
-
-    fetchData(nextProps: RecordPopupProps, nextState: {}): Promise<any> {
-        let record = this.props.store.getState().items[this.props.recordId];
-        if (record) {
-            this.state.record = record;
-            return null;
-        } else {
-            return this.props.dataFetcher.getRecord(this.props.db.name, nextProps.recordId).then(
-                (record) => {
-                    this.props.store.dispatch(createUpdateItemAction(record));
-                    this.setState({record});
-                });
-        }
-    }
-
-    renderLoaded() {
-        return <Modal open={true} onClose={this.props.onClose} >
-            <Modal.Header>
-                {(this.state.record) ?
-                    <Link to={singleRecordLink(this.props.db.name, this.state.record._id)}>
-                    {recordName(this.props.db.schema, this.state.record)}
-                    </Link> : null}
-            </Modal.Header>
-
-            <Modal.Content>
-            {(this.state.record) ?
-                <SingleRecordComponent
-                    {...this.props}
-                    record={this.state.record}
-                /> : null}
-            </Modal.Content>
-
-        </Modal>
-    }
-}
 
 type MapProps = GlobalContextProps & DbProps & PageProps<DbPathParams> & DispatchProp<{}>;
 
@@ -95,12 +46,13 @@ const DEFAULT_BOUNDS = new LatLngBounds(
     new LatLng(42, -5),
     new LatLng(50, 8));
 
-export class RecordsMap extends AsyncDataComponent<MapProps> {
+export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
+
+    className = "RecordsMap";
 
     state : {
         popupRecordId:string,
         bounds : LatLngBounds,
-        markers : (Record | Cluster)[],
         viewport:Viewport};
 
     locAttr : Attribute;
@@ -111,7 +63,6 @@ export class RecordsMap extends AsyncDataComponent<MapProps> {
         super(props);
         this.state = {
             popupRecordId:null,
-            markers:null,
             bounds : DEFAULT_BOUNDS,
             viewport:DEFAULT_VIEWPORT}
 
@@ -164,7 +115,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps> {
         });
     }
 
-    fetchData(props: MapProps, nextState:any): Promise<any> {
+    fetchData(props: MapProps, nextState:any): Promise<Marker[]>|Marker[] {
 
         console.debug("fetch data called for map");
 
@@ -174,6 +125,8 @@ export class RecordsMap extends AsyncDataComponent<MapProps> {
         let filters = extractFilters(props.db.schema, query);
 
         let bounds : LatLngBounds = nextState.bounds;
+
+        console.debug("Geo bounds", bounds, "zoom", nextState.viewport.zoom);
 
         // List geohashes to request
         // We use geohashes in order to "tile" the request and to make theam easier to cache both on client & server
@@ -199,13 +152,15 @@ export class RecordsMap extends AsyncDataComponent<MapProps> {
             // Compute key of cache
             let updatedFilters = filtersForHash(hash);
             let query = serializeSortAndFilters(null, updatedFilters, search);
+
+            // Add zoom to the key
             query["zoom"] = nextState.viewport.zoom;
 
-            let cacheKey = QueryString.stringify(query);
+            let cacheKey = stringify(query);
 
             if (cacheKey in props.store.getState().geoMarkers) {
 
-                console.debug("key in cache, updating", hash);
+                console.debug("key in cache", hash, cacheKey);
 
                 let markers = props.store.getState().geoMarkers[cacheKey];
 
@@ -214,7 +169,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps> {
 
             } else {
 
-                console.debug("key not in cache, fetching", hash);
+                console.debug("key not in cache, fetching", hash, cacheKey);
 
                 // Fetch markers for this geohash
                 promises.push(props.dataFetcher.getRecordsGeo(
@@ -223,31 +178,39 @@ export class RecordsMap extends AsyncDataComponent<MapProps> {
                     updatedFilters, search,
                     [this.colorAttr.name]).then((markers) =>
                 {
-
                     return {cacheKey, markers};
                 }));
             }
         }
 
-        this.state.markers = newMarkers;
 
-        if (promises) {
+        if (promises.length > 0) {
+
+            // Wait for all tiles
             return Promise.all(promises).then((items) => {
 
                 let markersByKey : Map<(Cluster | Record)[]> = {};
                 for (let keyAndMarkers of items) {
+
+                    // For cache
                     markersByKey[keyAndMarkers.cacheKey] = keyAndMarkers.markers;
-                    newMarkers = newMarkers.concat(this.filterMarkers( keyAndMarkers.markers, bounds));
+
+                    // Append to result
+                    newMarkers = newMarkers.concat(keyAndMarkers.markers);
                 }
 
                 // Store all in cache
                 props.store.dispatch(createUpdateMarkersAction(markersByKey));
-
-                // refresh
-                this.setState({markers:newMarkers});
+                let res = this.filterMarkers(newMarkers, bounds);
+                console.debug("Asynchronous update of markers", res);
+                return res;
             });
         } else {
-            return null;
+
+            // Synchronous render
+            let res = this.filterMarkers(newMarkers, bounds);
+            console.debug("Synchronous update of markers", res);
+            return res;
         }
     }
 
@@ -270,7 +233,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps> {
 
     updateFilters = () => {
         let filter = this.boundsToFilter(this.state.bounds);
-        goTo(this.props, serializeFilters([filter]));
+        goToResettingPage(this.props, serializeFilters([filter]));
     }
 
     isLocationFilterUpTodate() : boolean {
@@ -285,11 +248,12 @@ export class RecordsMap extends AsyncDataComponent<MapProps> {
         return isEqual(filters[this.locAttr.name], filter);
     }
 
-    renderLoaded() {
+    render() {
 
-        console.debug("Rendering map. Nb markers :", this.state.markers.length);
+        console.debug("Rendering map");
 
         let _ = this.props.messages;
+
 
         let toMarker = (item : Record | Cluster) => {
             if (item.hasOwnProperty("_id")) {
@@ -302,6 +266,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps> {
                 let color = colorVal ? this.colorMap[colorVal].color : "white";
 
                 return <CircleMarker
+                    key={record._id}
                     center={latln}
                     onClick={() => this.openPopup((item as Record)._id)}
                     fillOpacity={1}
@@ -314,6 +279,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps> {
                 let latln = new LatLng(cluster.lat, cluster.lon);
 
                 return <CircleMarker
+                    key={latln.toString()}
                     center={latln}
                     radius={30}
                     stroke={false}
@@ -328,12 +294,12 @@ export class RecordsMap extends AsyncDataComponent<MapProps> {
         };
 
         const Markers = () => {
-            if (this.state.markers == null) {
+            if (this.asyncData == null) {
                return null;
             }
 
             return <>
-                {this.state.markers.map((item) => toMarker(item))}
+                {this.asyncData.map((item) => toMarker(item))}
             </>
         };
 

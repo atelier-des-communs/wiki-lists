@@ -27,15 +27,9 @@ export interface DbProps {
     db: DbDefinition;
 }
 
-/** Props for components displaying a list of records */
-
-export interface RecordsPropsOnly {
-    records: Record[],
-
-    // Pagination
-    nbPages:number,
-    page: number}
-export type RecordsProps = RecordsPropsOnly & DbProps;
+export interface RecordsProps {
+    records : Record[];
+}
 
 export interface SingleRecordPropsOnly {
     record: Record,

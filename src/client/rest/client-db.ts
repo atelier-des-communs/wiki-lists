@@ -8,7 +8,7 @@ import {
     DELETE_ITEM_URL,
     GET_DB_DEFINITION_URL,
     GET_ITEM_URL, GET_ITEMS_GEO_URL,
-    GET_ITEMS_URL,
+    GET_ITEMS_URL, Marker,
     UPDATE_ITEM_URL,
     UPDATE_SCHEMA_URL,
     VALIDATION_ERROR_STATUS_CODE
@@ -93,7 +93,7 @@ export let restDataFetcher : DataFetcher = {
         return await get<Record[]>(url);
     },
 
-    async getRecordsGeo(dbName:string, zoom:number, filters: Map<Filter> = {}, search: string=null, extraFields : string[]=[]) : Promise<(Record | Cluster)[]> {
+    async getRecordsGeo(dbName:string, zoom:number, filters: Map<Filter> = {}, search: string=null, extraFields : string[]=[]) : Promise<Marker[]> {
 
         let params = serializeSortAndFilters(null, filters, search);
         params['zoom'] = zoom;

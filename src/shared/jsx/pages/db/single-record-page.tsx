@@ -54,12 +54,13 @@ class _SingleRecordPage extends React.Component<SingleRecordPageProps> {
 }
 
 // Fetch data from Redux store and map it to props
+// FIXME : useless fetchDAta is enough
 const mapStateToProps =(state : IState, props?: RouteComponentProps<SingleRecordPathParams> & GlobalContextProps) : SingleRecordPropsOnly => {
     let record = toAnnotatedJson(state.items[props.match.params.id]);
     return {record, large:true}
 };
 
-function fetchData(props:GlobalContextProps & RouteComponentProps<SingleRecordPathParams>) {
+function fetchData(props:GlobalContextProps & RouteComponentProps<SingleRecordPathParams>) : SingleRecordPropsOnly | Promise<SingleRecordPropsOnly> {
 
     let {params} = props.match;
     let state = props.store.getState();
@@ -69,9 +70,11 @@ function fetchData(props:GlobalContextProps & RouteComponentProps<SingleRecordPa
             .getRecord(params.db_name, params.id)
             .then((record) => {
                 props.store.dispatch(createAddItemAction(record));
+                return {record:record, large:true};
             });
     }
-    return null;
+
+    return {record:state.items[params.id], large:true};
 }
 
 

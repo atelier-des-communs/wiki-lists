@@ -16,7 +16,7 @@ import {
     extractSearch,
     hasFiltersOrSearch, serializeSortAndFilters
 } from "../../../views/filters";
-import {DbPathParams, PageProps, RecordsProps, RecordsPropsOnly, ReduxEventsProps} from "../../common-props";
+import {DbPathParams, DbProps, PageProps, RecordsProps, ReduxEventsProps} from "../../common-props";
 import {TableComponent} from "../../components/table";
 import {extractGroupBy, groupBy, updatedGroupBy} from "../../../views/group";
 import {Collapsible} from "../../utils/collapsible";
@@ -28,7 +28,7 @@ import {extractViewType, serializeViewType, ViewType} from "../../../views/view-
 import {CardsComponent} from "../../components/cards";
 import {ValueHandler} from "../../type-handlers/editors";
 import {AttributeDisplayComponent} from "../../components/attribute-display";
-import {GlobalContextProps} from "../../context/global-context";
+import {GlobalContextProps, withGlobalContext} from "../../context/global-context";
 import {AccessRight, hasRight} from "../../../access";
 import {attrLabel} from "../../utils/utils";
 import {
@@ -43,12 +43,13 @@ import {safeStorage} from "../../utils/storage";
 import {toAnnotatedJson} from "../../../serializer";
 import {extractSort} from "../../../views/sort";
 import {RecordsMap} from "./map";
-
+import {AsyncDataComponent} from "../../async/async-data-component";
+import stringify from "json-stringify-deterministic";
 
 
 type RecordsPageProps =
     PageProps<DbPathParams> &
-    RecordsProps & // mapped from redux react
+    DbProps &
     ReduxEventsProps &
     DispatchProp<any>;
 
@@ -56,97 +57,235 @@ type RecordsPageProps =
 // TODO : make it a setting
 let ITEMS_PER_PAGE = 20;
 
-function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: ViewType) {
+interface GroupProps {
+    viewType: ViewType,
+    groupAttr: string
+}
 
-    let db = props.db;
-    let attrMap = attributesMap(db.schema);
-    let _ = props.messages;
 
-    // Switch on type of view
-    let recordsSwitch = (records: Record[]) => {
-        switch (viewType) {
-            case ViewType.TABLE :
-                return  <TableComponent {...props} records={records} />
-            case ViewType.CARDS:
-                return  <CardsComponent {...props} records={records} />;
-            default :
-                throw new  Error(`unsupported view type : ${viewType}`)
+class AsyncSinglePage extends AsyncDataComponent<RecordsPageProps, RecordsProps> {
+
+    fetchData(nextProps: RecordsPageProps, nextState: {}): Promise<RecordsProps> | RecordsProps {
+
+        let props = this.props;
+        let state = this.props.store.getState();
+        let query = parseParams(this.props.location.search);
+        let sort = extractSort(query);
+        let search = extractSearch(query);
+        let filters = extractFilters(state.dbDefinition.schema, query);
+
+        // Sort and filter params, serialized
+        let key = stringify(serializeSortAndFilters(sort, filters, search));
+
+        let page : number = strToInt(query.page) || 1;
+
+        if (key in state.pages && page in state.pages[key]) {
+            // Synchronous result
+
+            // Every record should be there
+            // FIXME : still check it and fetch each record if missing ?
+            let recordIds = state.pages[key][page];
+            return {records : recordIds.map(id => state.items[id])};
+
+        } else {
+
+            // We need to fetch it !
+            return props.dataFetcher.getRecords(
+                props.match.params.db_name,
+                filters, search, sort,
+                (page -1) * ITEMS_PER_PAGE,
+                ITEMS_PER_PAGE)
+                .then((records) => {
+
+                    // Update records by their id
+                    props.store.dispatch(createAddItemsAction(records));
+
+                    // Update page of indexes
+                    let recordsIds = records.map(record => record._id);
+                    props.store.dispatch(createUpdatePageAction(key, page, recordsIds));
+
+                    return {records};
+                });
         }
-    };
+    }
 
-    const NothingHere = () => <div style={{textAlign:"center"}}>
-        <Header>{_.no_element}</Header>
+    render() {
 
-        <AddItemButton {...props} />
+        if (this.asyncData == null) {
+            // FIXME Loading ?
+            return null
+        }
 
-        {hasFiltersOrSearch(db.schema, props) &&
-        <Button icon="delete"
-                onClick={() => clearFiltersOrSearch(db.schema, props)} >
-            {_.clear_filters}
-        </Button>}
-    </div>
+        let allRecords = this.asyncData.records;
+        let props = this.props;
 
-    let recordsComponent = (records: Record[]) => {
-        if (!records) {
+        // FIXME extract once only
+        let params = parseParams(props.location.search);
+        let viewType = extractViewType(params);
+
+
+        let db = props.db;
+        let attrMap = attributesMap(db.schema);
+        let _ = props.messages;
+
+        // Switch on type of view
+        let ViewTypeSwitch = (recordsProps: { records: Record[] }) => {
+            switch (viewType) {
+                case ViewType.TABLE :
+                    return <TableComponent {...props} {...recordsProps} />
+                case ViewType.CARDS:
+                    return <CardsComponent {...props} {...recordsProps} />;
+                default :
+                    throw new Error(`unsupported view type : ${viewType}`)
+            }
+        };
+
+        const NothingHere = () => <div style={{textAlign: "center"}}>
+            <Header>{_.no_element}</Header>
+
+            <AddItemButton {...props} />
+
+            {hasFiltersOrSearch(db.schema, props) &&
+            <Button icon="delete"
+                    onClick={() => clearFiltersOrSearch(db.schema, props)}>
+                {_.clear_filters}
+            </Button>}
+        </div>
+
+        let Records = (props: { records: Record[] }) => {
+            if (!props.records) {
+                // FIXME : loading instead ?
+                return null;
+            }
+            return <div style={{marginTop: "1em", marginRight: "1em"}}>
+                {props.records.length == 0 ?
+                    <NothingHere/>
+                    : <ViewTypeSwitch {...props} />}
+            </div>
+        };
+
+        let groupAttr = extractGroupBy(params);
+
+        // Grouping activated ? => display sections
+        if (groupAttr) {
+
+            let attr = attrMap[groupAttr];
+            let sections = groupBy(allRecords, attr).map(group =>
+                <div style={{marginTop: "1em"}}>
+                    <Collapsible trigger={open =>
+                        <div style={{marginTop: "1em", display: "table-cell", cursor: "pointer"}}>
+                            <Button circular compact size="small" icon={open ? "chevron down" : "chevron right"}/>
+                            <Header
+                                as="span"
+                                size="medium">
+
+                                {attrLabel(attr, _)} :
+                                <ValueHandler
+                                    {...props}
+                                    type={attr.type}
+                                    value={group.value}
+                                    editMode={false}/>
+                            </Header></div>}>
+
+                        <Records records={group.records}/>
+
+                    </Collapsible>
+                </div>);
+
+            return <>{
+                sections.length == 0 ? <NothingHere/> : sections}
+            </>
+        } else {
+            return <Records records={allRecords}/>;
+        }
+    }
+}
+
+
+interface CountProps {
+    count : number;
+}
+
+export class AsyncPaging extends AsyncDataComponent<RecordsPageProps, CountProps> {
+
+    fetchData(nextProps: RecordsPageProps, nextState: {}) {
+        let props = this.props;
+        let state = props.store.getState();
+        let query = parseParams(props.location.search);
+        let search = extractSearch(query);
+        let filters = extractFilters(state.dbDefinition.schema, query);
+
+        // filter params, serialized
+        let key = stringify(serializeSortAndFilters(null, filters, search));
+
+        if (key in state.counts) {
+            // Synchronous result
+            return {count: state.counts[key]};
+        } else {
+            // Need fetch
+            return props.dataFetcher.countRecords(
+                props.match.params.db_name,
+                filters, search)
+                .then((count) => {
+                    // Update state (cache)
+                    props.store.dispatch(createUpdateCountAction(key, count));
+                    return {count};
+                })
+        }
+    }
+
+    goToPage(pageNum : number | string) {
+        if (typeof pageNum  != 'number') {
+            pageNum = parseInt(pageNum);
+        }
+        goTo(this.props, {page: intToStr(pageNum)});
+    }
+
+    render() {
+        if (this.asyncData == null) {
             return null;
         }
-        return <div style={{marginTop:"1em", marginRight:"1em"}}>
-            {records.length == 0 ? <NothingHere />
-                : recordsSwitch(records)}
-        </div>
+
+        let query = parseParams(this.props.location.search);
+        let page : number = strToInt(query.page) || 1;
+
+        let nbPages = Math.ceil(this.asyncData.count / ITEMS_PER_PAGE);
+
+        if (nbPages > 1) {
+            return <Pagination
+                totalPages={nbPages}
+                activePage={page}
+                style={{marginTop:"1em"}}
+                onPageChange={(e, {activePage}) => {this.goToPage(activePage)}}
+            />
+        } else {
+            return null;
+        }
     };
-
-    // Grouping activated ? => display sections
-    if (groupAttr) {
-
-        let attr = attrMap[groupAttr];
-        let groups = groupBy(props.records, attr);
-        let sections = groups.map(group =>
-            <div style={{marginTop:"1em"}}>
-                <Collapsible trigger={open =>
-                    <div style={{marginTop:"1em", display:"table-cell", cursor:"pointer"}} >
-                    <Button circular compact size="small" icon={open ? "chevron down" : "chevron right"} />
-                    <Header
-                        as="span"
-                        size="medium" >
-
-                        {attrLabel(attr, _)} :
-                            <ValueHandler
-                                {...props}
-                                type={attr.type}
-                                value={group.value}
-                                editMode={false} />
-                    </Header></div>} >
-
-                    {recordsComponent(group.records)}
-                </Collapsible>
-            </div>);
-
-        return <>{
-                sections.length == 0 ? <NothingHere /> : sections}
-            </>
-    } else {
-        return recordsComponent(props.records);
-    }
 }
 
 function AddItemButton(props: RecordsPageProps) {
     let _ = props.messages;
-    return hasRight(props, AccessRight.EDIT) && <SafeClickWrapper  trigger={
-        <Button primary style={{marginBottom:"1em"}} icon="plus" content={_.add_item} />
-    }>
-        <EditDialog
-            {...props}
-            record={{}}
-            schema={props.db.schema}
-            create={true}
-            onUpdate={props.onCreate}  />
-    </SafeClickWrapper>
+    return hasRight(props, AccessRight.EDIT) &&
+            <SafeClickWrapper
+                trigger={onOpen =>
+                    <Button
+                        primary style={{marginBottom:"1em"}}
+                        icon="plus" content={_.add_item}
+                        onClick={onOpen}/>}
+                render={onClose =>
+                    <EditDialog
+                        {...props}
+                        record={{}}
+                        schema={props.db.schema}
+                        create={true}
+                        onUpdate={props.onCreate}
+                        close={onClose} />
+                } >
+            </SafeClickWrapper>
 }
 
 const SIDEBAR_LS_KEY = "filtersSidebar";
-
-
 
 
 // Main component
@@ -168,25 +307,11 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
         this.setState({filtersSidebar:newVal});
     }
 
-
-
-    goToPage(pageNum : number | string) {
-        if (typeof pageNum  != 'number') {
-            pageNum = parseInt(pageNum);
-        }
-        goTo(this.props, {page: intToStr(pageNum)});
-    }
-
-
-
     render() {
         let props = this.props;
         let db = props.db;
         let dbName = props.match.params.db_name;
         let _ = props.messages;
-
-        let params = parseParams(props.location.search);
-        let groupAttr = extractGroupBy(params);
 
         let xls_link =
             DOWNLOAD_XLS_URL.replace(":db_name", dbName)
@@ -210,15 +335,19 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
             if (!hasRight(props, AccessRight.ADMIN)) {
                 return null;
             }
-            return <SafeClickWrapper trigger={
-                <ResponsiveButton icon="configure"
-                                  color="teal"
-                                  content={_.edit_attributes} />} >
-                <SchemaDialog
-                    {...props}
-                    onUpdateSchema={props.onUpdateSchema}
-                    schema={db.schema}
-                />
+            return <SafeClickWrapper
+                    trigger={onOpen =>
+                        <ResponsiveButton icon="configure"
+                                          color="teal"
+                                          content={_.edit_attributes}
+                                          onClick={onOpen} />}
+                    render={onClose =>
+                        <SchemaDialog
+                            {...props}
+                            onUpdateSchema={props.onUpdateSchema}
+                            schema={db.schema}
+                            close={onClose} />}
+                    >
             </SafeClickWrapper>;
         };
 
@@ -226,8 +355,8 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
             goTo(props, serializeViewType(viewType));
         };
 
-        //
-        let viewType = extractViewType(params);
+        let params = parseParams(props.location.search);
+        let groupAttr = extractGroupBy(params);
 
         let GroupByButton = () => {
             let props = this.props;
@@ -257,6 +386,9 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
                 onChange={(e, update) => goTo(props, updatedGroupBy(update.value as string))} />
         }
 
+        // FIXME : parse all this once
+        let viewType = extractViewType(params);
+
         let ViewTypeButtons = () => <Button.Group basic>
             <Button icon="table"
                     title={`${_.view_type} : ${_.table_view}`}
@@ -268,17 +400,7 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
                     onClick={() => setViewType(ViewType.CARDS)}/>
         </Button.Group>;
 
-        let Paging : React.SFC<{}> = () => {
-            if (props.nbPages > 1) {
-                return <Pagination
-                    totalPages={props.nbPages}
-                    activePage={props.page}
-                    style={{marginTop:"1em"}}
-                    onPageChange={(e, {activePage}) => {this.goToPage(activePage)}}
-                />
-            } else {
-                return null;
-            }};
+
 
 
         let AttributeDisplayButton = () => <SafePopup position="bottom left" trigger={
@@ -304,8 +426,6 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
             onClick={() => this.toggleFilterSidebar()}
             title={_.toggle_filters}
             icon={this.state.filtersSidebar ? "angle double left" : "angle double right"} />
-
-
 
         return <>
 
@@ -355,11 +475,11 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
 
                     <RecordsMap {...props} />
 
-                    <Paging />
+                    <AsyncPaging {...props} />
 
-                    {groupedRecords(groupAttr, props, viewType)}
+                        <AsyncSinglePage {...props} />
 
-                    <Paging />
+                    <AsyncPaging {...props} />
 
                 </div>
             </div>
@@ -368,99 +488,6 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
     }
 }
 
-
-// Filter data from Redux store and map it to props
-const mapStateToProps =(state : IState, props?: RouteComponentProps<{}> & GlobalContextProps) : RecordsPropsOnly => {
-
-    // Parse page from query
-    let queryParams = parseParams(props.location.search);
-    let page : number = (strToInt(queryParams.page) || 1);
-
-    // Not fetched yet ?
-    if (!state.sortedPages.count || !(page in state.sortedPages.pages)) {
-        return {nbPages :null, records:null, page}
-    }
-
-    let nbPages = Math.ceil(state.sortedPages.count / ITEMS_PER_PAGE);
-
-    // Get record for given page
-    let records = state.sortedPages.pages[page].map(id => state.items[id]);
-
-    // Flatten map of records
-    return {
-        records:toAnnotatedJson(records),
-        nbPages,
-        page
-    }
-};
-
-// Async fetch of data
-function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>) : Promise<any> {
-
-    // FIXME parse once and put it in global props
-    let query = parseParams(props.location.search);
-
-    let state = props.store.getState();
-
-    let sort = extractSort(query);
-    let search = extractSearch(query);
-    let filters = extractFilters(state.dbDefinition.schema, query);
-
-    // Sort and filter params, serialized
-    let sortFilterParams = QueryString.stringify(serializeSortAndFilters(sort, filters, search));
-
-    console.debug("Checking records are present. Query : ", query);
-
-    // Query params are different ? Or nothing fetched yet ?
-    if (state.sortedPages.count == null || sortFilterParams != state.sortedPages.queryParams) {
-
-        console.debug("Count records ", query);
-
-        // Fetch count
-        return props.dataFetcher.countRecords(
-            props.match.params.db_name,
-            filters, search)
-        .then((count) => {
-
-            // Update state
-            props.store.dispatch(createUpdateCountAction({
-                count:count,
-                queryParams:sortFilterParams,
-                pages:{},
-            }));
-        })
-    }
-
-    let page : number = strToInt(query.page) || 1;
-
-    console.debug("page in pages ?", page, Object.keys(state.sortedPages.pages));
-
-    // Is page present ?
-    if (!(page in state.sortedPages.pages)) {
-
-        return props.dataFetcher.getRecords(
-            props.match.params.db_name,
-            filters, search, sort,
-            (page -1) * ITEMS_PER_PAGE,
-            ITEMS_PER_PAGE)
-        .then((records) => {
-
-            // Update records by their id
-            props.store.dispatch(createAddItemsAction(records));
-
-            // Update page of indexes
-            let recordsIdx = records.map(record => record._id);
-            props.store.dispatch(createUpdatePageAction(page, recordsIdx));
-        })
-    }
-
-    // Nothing more to fetch
-    return null
-
-}
-
 // Connect to Redux
-export let RecordsPage = connectComponent(
-    mapStateToProps,
-    fetchData)(_RecordsPage);
+export let RecordsPage = withGlobalContext(_RecordsPage);
 

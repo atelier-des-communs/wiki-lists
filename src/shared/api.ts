@@ -74,7 +74,7 @@ export interface IMarshalledContext {
     supportedLanguages: Language[]}
 
 
-
+export type Marker = Record | Cluster;
 
 // Generic reader interface, implemented directly with DB access for SSR, or as rest client on Browser
 export interface DataFetcher {
@@ -82,7 +82,7 @@ export interface DataFetcher {
     getRecords(dbName: string, filters?: Map<Filter>, search?:string, sort?: ISort, from?:number, limit?:number) : Promise<Record[]>;
 
     // Get records location, potentially grouped by clusters
-    getRecordsGeo(dbName: string, zoom:number, filters?: Map<Filter>, search?:string, extraFields?:string[]) : Promise<(Record | Cluster)[]>;
+    getRecordsGeo(dbName: string, zoom:number, filters?: Map<Filter>, search?:string, extraFields?:string[]) : Promise<Marker[]>;
 
     countRecords(dbName: string, filters?: Map<Filter>, search?:string) : Promise<number>;
     getDbDefinition(dbName:string) : Promise<DbDefinition>;

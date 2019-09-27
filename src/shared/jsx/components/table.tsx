@@ -1,9 +1,9 @@
 /* Display several records with Type : table */
 import {extractSort, ISort, serializeSort} from "../../views/sort";
-import {goTo, parseParams} from "../../utils";
+import {goTo, goToResettingPage, parseParams} from "../../utils";
 import {Link} from 'react-router-dom'
 import {RouteComponentProps, withRouter} from "react-router"
-import {DbPathParams, RecordsProps, ReduxEventsProps} from "../common-props";
+import {DbPathParams, DbProps, RecordsProps, ReduxEventsProps} from "../common-props";
 import * as React from "react";
 import {Button, Table} from 'semantic-ui-react'
 import {SafePopup} from "../utils/ssr-safe";
@@ -16,7 +16,7 @@ import {singleRecordLink} from "../../api";
 import {GlobalContextProps, withGlobalContext} from "../context/global-context";
 import {AccessRight, hasRight} from "../../access";
 
-type TableProps = RecordsProps & ReduxEventsProps & RouteComponentProps<DbPathParams> & GlobalContextProps;
+type TableProps = RecordsProps & DbProps & ReduxEventsProps & RouteComponentProps<DbPathParams> & GlobalContextProps;
 
 
 class _TableComponent extends React.Component<TableProps> {
@@ -36,7 +36,7 @@ class _TableComponent extends React.Component<TableProps> {
 
         let newSort:ISort = {key:attr, asc:newAsc};
         let params = serializeSort(newSort);
-        goTo(props, params);
+        goToResettingPage(props, params);
     }
 
     render() {

@@ -19,6 +19,7 @@ import {cloneDeep} from "lodash";
 import {IUser} from "../shared/model/user";
 import {cache, getCache} from "./cache";
 import * as md5 from "md5";
+import stringify from "json-stringify-deterministic";
 
 const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '/static' : 'http://localhost:8081/static';
 
@@ -91,7 +92,7 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
     let lang = selectLanguage(req);
 
     let baseurl = req.url.split("?")[0];
-    let key = baseurl + ":" + md5(JSON.stringify(req.query));
+    let key = baseurl + ":" + md5(stringify(req.query));
 
     return getCache(key, async () => {
         
@@ -104,12 +105,8 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
 
         let initialState : IState= {
             items: null, // Will be fetched asynchronously
-            sortedPages : {
-                queryParams: null,
-                count: null,
-                pages: {},
-
-            },
+            pages : {},
+            counts : {},
             geoMarkers : {},
             dbDefinition: null, // Will be fetched asynchronously
             user: req.user as IUser};

@@ -100,6 +100,10 @@ export function goTo(props:RouteComponentProps<{}>, queryParams: Map<string>) {
     props.history.push(updatedQuery(props.location.search, queryParams));
 }
 
+export function goToResettingPage(props:RouteComponentProps<{}>, queryParams: Map<string>) {
+    props.history.push(updatedQuery(props.location.search, {...queryParams, page:null}));
+}
+
 export function goToUrl(props:RouteComponentProps<{}>, link:string) {
     props.history.push(link);
 }
@@ -208,5 +212,10 @@ export function oneToArray<T>(elem : OneOrMany<T>) : T[]  {
 
 
 export function parseBool(value : any) {
-    return value == "true" || value == 1 || value=="1" || !!value;
+    return value == "true" || value == 1 || value == "1" || value === true;
+}
+
+
+export function isPromise<T>(value:any) : boolean  {
+    return (value && typeof value.then === 'function');
 }

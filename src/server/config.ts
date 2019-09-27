@@ -1,6 +1,7 @@
 
 export default {
     SECRET : getEnv("SECRET"),
+    CACHE : getEnv("CACHE", "true"),
     DB_HOST : getEnv("DB_HOST", "localhost"),
     DB_NAME : getEnv("DB_NAME", "wikilist"),
     DB_PORT : getEnv("DB_PORT", "27017"),

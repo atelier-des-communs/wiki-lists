@@ -6,12 +6,16 @@
 import * as React from "react";
 import {GlobalContextProps, withGlobalContext} from "../context/global-context";
 import {Loader, Dimmer} from "semantic-ui-react";
+import {isPromise} from "../../utils";
 
-export abstract class AsyncDataComponent<T extends GlobalContextProps> extends React.Component<T> {
+/** Asynchronous component handling correctly promises for SSR. */
+export abstract class AsyncDataComponent<T extends GlobalContextProps, DataType> extends React.Component<T> {
 
     className : string;
 
     loading:boolean;
+
+    asyncData : DataType;
 
     constructor(props: T, className:string=null) {
         super(props);
@@ -19,8 +23,14 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps> extends R
         console.debug("Instantiated " + (this.className));
     }
 
-    /** Should look at props / state, and return null if no loading is required */
-    abstract fetchData(nextProps: T, nextState:{}) :  Promise<{}>;
+    /**
+     *  Should either return data right away, or return a promise.
+     *  If a promise is returned, it will be queued and prosessed until there it no more promise :
+     *  Hence, this method should internally use a cache system with the state, so the state might eventually be ready
+     *  on SSR for full render.
+     *  In case of "infinite" loop, the SSR will still stop after a few fetch process (5 or so) and return an incomplete page
+     */
+    abstract fetchData(nextProps: T, nextState:{}) :  Promise<DataType> | DataType;
 
     doFetch(props:T, state:{}): void {
         // Don't fetch data twice
@@ -28,18 +38,25 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps> extends R
             return;
         }
 
-        let promise = this.fetchData(props, state);
+        let res = this.fetchData(props, state);
 
-        console.debug("Getting promise for " + this.className, promise);
-
-        if (promise) {
+        if (isPromise(res)) {
+            let promise = res as Promise<DataType>;
             this.loading = true;
 
             this.props.promises.push(
-                promise.then(() => {
-                    console.debug("Async data fetch finished for " + this.className);
+                promise.then((data) => {
                     this.loading = false;
-                }));
+                    this.asyncData = data;
+
+                    // Trigger update
+                    this.setState({});
+                }).catch((e) => {
+                    this.setState({loading:false});
+                    throw e;
+            }));
+        } else {
+            this.asyncData=res as DataType;
         }
     }
 
@@ -52,37 +69,30 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps> extends R
     }
 
 
-    render() {
-        let child = this.renderLoaded();
-        return <div>
-                {child}
-            </div>
-    }
-
-    abstract renderLoaded(): false | JSX.Element;
 }
 
 
 // Higher order function wrapping a component with async data fetching
-export function withAsyncData<P>(
-    fetchData:(props: Readonly<P & GlobalContextProps>) => Promise<any>)
+// FIXME: remove this, too much complex
+export function withAsyncData<OwnProps,AsyncProps>(
+    fetchData:(props: Readonly<OwnProps & GlobalContextProps>) => AsyncProps | Promise<AsyncProps>)
 {
-    return (WrappedComponent: React.ComponentType<P>, name:string=null): React.ComponentClass<P> => {
+    return (WrappedComponent: React.ComponentType<AsyncProps & OwnProps>, name:string=null): React.ComponentClass<OwnProps> => {
 
-        class WithAsyncData extends AsyncDataComponent<P & GlobalContextProps> {
+        class WithAsyncData extends AsyncDataComponent<OwnProps & GlobalContextProps, AsyncProps> {
 
 
-            constructor(props: P & GlobalContextProps) {
+            constructor(props: OwnProps & GlobalContextProps) {
                 super(props, name || (WrappedComponent as any).name + "#async");
             }
 
 
-            fetchData(props:P & GlobalContextProps) {
+            fetchData(props:OwnProps & GlobalContextProps) {
                 return fetchData(props);
             }
 
-            public renderLoaded() {
-                return <WrappedComponent {...this.props} />;
+            public render() {
+                return <WrappedComponent {...this.props} {...this.asyncData} />;
             }
         }
 

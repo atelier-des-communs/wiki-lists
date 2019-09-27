@@ -3,7 +3,7 @@ import {Button, Header, Icon} from "semantic-ui-react";
 import * as React from "react";
 import {RouteComponentProps} from "react-router";
 import {Attribute, attributesMap, StructType} from "../../model/types";
-import {goTo, parseParams} from "../../utils";
+import {goTo, goToResettingPage, parseParams} from "../../utils";
 import {extractSort, ISort, serializeSort} from "../../views/sort";
 import {SafePopup} from "../utils/ssr-safe";
 import {attrLabel, ellipsis} from "../utils/utils";
@@ -23,7 +23,7 @@ export const SortPopup : React.SFC<SortProps> = (props) => {
 
     let setSort = (attrName:string, asc:boolean) => {
         let newSort : ISort = {key:attrName, asc};
-        goTo(props, serializeSort(newSort));
+        goToResettingPage(props, serializeSort(newSort));
     };
 
     let sortAttr = sort.key ? attributesMap(schema)[sort.key] : null;

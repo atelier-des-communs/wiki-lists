@@ -18,6 +18,7 @@ import "../../../img/logo.png";
 import {Button, Message} from "semantic-ui-react";
 import {AccessRight, hasRight} from "../../../access";
 import {toTypedObjects} from "../../../serializer";
+import {DbDefinition} from "../../../model/db-def";
 
 type DbPageProps =
     PageProps<DbPathParams> &
@@ -119,6 +120,7 @@ class _DbPageSwitch extends React.Component<DbPageProps>{
 
 
 // Filter data from Redux store and map it to props
+// FIXME : quite useless => async data is enough
 const mapStateToProps = (state : IState, props?: RouteComponentProps<{}> & GlobalContextProps) : DbProps => {
 
     if (!state.dbDefinition) {
@@ -134,17 +136,17 @@ const mapStateToProps = (state : IState, props?: RouteComponentProps<{}> & Globa
 };
 
 // Async fetch of dbDefinition
-function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>) : Promise<any> {
+function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>) : Promise<DbProps> | DbProps {
     let state = props.store.getState();
     if (!state.dbDefinition) {
         return props.dataFetcher
             .getDbDefinition(props.match.params.db_name)
             .then((dbDef) => {
-                // Dispatch to Redux
                 props.store.dispatch(createUpdateDbAction(dbDef));
+                return {db:dbDef};
             });
     } else {
-        return null;
+        return {db:state.dbDefinition};
     }
 }
 

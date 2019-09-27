@@ -15,7 +15,7 @@ import {
 } from "../../views/filters";
 import {RouteComponentProps, withRouter} from "react-router";
 import {Attribute, StructType, Types} from "../../model/types";
-import {copyArr, goTo, isIn, parseParams, remove, stopPropag, strToInt} from "../../utils";
+import {copyArr, goTo, goToResettingPage, isIn, parseParams, remove, stopPropag, strToInt} from "../../utils";
 import * as debounce from "debounce";
 import {SafePopup} from "../utils/ssr-safe";
 import {attrLabel, ellipsis} from "../utils/utils";
@@ -42,7 +42,7 @@ abstract class AbstractSingleFilter<T extends Filter> extends React.Component<Si
     // Update the filter by pushing query params in URL
     setFilter = (newFilter: T) => {
         let queryParams = serializeFilter(this.props.attr, newFilter);
-        goTo(this.props, queryParams);
+        goToResettingPage(this.props, queryParams);
     }
 }
 
@@ -194,7 +194,7 @@ export function singleFilter(props : RouteComponentProps<{}> & MessagesProps, at
 
     let clearFilter = () => {
         let queryParams = serializeFilter(attr, null);
-        goTo(props, queryParams);
+        goToResettingPage(props, queryParams);
     };
 
     let filterComp = null;
@@ -338,7 +338,7 @@ class _SearchComponent extends React.Component<IFiltersComponentProps & RouteCom
 
     // Don' update location / view on each key stroke ... wait a bit for it
     updateSearch = debounce((search: string) => {
-        goTo(this.props, serializeSearch(search));
+        goToResettingPage(this.props, serializeSearch(search));
     }, DEBOUNCE_DELAY);
 
     render() {
