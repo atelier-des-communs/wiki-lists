@@ -20,6 +20,9 @@ import {IUser} from "../shared/model/user";
 import {cache, getCache} from "./cache";
 import * as md5 from "md5";
 import stringify from "json-stringify-deterministic";
+import * as fs from 'fs';
+import {endsWith} from 'lodash';
+
 
 const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '/static' : 'http://localhost:8081/static';
 
@@ -48,12 +51,33 @@ class SSRHeadSetter implements HeadSetter {
     }
 }
 
+// Load CDN paths from manifest file
+// Acrivated for prod only
+let cdnPaths : string[] = [];
+const MANIFEST_FILE = process.cwd() + '/dist/client/manifest.json';
+if (fs.existsSync(MANIFEST_FILE)) {
+    const manifest = JSON.parse(fs.readFileSync('./dist/client/manifest.json', 'utf8'));
+    console.debug("manifest :", manifest);
+    for (let key in manifest) {
+        let url = manifest[key];
+        if (endsWith(key, '.js') && url.indexOf("https") > -1) {
+            cdnPaths.push(url.replace("/static/", ""));
+        }
+    }
+    console.debug("cdn paths :", cdnPaths);
+} else {
+    console.debug('Not found', MANIFEST_FILE);
+    process
+}
+
 function renderHtml(head:SSRHeadSetter, html:string, context:IMarshalledContext=null) {
 
     let title = escapeHtml(head.title);
     let description = escapeHtml(head.description);
 
     console.log(`Title : ${head.title} ${title} decr: ${description}`);
+
+    let extraScripts = cdnPaths.map(path => `<script src="${path}"></script>`).join("\n");
 
     return `<!DOCTYPE html>
 		<html>
@@ -77,6 +101,8 @@ function renderHtml(head:SSRHeadSetter, html:string, context:IMarshalledContext=
 				<script>
 					window.__MARSHALLED_CONTEXT__ = ${JSON.stringify(toAnnotatedJson(context))};
 				</script>
+				
+				${extraScripts}
 				
 				<script src="${BUNDLE_ROOT}/lang-${context.lang}.js"></script>
 				<script src="${BUNDLE_ROOT}/client.bundle.js"></script>

@@ -271,7 +271,8 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
                     onClick={() => this.openPopup((item as Record)._id)}
                     fillOpacity={1}
                     fillColor={color}
-                    strokeColor="black"
+                    color="black"
+                    weight={2}
                     radius={10} />
             } else {
                 let cluster = item as Cluster;

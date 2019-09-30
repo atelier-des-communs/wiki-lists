@@ -6,7 +6,7 @@
     "test": "jest",
     "clean": "node ./bin/clean.js",
     "server": "node ./bin/server",
-    "build": "npm run clean && node ./bin/bundler/prod.js --json",
+    "build": "NODE_ENV=production && npm run clean && node ./bin/bundler/prod.js --json",
     "deploy": "npm run build && npm run server",
     "watch": "better-npm-run watch"
   },
@@ -87,6 +87,7 @@
     "css-loader": "^0.28.4",
     "cypress": "^3.3.1",
     "del": "^3.0.0",
+    "dynamic-cdn-webpack-plugin": "^4.0.0",
     "express-logger": "0.0.3",
     "extract-text-webpack-plugin": "^2.1.2",
     "file-loader": "^1.1.11",
@@ -98,6 +99,7 @@
     "jest-environment-jsdom-global": "^1.1.0",
     "lodash": "^4.17.10",
     "mini-css-extract-plugin": "^0.4.1",
+    "module-to-cdn": "^3.1.5",
     "mongodb-memory-server": "^2.7.2",
     "morgan": "^1.9.1",
     "node-sass": "^4.5.3",
@@ -117,6 +119,7 @@
     "webpack-bundle-analyzer": "^3.0.3",
     "webpack-cdn-plugin": "^3.1.4",
     "webpack-dev-server": "^2.5.0",
+    "webpack-manifest-plugin": "^2.1.2",
     "webpack-node-externals": "^1.7.2",
     "webpack-stats-plugin": "^0.2.1"
   },
