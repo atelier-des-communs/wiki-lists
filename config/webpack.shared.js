@@ -2,9 +2,7 @@ var path = require("path");
 var MiniCssExtractPlugin = require('mini-css-extract-plugin');
 var nodeExternals = require('webpack-node-externals');
 const { StatsWriterPlugin } = require("webpack-stats-plugin");
-const ManifestPlugin = require('webpack-manifest-plugin');
-const DynamicCdnWebpackPlugin = require('dynamic-cdn-webpack-plugin');
-const moduleToCdn = require('module-to-cdn');
+
 
 exports.CLIENT_BUILD_DIR = path.resolve(__dirname, "..", "dist", "client");
 exports.SERVER_BUILD_DIR = path.resolve(__dirname, "..", "dist", "server");
@@ -96,28 +94,7 @@ function flatten_loaders(obj) {
 
 var langs = ["fr-FR", "en-GB"];
 
-function resolve(dep, version) {
-    console.debug("Resolving", dep, version);
-    if (dep === "leaflet") {
-        return {
-            name : "leaflet",
-            var : "L",
-            version,
-            url : `https://unpkg.com/leaflet@${version}/dist/leaflet.js`
-        }
-    } else if (dep === "react-leaflet") {
-        return {
-            name : "react-leaflet",
-            var : null,
-            version,
-            url : `https://cdnjs.cloudflare.com/ajax/libs/react-leaflet/${version}/react-leaflet.min.js`
-        }
-    } else {
-        var res = moduleToCdn(dep, version, {env:"production"});
-        console.debug("Resolved by module to cdn", res);
-        return res;
-    }
-}
+
 
 var mkconfig = (loaders, name) => ({
     output: {
@@ -133,15 +110,6 @@ var mkconfig = (loaders, name) => ({
     },
     plugins: [
         new MiniCssExtractPlugin("[name].css"),
-
-        new ManifestPlugin({filename:'manifest.json'}),
-
-        new DynamicCdnWebpackPlugin(
-            {
-                only: ["react", "react-dom", "leaflet", "react-router", "react-router-dom", "axios"],
-                resolver : resolve
-            }),
-
         new StatsWriterPlugin({
             fields : null,
             filename: "./reports/" + name + "-stats.json"})

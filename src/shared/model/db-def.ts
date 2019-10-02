@@ -7,6 +7,7 @@ import {classTag} from '../serializer';
 export interface DbSettings {
     label: string;
     description: string;
+    instructions: string;
 }
 
 
@@ -15,6 +16,7 @@ export class DbDefinition implements DbSettings {
 
     label: string;
     description: string;
+    instructions: string;
 
     /** Shortname of the db */
     name: string;

@@ -9,6 +9,7 @@ import {SingleRecordComponent} from "./single-record-component";
 import {singleRecordLink} from "../../api";
 import {GlobalContextProps} from "../context/global-context";
 import {recordName} from "../utils/utils";
+import {getDbName} from "../../utils";
 
 type CardsProps = RecordsProps & DbProps & ReduxEventsProps & RouteComponentProps<DbPathParams> & GlobalContextProps;
 
@@ -22,7 +23,7 @@ export class CardsComponent extends React.Component<CardsProps> {
         let props = this.props;
 
         let recordURL = (id:string) => {
-            return singleRecordLink(props.match.params.db_name, id);
+            return singleRecordLink(props.config, getDbName(props), id);
         };
 
         return <Grid fluid stackable >

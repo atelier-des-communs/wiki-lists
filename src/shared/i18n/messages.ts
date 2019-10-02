@@ -137,6 +137,7 @@ export interface IMessages {
 
     email: string;
 
+    search: string;
     update_list_from_map: string;
 
 }

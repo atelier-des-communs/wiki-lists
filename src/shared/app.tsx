@@ -27,16 +27,22 @@ export class App extends React.Component<GlobalContextProps> {
         let props = this.props;
         let _ = props.messages;
 
+
+
         return <Provider store={props.store} >
 
             <GlobalContextProvider {...props}>
 
                 <Switch>
 
-                    <Route exact path="/" component={HomePage} />
+
+                    {
+                        // In single DB mode root page is served by RECORDS_PATH
+                        (props.config.singleDb) ? null : <Route exact path="/" component={HomePage} /> }
+
                     <Route exact path={CREATE_DB_PATH} component={AddDbPageAsync} />
                     <Route exact path={LOGIN_PAGE_PATH} component={LoginPage} />
-                    <Route path={RECORDS_PATH} component={DbPageSwitch} />
+                    <Route path={RECORDS_PATH(props.config)} component={DbPageSwitch} />
 
                     <Route component={NotFoundPage} />
 

@@ -1,7 +1,7 @@
 import * as React from "react";
 import {withGlobalContext} from "../context/global-context";
 import {Button, Container, Form, Input, TextArea} from "semantic-ui-react";
-import {BASE_DB_PATH, RECORDS_PATH} from "../../api";
+import {RECORDS_PATH, recordsLink} from "../../api";
 import {slug} from "../../utils";
 import {Attribute, StructType, TextType} from "../../model/types";
 import {IMessages} from "../../i18n/messages";
@@ -70,14 +70,14 @@ export class AddDbPageInternal extends React.Component<PageProps<{}>> {
     }
 
     goToNewDb() {
-        this.props.history.push(RECORDS_PATH.replace(":db_name", this.state.slug));
+        this.props.history.push(recordsLink(this.props.config, this.state.slug));
     }
 
     render() {
 
         let props = this.props;
         let _ = this.props.messages;
-        let base_url = location.protocol + '//' + location.host + BASE_DB_PATH;
+        let base_url = location.protocol + '//' + location.host + recordsLink(this.props.config,"");
 
         // Async check of availability of slug
         let slugAvailabilityValidator : ValueValidator = (value:string) => checkAvailability(value)
@@ -89,7 +89,8 @@ export class AddDbPageInternal extends React.Component<PageProps<{}>> {
                 schema : this.state.schema,
                 name : this.state.slug,
                 label : this.state.name,
-                description : this.state.description});
+                description : this.state.description,
+                instructions:null});
 
             return toPromiseWithErrors(createDb(dbDef));
         };

@@ -8,9 +8,9 @@ import {IState, reducers} from "../shared/redux";
 import {DbDataFetcher} from "./db/db";
 import {toImmutable} from "../shared/utils";
 import {Express} from "express";
-import {ContentWithStatus, returnPromiseWithCode} from "./utils";
+import {ContentWithStatus, dbNameSSR, returnPromiseWithCode} from "./utils";
 import {Request, Response} from "express-serve-static-core"
-import {COOKIE_DURATION, IMarshalledContext, RECORDS_ADMIN_PATH, SECRET_COOKIE} from "../shared/api";
+import {COOKIE_DURATION, IMarshalledContext, RECORDS_ADMIN_PATH, SECRET_COOKIE, SharedConfig} from "../shared/api";
 import {GlobalContextProps, HeadSetter, ICookies} from "../shared/jsx/context/global-context";
 import {selectLanguage, LANGUAGES} from "./i18n/messages";
 import * as escapeHtml from "escape-html";
@@ -22,6 +22,7 @@ import * as md5 from "md5";
 import stringify from "json-stringify-deterministic";
 import * as fs from 'fs';
 import {endsWith} from 'lodash';
+import {config, sharedConfig} from "./config";
 
 
 const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '/static' : 'http://localhost:8081/static';
@@ -152,6 +153,9 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
             }
         };
 
+        let sharedConfig : SharedConfig = {
+            singleDb : config.SINGLE_BASE};
+
         // Render HTML several time, until all async promises have been resolved
         // This is the way we do async data fetching on SSR
         // The Redux Store will accumulate state and eventually make the component to render synchronously
@@ -167,6 +171,7 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
                 cookies:serverCookies,
                 promises: [],
                 head,
+                config: sharedConfig,
                 supportedLanguages:supportedLang
             };
 
@@ -195,6 +200,7 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
             state : store.getState(),
             env: process.env.NODE_ENV,
             lang:lang.key,
+            config : sharedConfig,
             supportedLanguages:supportedLang};
 
         let html = renderHtml(
@@ -214,8 +220,8 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
 export function setUp(server : Express) {
 
     // Admin URL => set cookie and redirect
-    server.get(RECORDS_ADMIN_PATH, function(req:Request, res:Response) {
-        res.cookie(SECRET_COOKIE(req.params.db_name), req.params.db_pass, {
+    server.get(RECORDS_ADMIN_PATH(sharedConfig), function(req:Request, res:Response) {
+        res.cookie(SECRET_COOKIE(dbNameSSR(req)), req.params.db_pass, {
             maxAge : COOKIE_DURATION
         });
         res.redirect(`/db/${req.params.db_name}`);

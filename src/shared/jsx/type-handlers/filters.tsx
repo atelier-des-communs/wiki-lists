@@ -14,7 +14,7 @@ import {
     TextFilter
 } from "../../views/filters";
 import {RouteComponentProps, withRouter} from "react-router";
-import {Attribute, StructType, Types} from "../../model/types";
+import {Attribute, StructType, TextType, Types} from "../../model/types";
 import {copyArr, goTo, goToResettingPage, isIn, parseParams, remove, stopPropag, strToInt} from "../../utils";
 import * as debounce from "debounce";
 import {SafePopup} from "../utils/ssr-safe";
@@ -336,19 +336,42 @@ export const FiltersPopup : React.SFC<IFiltersComponentProps & RouteComponentPro
 /* Search component, for all fields */
 class _SearchComponent extends React.Component<IFiltersComponentProps & RouteComponentProps<{}>> {
 
+
+    state : {value:string};
+
+    constructor(props:IFiltersComponentProps & RouteComponentProps<{}>) {
+        super(props);
+        this.state = {value : extractSearch(parseParams(this.props.location.search))};
+    }
+
     // Don' update location / view on each key stroke ... wait a bit for it
-    updateSearch = debounce((search: string) => {
-        goToResettingPage(this.props, serializeSearch(search));
-    }, DEBOUNCE_DELAY);
+    updateSearch() {
+        goToResettingPage(this.props, serializeSearch(this.state.value));
+    }
 
     render() {
-        let search = extractSearch(parseParams(this.props.location.search));
-        return <Input icon="filter"
-                      defaultValue={search}
-                      onChange={(e, val) => {
-                          e.stopPropagation(),
-                          this.updateSearch(val.value)
-                      }} />
+        let _ = this.props.messages;
+        let placeholder = this.props.schema.attributes.
+        filter(
+            attr => (attr.type.tag == Types.TEXT
+                && ! attr.system
+                && !(attr.type as TextType).rich)).
+        map(attr => attrLabel(attr, this.props.messages)).
+        join();
+
+
+        return <Input
+            value={this.state.value}
+            onChange={(e, data) => {this.setState({value:data.value})}}
+            action={{
+                icon:"search",
+                onClick: (e:any, val:any) => {
+                    e.stopPropagation();
+                    this.updateSearch();
+                }}}
+            onKeyPress = {(e:any) => {if (e.key == 'Enter') {this.updateSearch()}}}
+            placeholder={_.search}
+        />
     }
 }
 

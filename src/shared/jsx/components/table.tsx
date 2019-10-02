@@ -1,6 +1,6 @@
 /* Display several records with Type : table */
 import {extractSort, ISort, serializeSort} from "../../views/sort";
-import {goTo, goToResettingPage, parseParams} from "../../utils";
+import {getDbName, goTo, goToResettingPage, parseParams} from "../../utils";
 import {Link} from 'react-router-dom'
 import {RouteComponentProps, withRouter} from "react-router"
 import {DbPathParams, DbProps, RecordsProps, ReduxEventsProps} from "../common-props";
@@ -66,7 +66,8 @@ class _TableComponent extends React.Component<TableProps> {
 
         let recordUrl = (id:string) => {
             return singleRecordLink(
-                props.match.params.db_name,
+                props.config,
+                getDbName(props),
                 id);};
 
 

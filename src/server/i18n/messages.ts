@@ -2,7 +2,7 @@ import {IMessages, Language} from "../../shared/i18n/messages";
 import {messages as frMessages} from "./fr-FR";
 import {messages as enMessages} from "./en-GB";
 import {Request} from "express-serve-static-core"
-import config from "../config";
+import {config} from "../config";
 
 interface LanguageWithMessages extends Language {
     messages:IMessages;

@@ -21,7 +21,7 @@ import {
     updateSchemaDb
 } from "../db/db";
 import {Record} from "../../shared/model/instances";
-import {requiresRight, returnPromise, traverse} from "../utils";
+import {dbNameSSR, requiresRight, returnPromise, traverse} from "../utils";
 import {Express} from "express";
 import {StructType} from "../../shared/model/types";
 import {Request, Response, RequestHandler} from "express-serve-static-core"
@@ -42,12 +42,12 @@ async function addItemsAsync(req:Request) : Promise<Record[] | Record> {
 
     if (records instanceof Array) {
         return createRecordsDb(
-            req.params.db_name,
+            dbNameSSR(req),
             records,
             selectLanguage(req).messages);
     } else {
         return createRecordsDb(
-            req.params.db_name,
+            dbNameSSR(req),
             oneToArray(records),
             selectLanguage(req).messages).then(records => records[0]);
     }
@@ -55,7 +55,7 @@ async function addItemsAsync(req:Request) : Promise<Record[] | Record> {
 
 async function setupIndexes(req:Request) : Promise<boolean> {
     await requiresRight(req, AccessRight.ADMIN);
-    setUpIndexesDb(req.params.db_name);
+    setUpIndexesDb(dbNameSSR(req));
     return true;
 }
 
@@ -63,7 +63,7 @@ async function updateItemAsync(req:Request) : Promise<Record>{
     let record = req.body as Record;
     await requiresRight(req, AccessRight.EDIT);
     return updateRecordDb(
-        req.params.db_name,
+        dbNameSSR(req),
         record,
         selectLanguage(req).messages);
 }
@@ -71,14 +71,14 @@ async function updateItemAsync(req:Request) : Promise<Record>{
 async function deleteItemAsync(req:Request) : Promise<boolean>{
     let id = req.params.id;
     await requiresRight(req, AccessRight.DELETE);
-    return deleteRecordDb(req.params.db_name, id);
+    return deleteRecordDb(dbNameSSR(req), id);
 }
 
 async function updateSchemaAsync(req:Request) : Promise<StructType>{
     let schema = req.body as StructType;
     await requiresRight(req, AccessRight.ADMIN);
     return updateSchemaDb(
-        req.params.db_name,
+        dbNameSSR(req),
         schema,
         selectLanguage(req).messages);
 }
@@ -149,17 +149,17 @@ export function setUp(server:Express) {
     });
 
     server.get(CHECK_DB_NAME, function (req: Request, res: Response) {
-        returnPromise(res, checkAvailability(req.params.db_name));
+        returnPromise(res, checkAvailability(dbNameSSR(req)));
     });
 
     server.get(GET_ITEM_URL, function (req: Request, res: Response) {
-        returnPromise(res, new DbDataFetcher(req).getRecord(req.params.db_name, req.params.id));
+        returnPromise(res, new DbDataFetcher(req).getRecord(dbNameSSR(req), req.params.id));
     });
 
     server.get(GET_ITEMS_URL, async function (req: Request, res: Response) {
 
         let fetcher = new DbDataFetcher(req);
-        let schema = await fetcher.getDbDefinition(req.params.db_name);
+        let schema = await fetcher.getDbDefinition(dbNameSSR(req));
 
         // Extract filters
         let sort = extractSort(req.query);
@@ -169,7 +169,7 @@ export function setUp(server:Express) {
         let limit = strToInt(req.query.limit);
 
         returnPromise(res, fetcher.getRecords(
-            req.params.db_name,
+            dbNameSSR(req),
             filters,
             search,
             sort,
@@ -180,7 +180,7 @@ export function setUp(server:Express) {
     server.get(GET_ITEMS_GEO_URL, async function (req: Request, res: Response) {
 
         let fetcher = new DbDataFetcher(req);
-        let schema = await fetcher.getDbDefinition(req.params.db_name);
+        let schema = await fetcher.getDbDefinition(dbNameSSR(req));
 
         // Extract filters
         let search = extractSearch(req.query);
@@ -190,7 +190,7 @@ export function setUp(server:Express) {
         let fields = oneToArray(req.query.fields);
 
         returnPromise(res, fetcher.getRecordsGeo(
-            req.params.db_name,
+            dbNameSSR(req),
             zoom,
             filters,
             search,
@@ -200,14 +200,14 @@ export function setUp(server:Express) {
     server.get(COUNT_ITEMS_URL, async function (req: Request, res: Response) {
 
         let fetcher = new DbDataFetcher(req);
-        let schema = await fetcher.getDbDefinition(req.params.db_name);
+        let schema = await fetcher.getDbDefinition(dbNameSSR(req));
 
         // Search & filter
         let search = extractSearch(req.query);
         let filters = extractFilters(schema.schema, req.query);
 
         returnPromise(res, fetcher.countRecords(
-            req.params.db_name,
+            dbNameSSR(req),
             filters,
             search)
             .then((count) => {return "" + count}));
@@ -215,7 +215,7 @@ export function setUp(server:Express) {
 
 
     server.get(GET_DB_DEFINITION_URL, function (req: Request, res: Response) {
-        returnPromise(res, new DbDataFetcher(req).getDbDefinition(req.params.db_name));
+        returnPromise(res, new DbDataFetcher(req).getDbDefinition(dbNameSSR(req)));
     });
 
 }

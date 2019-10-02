@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Store} from "react-redux";
 import {IState} from "../../redux";
-import {DataFetcher} from "../../api";
+import {DataFetcher, SharedConfig} from "../../api";
 import {IMessages, Language} from "../../i18n/messages";
 
 
@@ -45,6 +45,8 @@ export interface GlobalContextProps  {
 
     /** List of supported languages */
     supportedLanguages: Language[];
+
+    config : SharedConfig;
 }
 
 const GlobalContext: React.Context<GlobalContextProps> = React.createContext(null);

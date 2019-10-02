@@ -13,6 +13,7 @@ import {connectComponent} from "../../context/redux-helpers";
 import {createAddItemAction} from "../../../redux";
 import {recordsLink} from "../../../api";
 import {toAnnotatedJson} from "../../../serializer";
+import {getDbName} from "../../../utils";
 
 type SingleRecordPageProps =
     GlobalContextProps &
@@ -37,7 +38,7 @@ class _SingleRecordPage extends React.Component<SingleRecordPageProps> {
         head.setTitle(recordNameStr(db.schema, record));
 
         return <Container>
-            <Link to={recordsLink(db.name)} > « {_.back_to_list}</Link>
+            <Link to={recordsLink(props.config, db.name)} > « {_.back_to_list}</Link>
             <Segment className="hoverable" >
                 <Header as="h2">{ recordName(db.schema, record)}
                     <div style={{float:"right"}} className="super-shy" >
@@ -67,7 +68,7 @@ function fetchData(props:GlobalContextProps & RouteComponentProps<SingleRecordPa
 
     if (!state.items || !state.items[params.id]) {
         return props.dataFetcher
-            .getRecord(params.db_name, params.id)
+            .getRecord(getDbName(props), params.id)
             .then((record) => {
                 props.store.dispatch(createAddItemAction(record));
                 return {record:record, large:true};

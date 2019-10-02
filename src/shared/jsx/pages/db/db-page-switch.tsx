@@ -14,11 +14,14 @@ import {RecordsPage} from "./records-page";
 import {SingleRecordPage} from "./single-record-page";
 import {Header} from "../layout/header";
 import {Link} from 'react-router-dom';
-import "../../../img/logo.png";
+import logo from "../../../img/logo.png" ;
+import back from "../../../img/back.png";
 import {Button, Message} from "semantic-ui-react";
 import {AccessRight, hasRight} from "../../../access";
 import {toTypedObjects} from "../../../serializer";
 import {DbDefinition} from "../../../model/db-def";
+import {nl2br} from "../../utils/utils";
+import {getDbName} from "../../../utils";
 
 type DbPageProps =
     PageProps<DbPathParams> &
@@ -51,30 +54,31 @@ class _DbPageSwitch extends React.Component<DbPageProps>{
         let base_url = location.protocol + '//' + location.host;
 
         let private_link = base_url +
-            RECORDS_ADMIN_PATH.
-                replace(":db_name", props.match.params.db_name).
+            RECORDS_ADMIN_PATH(props.config).
+                replace(":db_name", getDbName(props)).
                 replace(":db_pass", db.secret)
 
         let public_link = base_url +
-            RECORDS_PATH.
-                replace(":db_name", props.match.params.db_name);
+            RECORDS_PATH(props.config).
+                replace(":db_name", getDbName(props));
 
         let hideLinks = props.cookies.get(HIDE_LINKS_COOKIE(this.props.db.name));
 
         return <>
             <Header {...props} >
+                <img src={back} width={250} style={{float:"left"}} />
                 <h1>
-                    <Link to={recordsLink(db.name)}>
+                    <Link to={recordsLink(props.config, db.name)}>
                         {db.label}
                     </Link>
                 </h1>
-                <div>{db.description}</div>
+                <h4>{nl2br(db.description)}</h4>
 
                 <div style={{textAlign: "right"}}>
                     {_.powered_by}
                     <Link to="/" >
                         <img
-                        src="/static/img/logo.png"
+                        src={logo}
                         width="100"
                         style={{cursor: 'pointer', verticalAlign: "middle"}} />
                     </Link>
@@ -109,9 +113,11 @@ class _DbPageSwitch extends React.Component<DbPageProps>{
 
                 </Message>}
 
+                <p dangerouslySetInnerHTML={{__html:db.instructions}} />
+
                 <Switch>
-                    <Route path={SINGLE_RECORD_PATH} render={(props: RouteComponentProps<SingleRecordPathParams>) => <SingleRecordPage  {...this.props} {...props} />}/>
-                    <Route path={RECORDS_PATH} render={(props:RouteComponentProps<DbPathParams>) => <RecordsPage {...this.props} {...props}  />}/>
+                    <Route path={SINGLE_RECORD_PATH(props.config)} render={(props: RouteComponentProps<SingleRecordPathParams>) => <SingleRecordPage  {...this.props} {...props} />}/>
+                    <Route path={RECORDS_PATH(props.config)} render={(props:RouteComponentProps<DbPathParams>) => <RecordsPage {...this.props} {...props}  />}/>
                 </Switch>
             </div>
         </>
@@ -140,7 +146,7 @@ function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>)
     let state = props.store.getState();
     if (!state.dbDefinition) {
         return props.dataFetcher
-            .getDbDefinition(props.match.params.db_name)
+            .getDbDefinition(getDbName(props))
             .then((dbDef) => {
                 props.store.dispatch(createUpdateDbAction(dbDef));
                 return {db:dbDef};

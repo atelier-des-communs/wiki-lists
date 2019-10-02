@@ -2,7 +2,7 @@ import * as redis from "redis";
 import lru from "redis-lru";
 import {toAnnotatedJson, toTypedObjects} from "../shared/serializer";
 import * as md5 from "md5";
-import config from "./config";
+import {config} from "./config";
 import {parseBool} from "../shared/utils";
 import stringify from 'json-stringify-deterministic';
 

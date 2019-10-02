@@ -3,7 +3,7 @@ import * as React from 'react';
 import {Button, Dropdown, Header, Responsive, Pagination} from 'semantic-ui-react'
 import {EditDialog} from "../../dialogs/edit-dialog";
 import {attributesMap, Types} from "../../../model/types";
-import {goTo, intToStr, mapMap, mapValues, parseParams, strToInt} from "../../../utils";
+import {getDbName, goTo, intToStr, mapMap, mapValues, parseParams, strToInt} from "../../../utils";
 import {SafeClickWrapper, SafePopup} from "../../utils/ssr-safe";
 import {DispatchProp} from "react-redux";
 import * as QueryString from "querystring";
@@ -91,7 +91,7 @@ class AsyncSinglePage extends AsyncDataComponent<RecordsPageProps, RecordsProps>
 
             // We need to fetch it !
             return props.dataFetcher.getRecords(
-                props.match.params.db_name,
+                getDbName(props),
                 filters, search, sort,
                 (page -1) * ITEMS_PER_PAGE,
                 ITEMS_PER_PAGE)
@@ -224,7 +224,7 @@ export class AsyncPaging extends AsyncDataComponent<RecordsPageProps, CountProps
         } else {
             // Need fetch
             return props.dataFetcher.countRecords(
-                props.match.params.db_name,
+                getDbName(props),
                 filters, search)
                 .then((count) => {
                     // Update state (cache)
@@ -255,7 +255,6 @@ export class AsyncPaging extends AsyncDataComponent<RecordsPageProps, CountProps
             return <Pagination
                 totalPages={nbPages}
                 activePage={page}
-                style={{marginTop:"1em"}}
                 onPageChange={(e, {activePage}) => {this.goToPage(activePage)}}
             />
         } else {
@@ -310,7 +309,7 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
     render() {
         let props = this.props;
         let db = props.db;
-        let dbName = props.match.params.db_name;
+        let dbName = getDbName(props);
         let _ = props.messages;
 
         let xls_link =
@@ -389,7 +388,7 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
         // FIXME : parse all this once
         let viewType = extractViewType(params);
 
-        let ViewTypeButtons = () => <Button.Group basic>
+        let ViewTypeButtons = () => <Button.Group basic style={{marginRight:"10px"}}>
             <Button icon="table"
                     title={`${_.view_type} : ${_.table_view}`}
                     active={viewType == ViewType.TABLE}
@@ -429,10 +428,10 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
 
         return <>
 
-            <div style={{float: "right"}} className="no-print">
-                <SearchComponent {...props} schema={db.schema} />
-                <DownloadButton />
-            </div>
+
+
+            {/** <DownloadButton /> */}
+
 
             <div className="no-print">
                 <UpdateSchemaButton/>
@@ -452,6 +451,9 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
                 &nbsp;
 
                 <AttributeDisplayButton/>
+
+                <SearchComponent {...props} schema={db.schema} />
+
             </div>
 
             <div style={{display:"flex"}}>
@@ -470,16 +472,20 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
                     <div className="no-print" style={{ marginBottom: "0.5em" }} >
                         {!this.state.filtersSidebar && <SideBarButton floated={null} />}
                         <AddItemButton {...this.props} />
-                        <ViewTypeButtons />
+
                     </div>
 
                     <RecordsMap {...props} />
 
-                    <AsyncPaging {...props} />
+                    <div style={{marginTop:"1em"}}>
 
-                        <AsyncSinglePage {...props} />
+                        <ViewTypeButtons />
 
-                    <AsyncPaging {...props} />
+                        <AsyncPaging {...props} />
+                            <AsyncSinglePage {...props} />
+                        <AsyncPaging {...props} />
+
+                    </div>
 
                 </div>
             </div>

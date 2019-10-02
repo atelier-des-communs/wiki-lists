@@ -1,5 +1,5 @@
 import {Attribute, EnumType, StructType, Types} from "../../shared/model/types";
-import config from "../config"
+import {config} from "../config"
 import {MongoClient, Cursor} from "mongodb";
 import {Record, withSystemAttributes} from "../../shared/model/instances";
 import {validateSchemaAttributes} from "../../shared/validators/schema-validators";

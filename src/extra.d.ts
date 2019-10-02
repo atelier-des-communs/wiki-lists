@@ -41,3 +41,8 @@ declare module "redis-lru" {
 declare module "json-stringify-deterministic" {
     export default function stringify(value:any) : string;
 }
+
+declare module "*.png" {
+    const value: any;
+    export default value;
+}

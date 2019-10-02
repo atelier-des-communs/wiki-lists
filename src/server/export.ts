@@ -11,6 +11,7 @@ import {attrLabel} from "../shared/jsx/utils/utils";
 import {extractSort} from "../shared/views/sort";
 import {cloneDeep} from "lodash";
 import {AttributeDisplay} from "../shared/model/types";
+import {dbNameSSR} from "./utils";
 
 enum ExportType {
     JSON = "json",
@@ -82,10 +83,10 @@ async function exportAs(db_name:string, req:Request, res:Response, exportType: E
 
 export function setUp(server : Express) {
     server.get(DOWNLOAD_JSON_URL, function(req:Request, res:Response) {
-        exportAs(req.params.db_name, req, res, ExportType.JSON);
+        exportAs(dbNameSSR(req), req, res, ExportType.JSON);
     });
 
     server.get(DOWNLOAD_XLS_URL, function(req:Request, res:Response) {
-        exportAs(req.params.db_name, req, res, ExportType.EXCEL);
+        exportAs(dbNameSSR(req), req, res, ExportType.EXCEL);
     });
 }

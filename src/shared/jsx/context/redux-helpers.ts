@@ -8,32 +8,33 @@ import {createAddItemAction, createDeleteAction, createUpdateItemAction, createU
 import {StructType} from "../../model/types";
 import {RouteComponentProps} from "react-router";
 import {withAsyncData} from "../async/async-data-component";
+import {getDbName} from "../../utils";
 
 /** Expose actions as common props */
 export const matchDispatchToProps = (dispatch: Dispatch<{}>, props?: RouteComponentProps<DbPathParams> & GlobalContextProps) : ReduxEventsProps => {
 
-    let dbName = props.match.params.db_name;
+    let name = getDbName(props);
 
     let onCreate = (record: Record) : Promise<void> => {
-        return createItem(dbName, record).then(function(responseValue) {
+        return createItem(name, record).then(function(responseValue) {
             dispatch(createAddItemAction(responseValue));
         })
     };
 
     let onUpdate = (record: Record) : Promise<void> => {
-        return updateItem(dbName, record).then(function(responseValue) {
+        return updateItem(name, record).then(function(responseValue) {
             dispatch(createUpdateItemAction(responseValue));
         })
     };
 
     let onDelete = (id: string) : Promise<void> => {
-        return deleteItem(dbName, id).then(function() {
+        return deleteItem(name, id).then(function() {
             dispatch(createDeleteAction(id));
         })
     };
 
     let onUpdateSchema = (schema: StructType) => {
-        return updateSchema(dbName, schema).then(function(responseValue) {
+        return updateSchema(name, schema).then(function(responseValue) {
             dispatch(createUpdateSchema(responseValue));
         })
     };

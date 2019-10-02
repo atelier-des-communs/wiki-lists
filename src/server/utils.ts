@@ -1,11 +1,12 @@
 import * as Express from "express";
-import {SECRET_COOKIE, VALIDATION_ERROR_STATUS_CODE} from "../shared/api";
+import {SECRET_COOKIE, SharedConfig, VALIDATION_ERROR_STATUS_CODE} from "../shared/api";
 import {AccessRight} from "../shared/access";
 import {getDbDef} from "./db/db";
 import {isIn} from "../shared/utils";
 import {Request} from "express-serve-static-core"
 import {ValidationException} from "../shared/validators/validators";
 import {BadRequestException, HttpError} from "./exceptions";
+import {config} from "./config";
 
 export interface ContentWithStatus {
     statusCode:number,
@@ -66,8 +67,8 @@ export async function getAccessRights(dbStr: string, pass:string) {
 
 export async function requiresRight(req:Request, right : AccessRight) {
     let rights = await getAccessRights(
-        req.params.db_name,
-        req.cookies[SECRET_COOKIE(req.params.db_name)]);
+        dbNameSSR(req),
+        req.cookies[SECRET_COOKIE(dbNameSSR(req))]);
     if (isIn(rights, right)) {
         return true;
     } else {
@@ -86,3 +87,11 @@ export function traverse(o: any, fn: (obj: any, prop: string, value: any) => voi
     }
 }
 
+// Get DB Name either from config (for single DB mode) or from request path
+export function dbNameSSR(req:Request) {
+    if (config.SINGLE_BASE) {
+        return config.SINGLE_BASE
+    } else {
+        return req.params.db_name;
+    }
+}

@@ -12,7 +12,7 @@ import {LANGUAGES} from "./i18n/messages";
 import {LANG_COOKIE, COOKIE_DURATION} from "../shared/api";
 import * as mongoose from "mongoose";
 import '../shared/model';
-import config from "./config";
+import {config} from "./config";
 
 const MAX_AGE  = 30 * 24 * 3600 * 1000; // One month
 

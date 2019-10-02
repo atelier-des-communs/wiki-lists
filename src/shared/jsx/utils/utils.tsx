@@ -119,3 +119,4 @@ export function applyRec<T>(children:React.ReactChild, fn: (children: React.Reac
         return fn(child, index);
     });
 }
+

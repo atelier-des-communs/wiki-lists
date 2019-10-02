@@ -1,6 +1,6 @@
 import * as mongoose from "mongoose";
 import * as shortid from "shortid";
-import config from "../../server/config";
+import {config} from "../../server/config";
 
 
 // Connect mongoose

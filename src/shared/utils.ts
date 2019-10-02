@@ -4,6 +4,9 @@ import * as QueryString from "querystring";
 import {RouteComponentProps} from "react-router";
 import slugify from "slugify";
 import {cloneDeep} from "lodash";
+import {GlobalContextProps} from "./jsx/context/global-context";
+import {DbPathParams} from "./jsx/common-props";
+import {SharedConfig} from "./api";
 
 
 /** Helper for mapping key => values to f(key, record)*/
@@ -219,3 +222,12 @@ export function parseBool(value : any) {
 export function isPromise<T>(value:any) : boolean  {
     return (value && typeof value.then === 'function');
 }
+
+export function getDbName(props : RouteComponentProps<DbPathParams> & GlobalContextProps) {
+    if (props.config.singleDb) {
+        return props.config.singleDb
+    } else {
+        return props.match.params.db_name;
+    }
+}
+

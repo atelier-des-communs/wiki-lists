@@ -44,12 +44,12 @@ export class Header extends  React.Component<GlobalContextProps>  {
 
         return <>
 
-            <Button as={Link}
+            {/** <Button as={Link}
                     to={LOGIN_PAGE_PATH}
                     floated="right" style={{margin:"5px"}}
                     key="user"
                     compact primary size="small"
-                    content={_.auth.login} />
+                    content={_.auth.login} /> */}
 
             <LangSelector />
 

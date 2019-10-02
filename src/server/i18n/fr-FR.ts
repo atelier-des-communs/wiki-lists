@@ -141,7 +141,9 @@ export let messages : IMessages = {
         wrongPassword : "Mot de passe incorrect",
     },
 
-    update_list_from_map : "Filtrer la liste dans cette zone"
+    update_list_from_map : "Filtrer la liste dans cette zone",
+
+    search : "recherche"
 
 };
 

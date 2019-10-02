@@ -62,7 +62,8 @@ let context : GlobalContextProps = {
     supportedLanguages:marshalledContext.supportedLanguages,
     promises:[],
     cookies : clientCookies,
-    dataFetcher:restDataFetcher};
+    dataFetcher:restDataFetcher,
+    config : marshalledContext.config};
 
 let app = <BrowserRouter >
     <App {...context} />

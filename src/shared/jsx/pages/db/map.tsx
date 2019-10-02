@@ -1,13 +1,13 @@
 /** */
 import * as React from 'react';
-import {GlobalContextProps, GlobalContextProvider} from "../../context/global-context";
+import {GlobalContextProps} from "../../context/global-context";
 import {DbPathParams, DbProps, PageProps} from "../../common-props";
 import {AsyncDataComponent} from "../../async/async-data-component";
 import {Cluster, findBestHashPrecision, ICoord} from "../../../model/geo";
 import {Record} from "../../../model/instances";
-import {Map as MapEl, TileLayer, MapControl, Tooltip, Viewport, CircleMarker} from "react-leaflet";
-import {LatLngBounds, LatLng} from "leaflet";
-import {arrayToMap, goTo, goToResettingPage, Map, mapValues, parseParams, updatedParams} from "../../../utils";
+import {CircleMarker, Map as MapEl, TileLayer, Tooltip, Viewport} from "react-leaflet";
+import {LatLng, LatLngBounds} from "leaflet";
+import {arrayToMap, getDbName, goToResettingPage, Map, parseParams} from "../../../utils";
 import {
     extractFilters,
     extractSearch,
@@ -15,24 +15,17 @@ import {
     serializeFilters,
     serializeSortAndFilters
 } from "../../../views/filters";
-import {Attribute, EnumType, EnumValue, LocationType, Types} from "../../../model/types";
-import {encode, bboxes} from "ngeohash";
-import * as QueryString from "querystring";
+import {Attribute, EnumType, EnumValue, Types} from "../../../model/types";
+import {bboxes} from "ngeohash";
 import {DispatchProp} from "react-redux";
-import {createUpdateItemAction, createUpdateMarkersAction} from "../../../redux";
-import {cloneDeep} from "lodash";
+import {createUpdateMarkersAction} from "../../../redux";
+import {cloneDeep, isEqual} from "lodash";
 import Control from 'react-leaflet-control';
-import {Button, Modal} from 'semantic-ui-react';
-import {isEqual} from "lodash";
-import {SingleRecordComponent} from "../../components/single-record-component";
-import {MessagesProps} from "../../../i18n/messages";
-import {EditDialog} from "../../dialogs/edit-dialog";
-import {recordName} from "../../utils/utils";
-import {Marker, singleRecordLink} from "../../../api";
+import {Button} from 'semantic-ui-react';
+import {Marker} from "../../../api";
 import stringify from "json-stringify-deterministic";
-import {EditButtons} from "../../components/edit-button";
 import {RecordPopup} from "../../components/record-popup";
-
+import {getDbDef} from "../../../../server/db/db";
 
 
 type MapProps = GlobalContextProps & DbProps & PageProps<DbPathParams> & DispatchProp<{}>;
@@ -173,7 +166,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
 
                 // Fetch markers for this geohash
                 promises.push(props.dataFetcher.getRecordsGeo(
-                    props.match.params.db_name,
+                    getDbName(props),
                     nextState.viewport.zoom,
                     updatedFilters, search,
                     [this.colorAttr.name]).then((markers) =>

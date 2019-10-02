@@ -134,7 +134,8 @@ export let messages : IMessages = {
         wrongPassword : "Wrong password",
     },
 
-    update_list_from_map : "Filter list for this area"
+    update_list_from_map : "Filter list for this area",
+    search : "search"
 
 };
 

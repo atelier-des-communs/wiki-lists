@@ -39,7 +39,7 @@ export class RecordPopup extends AsyncDataComponent<RecordPopupProps, Record> {
         return <Modal open={true} onClose={this.props.onClose} closeIcon >
             <Modal.Header>
                 {(this.asyncData) ?
-                    <Link to={singleRecordLink(this.props.db.name, this.asyncData._id)}>
+                    <Link to={singleRecordLink(this.props.config, this.props.db.name, this.asyncData._id)}>
                         {recordName(this.props.db.schema, this.asyncData)}
                     </Link> : null}
             </Modal.Header>

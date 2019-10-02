@@ -10,11 +10,10 @@ import {Cluster} from "./model/geo";
 
 
 // HTML
-export const BASE_DB_PATH = "/db/";
 export const CREATE_DB_PATH = "/create-db";
-export const RECORDS_PATH = BASE_DB_PATH + ":db_name";
-export const RECORDS_ADMIN_PATH = RECORDS_PATH + "@:db_pass";
-export const SINGLE_RECORD_PATH = BASE_DB_PATH + ":db_name/:id";
+export const RECORDS_PATH = (config : SharedConfig) =>  config.singleDb ? "/" : "/db/:db_name";
+export const RECORDS_ADMIN_PATH = (config : SharedConfig) => RECORDS_PATH(config) + "@:db_pass" ;
+export const SINGLE_RECORD_PATH = (config : SharedConfig) => RECORDS_PATH(config) + "/:id";
 export const LOGIN_PAGE_PATH = "/login";
 
 // Cookies
@@ -24,12 +23,12 @@ export const COOKIE_PREFIX = "wl_";
 export const LANG_COOKIE = COOKIE_PREFIX + "lang";
 export const SECRET_COOKIE = (dbName:string) => {return COOKIE_PREFIX + `secret_${dbName}`};
 
-export function recordsLink(dbName: string) {
-    return RECORDS_PATH.replace(':db_name', dbName);
+export function recordsLink(config:SharedConfig, dbName: string) {
+    return RECORDS_PATH(config).replace(':db_name', dbName);
 }
 
-export function singleRecordLink(dbName: string, recordId:string) {
-    return SINGLE_RECORD_PATH
+export function singleRecordLink(config:SharedConfig, dbName: string, recordId:string) {
+    return SINGLE_RECORD_PATH(config)
         .replace(':db_name', dbName)
         .replace(":id", recordId);
 }
@@ -66,12 +65,18 @@ export const DOWNLOAD_JSON_URL  = "/json/:db_name";
 
 export const VALIDATION_ERROR_STATUS_CODE = 444;
 
+export interface SharedConfig {
+    singleDb : string;
+}
+
 // Marshalled JSON within the page, containing static & config data
 export interface IMarshalledContext {
     state: IState,
     env:string,
     lang:string,
-    supportedLanguages: Language[]}
+    supportedLanguages: Language[],
+    config : SharedConfig;
+}
 
 
 export type Marker = Record | Cluster;
