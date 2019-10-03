@@ -12,7 +12,7 @@ import {dbNameSSR} from "../server/utils";
 
 // HTML
 export const CREATE_DB_PATH = "/create-db";
-export const RECORDS_PATH = (config : SharedConfig) =>  config.singleDb ? "/" : "/db/:db_name";
+export const RECORDS_PATH = (config : SharedConfig) =>  config.singleDb ? "" : "/db/:db_name";
 export const RECORDS_ADMIN_PATH = (config : SharedConfig) => RECORDS_PATH(config) + "@:db_pass" ;
 export const SINGLE_RECORD_PATH = (config : SharedConfig) => RECORDS_PATH(config) + "/:id";
 export const LOGIN_PAGE_PATH = "/login";

@@ -23,6 +23,7 @@ import stringify from "json-stringify-deterministic";
 import * as fs from 'fs';
 import {endsWith} from 'lodash';
 import {config, sharedConfig} from "./config";
+import socialPreview from "../shared/img/social-preview.jpg"
 
 
 const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '/static' : 'http://localhost:8081/static';
@@ -86,9 +87,14 @@ function renderHtml(head:SSRHeadSetter, html:string, context:IMarshalledContext=
 				<meta charset="UTF-8">
 				
 				<title>${title}</title>
+		
 				<meta name="description" content="${description}" />
 				
 				<meta name="referrer" content="no-referrer">
+				
+				<meta name="og:title" content="${title}" />
+				<meta property="og:image" content=${config.ROOT_URL}${socialPreview}" />
+				
 				<link rel="shortcut icon" type="image/png" href="/static/img/favicon.png"/>
 				<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.css" />
 				<link rel="stylesheet" href="${BUNDLE_ROOT}/client.bundle.css" />

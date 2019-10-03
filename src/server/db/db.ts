@@ -6,7 +6,7 @@ import {validateSchemaAttributes} from "../../shared/validators/schema-validator
 import {dieIfErrors, ValidationException} from "../../shared/validators/validators";
 import {validateRecord} from "../../shared/validators/record-validator";
 import {Autocomplete, AUTOCOMPLETE_URL, DataFetcher, Marker, SECRET_COOKIE} from "../../shared/api";
-import {arrayToMap, filterSingle, isIn, Map, mapMap, mapValues, oneToArray} from "../../shared/utils";
+import {arrayToMap, debug, filterSingle, isIn, Map, mapMap, mapValues, oneToArray} from "../../shared/utils";
 import {IMessages} from "../../shared/i18n/messages";
 import {AccessRight} from "../../shared/access";
 import {getAccessRights} from "../utils";
@@ -21,6 +21,7 @@ import {encode as geohash, decode} from "ngeohash";
 import {BadRequestException, HttpError} from "../exceptions";
 import {flatMap} from "lodash";
 import {cache} from "../cache";
+
 
 const SCHEMAS_COLLECTION = "schemas";
 const DB_COLLECTION_TEMPLATE = (name:string) => {return `db.${name}`};
@@ -356,7 +357,7 @@ export class DbDataFetcher implements DataFetcher {
 
         let hashsize = findBestHashPrecision(zoom, 100);
 
-        console.debug("zoom", zoom, "hash size", hashsize);
+        // console.debug("zoom", zoom, "hash size", hashsize);
 
         let locAttr = locFilter.attr.name;
 
@@ -377,7 +378,7 @@ export class DbDataFetcher implements DataFetcher {
             project["record." + field] = "$" + field;
         }
 
-        console.debug("Project", project);
+        // debug("location", locFilter, "query", query);
 
         // We group twice because $slice is not avail on $group stage
         // and gathering all records for each group may exceed RAM
@@ -403,10 +404,13 @@ export class DbDataFetcher implements DataFetcher {
             }
         ]);
 
-        console.debug("Explain", JSON.stringify(await cursor.explain(), null, 4));
+        // console.debug("Explain", JSON.stringify(await cursor.explain(), null, 4));
 
         let clusters = await cursor.toArray();
-        
+
+        // debug("clusters", clusters);
+        debug("Parsed nb records ", clusters.map(cluster => cluster.records.length).reduce((a, b) => a+b, 0))
+
         return flatMap(clusters, function (cluster) : Marker {
             if (cluster.count <= MARKERS_PER_CLUSTER) {
                 return cluster.records.map((record : Record) => fromMongo(record, attrMap));

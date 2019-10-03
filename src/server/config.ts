@@ -3,6 +3,7 @@ import {SharedConfig} from "../shared/api";
 export const config = {
     SECRET : getEnv("SECRET"),
     CACHE : getEnv("CACHE", "true"),
+    ROOT_URL : getEnv("ROOT_URL", "http://localhost"),
     DB_HOST : getEnv("DB_HOST", "localhost"),
     DB_NAME : getEnv("DB_NAME", "wikilist"),
     DB_PORT : getEnv("DB_PORT", "27017"),

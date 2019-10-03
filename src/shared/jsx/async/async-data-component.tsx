@@ -19,7 +19,11 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps, DataType>
 
     constructor(props: T, className:string=null) {
         super(props);
-        this.className = className;
+        if (className) {
+            this.className = className;
+        } else {
+            this.className = (this.constructor as any).name;
+        }
         console.debug("Instantiated " + (this.className));
     }
 
@@ -40,6 +44,8 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps, DataType>
 
         let res = this.fetchData(props, state);
 
+        console.debug("Async Fetched data for", this.className, res);
+
         if (isPromise(res)) {
             let promise = res as Promise<DataType>;
             this.loading = true;
@@ -48,6 +54,8 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps, DataType>
                 promise.then((data) => {
                     this.loading = false;
                     this.asyncData = data;
+
+                    console.debug("Async Data arrived for", this.className, data);
 
                     // Trigger update
                     this.setState({});

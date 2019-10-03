@@ -1,7 +1,7 @@
 import Axios, {AxiosPromise} from "axios";
 import {Record} from "../../shared/model/instances";
 import {
-    ADD_ITEM_URL,
+    ADD_ITEM_URL, Autocomplete, AUTOCOMPLETE_URL,
     CHECK_DB_NAME, COUNT_ITEMS_URL,
     CREATE_DB_URL,
     DataFetcher,
@@ -116,6 +116,14 @@ export let restDataFetcher : DataFetcher = {
             + "?" + QueryString.stringify(params);
 
         return await get<number>(url);
+    },
+
+    async autocomplete(dbName: string, attrName: string, query: string): Promise<Autocomplete[]> {
+        let url = AUTOCOMPLETE_URL.
+            replace(":db_name", dbName).
+            replace(":attr", attrName)
+        + "?" + QueryString.stringify({q:query});
+        return await get<Autocomplete[]>(url)
     }
 };
 

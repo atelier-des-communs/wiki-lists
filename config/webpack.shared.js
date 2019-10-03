@@ -29,7 +29,7 @@ var common_loaders = {
         use: [MiniCssExtractPlugin.loader, "css-loader"]},
     img : {
         test: /\.(jp[e]?g|png|gif|svg)$/i,
-        loader: "file-loader?name=img/[name].[ext]?publicPath=/static"
+        loader: "file-loader?name=img/[name].[ext]"
     },
     html : {
         test: /\.html$/,

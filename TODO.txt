@@ -1,3 +1,6 @@
+[BUG] Search box does not reset
+[BUG] Cluser marker with large count don't display well
+[BUG] Link to single record does not work in single base mode
 [BUG] Index needed for sorting big data
 [BUG] Should go back to page 1 upon change of filters
 [BUG] TEst filter state not reset when clearing filter

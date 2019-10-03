@@ -110,7 +110,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
 
     fetchData(props: MapProps, nextState:any): Promise<Marker[]>|Marker[] {
 
-        console.debug("fetch data called for map");
+        // console.debug("fetch data called for map");
 
         // Get location filter from URL
         let query = parseParams(props.location.search);
@@ -119,7 +119,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
 
         let bounds : LatLngBounds = nextState.bounds;
 
-        console.debug("Geo bounds", bounds, "zoom", nextState.viewport.zoom);
+        // console.debug("Geo bounds", bounds, "zoom", nextState.viewport.zoom);
 
         // List geohashes to request
         // We use geohashes in order to "tile" the request and to make theam easier to cache both on client & server
@@ -153,7 +153,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
 
             if (cacheKey in props.store.getState().geoMarkers) {
 
-                console.debug("key in cache", hash, cacheKey);
+                // console.debug("key in cache", hash, cacheKey);
 
                 let markers = props.store.getState().geoMarkers[cacheKey];
 
@@ -195,14 +195,14 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
                 // Store all in cache
                 props.store.dispatch(createUpdateMarkersAction(markersByKey));
                 let res = this.filterMarkers(newMarkers, bounds);
-                console.debug("Asynchronous update of markers", res);
+                // console.debug("Asynchronous update of markers", res);
                 return res;
             });
         } else {
 
             // Synchronous render
             let res = this.filterMarkers(newMarkers, bounds);
-            console.debug("Synchronous update of markers", res);
+            // console.debug("Synchronous update of markers", res);
             return res;
         }
     }

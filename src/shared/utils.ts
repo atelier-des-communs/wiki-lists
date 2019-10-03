@@ -240,3 +240,18 @@ export function filterSingle<T>(values: T[], func : (val:T) => boolean, error:st
     return candidates[0];
 }
 
+
+// Pretty print of objects to console.log
+export function debug(...args: any[]) {
+    args = []
+    for(let i=0; i < arguments.length; i++) {
+        let arg = arguments[i];
+        if (typeof arg === "object") {
+            args.push(JSON.stringify(arg, null, 4))
+        } else {
+            args.push(arg);
+        }
+    }
+    console.debug.apply(null, args);
+}
+

@@ -67,9 +67,9 @@ class AsyncSinglePage extends AsyncDataComponent<RecordsPageProps, RecordsProps>
 
     fetchData(nextProps: RecordsPageProps, nextState: {}): Promise<RecordsProps> | RecordsProps {
 
-        let props = this.props;
-        let state = this.props.store.getState();
-        let query = parseParams(this.props.location.search);
+
+        let state = nextProps.store.getState();
+        let query = parseParams(nextProps.location.search);
         let sort = extractSort(query);
         let search = extractSearch(query);
         let filters = extractFilters(state.dbDefinition.schema, query);
@@ -90,19 +90,19 @@ class AsyncSinglePage extends AsyncDataComponent<RecordsPageProps, RecordsProps>
         } else {
 
             // We need to fetch it !
-            return props.dataFetcher.getRecords(
-                getDbName(props),
+            return nextProps.dataFetcher.getRecords(
+                getDbName(nextProps),
                 filters, search, sort,
                 (page -1) * ITEMS_PER_PAGE,
                 ITEMS_PER_PAGE)
                 .then((records) => {
 
                     // Update records by their id
-                    props.store.dispatch(createAddItemsAction(records));
+                    nextProps.store.dispatch(createAddItemsAction(records));
 
                     // Update page of indexes
                     let recordsIds = records.map(record => record._id);
-                    props.store.dispatch(createUpdatePageAction(key, page, recordsIds));
+                    nextProps.store.dispatch(createUpdatePageAction(key, page, recordsIds));
 
                     return {records};
                 });
@@ -209,9 +209,9 @@ interface CountProps {
 export class AsyncPaging extends AsyncDataComponent<RecordsPageProps, CountProps> {
 
     fetchData(nextProps: RecordsPageProps, nextState: {}) {
-        let props = this.props;
-        let state = props.store.getState();
-        let query = parseParams(props.location.search);
+
+        let state = nextProps.store.getState();
+        let query = parseParams(nextProps.location.search);
         let search = extractSearch(query);
         let filters = extractFilters(state.dbDefinition.schema, query);
 
@@ -223,12 +223,12 @@ export class AsyncPaging extends AsyncDataComponent<RecordsPageProps, CountProps
             return {count: state.counts[key]};
         } else {
             // Need fetch
-            return props.dataFetcher.countRecords(
-                getDbName(props),
+            return nextProps.dataFetcher.countRecords(
+                getDbName(nextProps),
                 filters, search)
                 .then((count) => {
                     // Update state (cache)
-                    props.store.dispatch(createUpdateCountAction(key, count));
+                    nextProps.store.dispatch(createUpdateCountAction(key, count));
                     return {count};
                 })
         }

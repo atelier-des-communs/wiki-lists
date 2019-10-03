@@ -338,7 +338,7 @@ export class LocationFilter implements IFilter<ICoord> {
         this.attr = attr;
 
 
-        console.debug("Loc filter parsing, query params", queryParams);
+        // console.debug("Loc filter parsing, query params", queryParams);
 
         if (!queryParams) {
             return
@@ -388,6 +388,7 @@ export class LocationFilter implements IFilter<ICoord> {
         return {
             [this.attr.name] : {
                 $geoWithin : {
+                    // We use GeoJson matching instead of $box, otherwize Mongo does not use indexes
                     $geometry: {
                         type: "Polygon" ,
                         coordinates: [[
