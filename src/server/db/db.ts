@@ -403,6 +403,8 @@ export class DbDataFetcher implements DataFetcher {
             }
         ]);
 
+        console.debug("Explain", JSON.stringify(await cursor.explain(), null, 4));
+
         let clusters = await cursor.toArray();
         
         return flatMap(clusters, function (cluster) : Marker {

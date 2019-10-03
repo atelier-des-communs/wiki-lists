@@ -388,10 +388,19 @@ export class LocationFilter implements IFilter<ICoord> {
         return {
             [this.attr.name] : {
                 $geoWithin : {
-                    $box : [
-                        [this.minlon, this.minlat],
-                        [this.maxlon, this.maxlat],
-                ]}}};
+                    $geometry: {
+                        type: "Polygon" ,
+                        coordinates: [[
+                            [this.minlon, this.minlat],
+                            [this.minlon, this.maxlat],
+                            [this.maxlon, this.maxlat],
+                            [this.maxlon, this.minlat],
+                            [this.minlon, this.minlat],
+                        ]]
+                    }
+                }
+            }
+        };
     }
 }
 

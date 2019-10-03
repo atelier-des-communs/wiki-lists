@@ -161,7 +161,8 @@ export function setUp(server:Express) {
 
     server.get(AUTOCOMPLETE_URL, function (req: Request, res: Response) {
 
-        // FIXME only works now for VigiBati / commune : we need to store an extra field for text search
+        // FIXME only works now for VigiBati / commune : because it does not contain accents
+        //  we need to store an extra field for text search
         let query = slug(req.query.q);
 
         returnPromise(res, new DbDataFetcher(req).autocomplete(
