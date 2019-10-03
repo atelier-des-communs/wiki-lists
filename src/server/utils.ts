@@ -87,7 +87,7 @@ export function traverse(o: any, fn: (obj: any, prop: string, value: any) => voi
     }
 }
 
-// Get DB Name either from config (for single DB mode) or from request path
+// XXX we might not need this : we still pass dbname to api REST services, even for single base mode
 export function dbNameSSR(req:Request) {
     if (config.SINGLE_BASE) {
         return config.SINGLE_BASE

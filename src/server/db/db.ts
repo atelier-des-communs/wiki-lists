@@ -1,12 +1,12 @@
-import {Attribute, EnumType, StructType, Types} from "../../shared/model/types";
+import {Attribute, EnumType, StructType, TextType, Types} from "../../shared/model/types";
 import {config} from "../config"
 import {MongoClient, Cursor} from "mongodb";
 import {Record, withSystemAttributes} from "../../shared/model/instances";
 import {validateSchemaAttributes} from "../../shared/validators/schema-validators";
 import {dieIfErrors, ValidationException} from "../../shared/validators/validators";
 import {validateRecord} from "../../shared/validators/record-validator";
-import {DataFetcher, Marker, SECRET_COOKIE} from "../../shared/api";
-import {arrayToMap, isIn, Map, mapMap, mapValues, oneToArray} from "../../shared/utils";
+import {Autocomplete, AUTOCOMPLETE_URL, DataFetcher, Marker, SECRET_COOKIE} from "../../shared/api";
+import {arrayToMap, filterSingle, isIn, Map, mapMap, mapValues, oneToArray} from "../../shared/utils";
 import {IMessages} from "../../shared/i18n/messages";
 import {AccessRight} from "../../shared/access";
 import {getAccessRights} from "../utils";
@@ -26,6 +26,7 @@ const SCHEMAS_COLLECTION = "schemas";
 const DB_COLLECTION_TEMPLATE = (name:string) => {return `db.${name}`};
 
 const MARKERS_PER_CLUSTER = 20;
+const AUTOCOMPLETE_NUM = 10;
 
 /* Singleton instance */
 class  Connection {
@@ -426,6 +427,47 @@ export class DbDataFetcher implements DataFetcher {
         let query = this.baseQuery(dbName, filters);
         let cursor = col.find(query);
         return cursor.count();
+    }
+
+    @cache
+    async autocomplete(dbName: string, attrName: string, query: string): Promise<Autocomplete[]> {
+        let col = await Connection.getDbCollection(dbName);
+        let dbDef = await this.getDbDefinition(dbName);
+
+        let attr =  filterSingle(dbDef.schema.attributes, attr => attr.name == attrName);
+        if (attr.type.tag != Types.TEXT || (attr.type as TextType).rich) {
+            throw new BadRequestException(`${attr} is not a simple text field`);
+        }
+
+        let res = col.aggregate([
+            {
+                $match : {
+                    $text: {$search: query},
+                    [attrName] : {
+                        $regex : `.*${query}.*`,
+                        $options : 'i'
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: "$" + attrName,
+                    "count": {
+                        $sum: 1
+                    },
+                }
+            },
+            {
+                $sort : {count: -1}
+            },
+            {
+                $limit: AUTOCOMPLETE_NUM
+            }
+        ]);
+
+        // console.log(JSON.stringify(await res.explain(), null, 4));
+
+        return res.toArray();
     }
 
 }

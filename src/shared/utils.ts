@@ -231,3 +231,12 @@ export function getDbName(props : RouteComponentProps<DbPathParams> & GlobalCont
     }
 }
 
+/** Extract single value or die */
+export function filterSingle<T>(values: T[], func : (val:T) => boolean, error:string="Should have single match") : T {
+    let candidates = values.filter(func);
+    if (candidates.length != 1) {
+        throw new Error(error);
+    }
+    return candidates[0];
+}
+

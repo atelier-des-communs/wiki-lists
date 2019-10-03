@@ -7,6 +7,7 @@ import {Map} from "./utils";
 import {Filter} from "./views/filters";
 import {ISort} from "./views/sort";
 import {Cluster} from "./model/geo";
+import {dbNameSSR} from "../server/utils";
 
 
 // HTML
@@ -44,6 +45,7 @@ export const GET_ITEM_URL = "/api/:db_name/item/:id";
 export const GET_ITEMS_URL = "/api/:db_name/items";
 export const GET_ITEMS_GEO_URL = "/api/:db_name/items-coords";
 export const COUNT_ITEMS_URL = "/api/:db_name/count";
+export const AUTOCOMPLETE_URL = "/api/:db_name/autocomplete/:attr";
 export const GET_DB_DEFINITION_URL = "/api/:db_name/definition";
 
 
@@ -81,6 +83,11 @@ export interface IMarshalledContext {
 
 export type Marker = Record | Cluster;
 
+export interface Autocomplete {
+    value:string,
+    score:number
+}
+
 // Generic reader interface, implemented directly with DB access for SSR, or as rest client on Browser
 export interface DataFetcher {
     getRecord(dbName: string, id : string) : Promise<Record>;
@@ -91,4 +98,7 @@ export interface DataFetcher {
 
     countRecords(dbName: string, filters?: Map<Filter>, search?:string) : Promise<number>;
     getDbDefinition(dbName:string) : Promise<DbDefinition>;
+
+
+    autocomplete(dbName:string, attrName:string, query:string) : Promise<Autocomplete[]>;
 }

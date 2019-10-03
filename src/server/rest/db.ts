@@ -1,5 +1,5 @@
 import {
-    ADD_ITEM_URL, API_BASE_URL,
+    ADD_ITEM_URL, API_BASE_URL, AUTOCOMPLETE_URL,
     CHECK_DB_NAME,
     COOKIE_DURATION, COUNT_ITEMS_URL,
     CREATE_DB_URL,
@@ -32,9 +32,9 @@ import {toAnnotatedJson, toTypedObjects} from "../../shared/serializer";
 import {DbDefinition} from "../../shared/model/db-def";
 import * as mung from "express-mung";
 import {extractSort} from "../../shared/views/sort";
-import {oneToArray, sortBy, strToInt} from "../../shared/utils";
+import {oneToArray, slug, sortBy, strToInt} from "../../shared/utils";
 import {extractFilters, extractSearch} from "../../shared/views/filters";
-
+import * as responseTime from "response-time";
 
 async function addItemsAsync(req:Request) : Promise<Record[] | Record> {
     let records = req.body as Record | Record[];
@@ -122,6 +122,9 @@ export function setUp(server:Express) {
     // Add middleware in input / output to transform into json with type information
     server.use(API_BASE_URL, safeInput);
     server.use(API_BASE_URL, mung.json(decorateOutput));
+    server.use(API_BASE_URL, responseTime((req, res, time) => {
+        console.debug("Ellapsed time", time);
+    }));
 
     // Routes
     server.post(ADD_ITEM_URL, function (req: Request, res: Response) {
@@ -154,6 +157,17 @@ export function setUp(server:Express) {
 
     server.get(GET_ITEM_URL, function (req: Request, res: Response) {
         returnPromise(res, new DbDataFetcher(req).getRecord(dbNameSSR(req), req.params.id));
+    });
+
+    server.get(AUTOCOMPLETE_URL, function (req: Request, res: Response) {
+
+        // FIXME only works now for VigiBati / commune : we need to store an extra field for text search
+        let query = slug(req.query.q);
+
+        returnPromise(res, new DbDataFetcher(req).autocomplete(
+            dbNameSSR(req),
+            req.params.attr,
+            query));
     });
 
     server.get(GET_ITEMS_URL, async function (req: Request, res: Response) {
