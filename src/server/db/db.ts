@@ -225,7 +225,17 @@ export async function checkAvailability(dbName:string) : Promise<boolean> {
     return (database == null);
 }
 
+// Local cache of Schemas
+// FIXME : solve the serailization issue for Schemas and use Redis cache
+// FIXME : Update cache upon update
+const SCHEMAS_CACHE : Map<DbDefinition> = {};
+
+
 export async function getDbDef(dbName: string) : Promise<DbDefinition> {
+
+    if (dbName in SCHEMAS_CACHE) {
+        return SCHEMAS_CACHE[dbName];
+    }
 
     let db = await Connection.getDb();
     let schemas = db.collection<DbDefinition>(SCHEMAS_COLLECTION);
@@ -237,8 +247,12 @@ export async function getDbDef(dbName: string) : Promise<DbDefinition> {
     let res = toTypedObjects(schema, "tag", false);
 
     res.schema = withSystemAttributes(res.schema);
+
+    SCHEMAS_CACHE[dbName] = res;
+
     return res;
 }
+
 
 // DataFetcher for SSR : direct access to DB
 export class DbDataFetcher implements DataFetcher {
@@ -250,6 +264,7 @@ export class DbDataFetcher implements DataFetcher {
     }
 
     async getDbDefinition(dbName: string) : Promise<DbDefinition> {
+
         let dbDef = await getDbDef(dbName);
 
         // Decorate Db with user rights
@@ -383,7 +398,8 @@ export class DbDataFetcher implements DataFetcher {
         // We group twice because $slice is not avail on $group stage
         // and gathering all records for each group may exceed RAM
         // We use "$first" for single records and then group again at higher scale for having several samples in a group
-        let cursor = col.aggregate([{$match: query},
+        let cursor = col.aggregate([
+            {$match: query},
             {
                 $project: project
             },

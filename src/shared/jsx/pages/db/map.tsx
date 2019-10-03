@@ -310,7 +310,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
             />
 
             {this.isLocationFilterUpTodate() ? null : <Control position="bottomleft" >
-                <Button icon="filter" onClick={this.updateFilters}>
+                <Button icon="filter" onClick={this.updateFilters} primary>
                     {_.update_list_from_map}
                 </Button>
             </Control>}

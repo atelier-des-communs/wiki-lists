@@ -252,13 +252,21 @@ export class AsyncPaging extends AsyncDataComponent<RecordsPageProps, CountProps
         let nbPages = Math.ceil(this.asyncData.count / ITEMS_PER_PAGE);
 
         if (nbPages > 1) {
-            return <Pagination
+            let Paging =  () => <Pagination
                 totalPages={nbPages}
                 activePage={page}
                 onPageChange={(e, {activePage}) => {this.goToPage(activePage)}}
-            />
+            />;
+
+            return <>
+                    <Paging />
+                        {this.props.children}
+                    <Paging />
+                </>;
         } else {
-            return null;
+            return <>
+                {this.props.children}
+            </>;
         }
     };
 }
@@ -481,9 +489,9 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
 
                         <ViewTypeButtons />
 
-                        <AsyncPaging {...props} />
+                        <AsyncPaging {...props} >
                             <AsyncSinglePage {...props} />
-                        <AsyncPaging {...props} />
+                        </AsyncPaging>
 
                     </div>
 

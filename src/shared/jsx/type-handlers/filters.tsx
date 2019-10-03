@@ -334,19 +334,31 @@ export const FiltersPopup : React.SFC<IFiltersComponentProps & RouteComponentPro
 };
 
 /* Search component, for all fields */
-class _SearchComponent extends React.Component<IFiltersComponentProps & RouteComponentProps<{}>> {
+type SearchCompoentProps = IFiltersComponentProps & RouteComponentProps<{}>;
+class _SearchComponent extends React.Component<SearchCompoentProps> {
 
 
     state : {value:string};
 
-    constructor(props:IFiltersComponentProps & RouteComponentProps<{}>) {
+    getSearch = (props:SearchCompoentProps) => {
+        return extractSearch(parseParams(props.location.search))
+    }
+
+    constructor(props:SearchCompoentProps) {
         super(props);
-        this.state = {value : extractSearch(parseParams(this.props.location.search))};
+        this.state = {value : this.getSearch(props)};
     }
 
     // Don' update location / view on each key stroke ... wait a bit for it
     updateSearch() {
         goToResettingPage(this.props, serializeSearch(this.state.value));
+    }
+
+    // Reset search value if changed from upstream
+    componentWillReceiveProps(nextProps: Readonly<SearchCompoentProps>, nextContext: any): void {
+        if (this.getSearch(nextProps) != this.getSearch(this.props)) {
+            this.setState({value: this.getSearch(nextProps) || null})
+        }
     }
 
     render() {
