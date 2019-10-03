@@ -3,7 +3,7 @@ import * as React from 'react';
 import {GlobalContextProps} from "../../context/global-context";
 import {DbPathParams, DbProps, PageProps} from "../../common-props";
 import {AsyncDataComponent} from "../../async/async-data-component";
-import {Cluster, findBestHashPrecision, ICoord} from "../../../model/geo";
+import {Cluster, ICoord} from "../../../model/geo";
 import {Record} from "../../../model/instances";
 import {CircleMarker, Map as MapEl, TileLayer, Tooltip, Viewport} from "react-leaflet";
 import {LatLng, LatLngBounds} from "leaflet";
@@ -16,7 +16,6 @@ import {
     serializeSortAndFilters
 } from "../../../views/filters";
 import {Attribute, EnumType, EnumValue, Types} from "../../../model/types";
-import {bboxes} from "ngeohash";
 import {DispatchProp} from "react-redux";
 import {createUpdateMarkersAction} from "../../../redux";
 import {cloneDeep, isEqual} from "lodash";
@@ -25,8 +24,7 @@ import {Button} from 'semantic-ui-react';
 import {Marker} from "../../../api";
 import stringify from "json-stringify-deterministic";
 import {RecordPopup} from "../../components/record-popup";
-import {getDbDef} from "../../../../server/db/db";
-
+import * as tilebelt from "tilebelt";
 
 type MapProps = GlobalContextProps & DbProps & PageProps<DbPathParams> & DispatchProp<{}>;
 
@@ -57,7 +55,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
         this.state = {
             popupRecordId:null,
             bounds : DEFAULT_BOUNDS,
-            viewport:DEFAULT_VIEWPORT}
+            viewport:DEFAULT_VIEWPORT};
 
         // Get the location attribute
         let locationAttrs = props.db.schema.attributes.filter(attr => attr.type.tag == Types.LOCATION);
@@ -65,7 +63,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
 
         // FIXME: hardcoded
         this.colorAttr = props.db.schema.attributes.filter(attr => attr.name == "type")[0];
-        this.colorMap = arrayToMap((this.colorAttr.type as EnumType).values, (enumVal) => enumVal.value)
+        this.colorMap = arrayToMap((this.colorAttr.type as EnumType).values, (enumVal) => enumVal.value);
 
         console.debug("Color map", this.colorMap);
     }
@@ -74,13 +72,28 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
     listHashes(bound : LatLngBounds, zoom:number) {
 
         // Compute best precision to fetch a few tiles
-        let hashsize = findBestHashPrecision(zoom, 500);
-        console.debug("zoom", zoom, "hashsize", hashsize);
+        let hashsize = Math.max(1, zoom - 2);
 
-        return bboxes(
-            bound.getSouth(), bound.getWest(),
-            bound.getNorth(), bound.getEast() ,
+        // FIXME trouble at greenwich ??
+        let mintile = tilebelt.pointToTile(
+            bound.getWest(),
+            bound.getNorth(),
             hashsize);
+
+        let maxtile = tilebelt.pointToTile(
+            bound.getEast(),
+            bound.getSouth(),
+            hashsize);
+
+        console.debug("bbox", bound, "hashsize", hashsize, "min tile", mintile, "max tile", maxtile);
+
+        let res : string[] = [];
+        for (let x=mintile[0]; x <= maxtile[0]; x++) {
+            for (let y=mintile[1]; y <= maxtile[1]; y++) {
+                res.push(tilebelt.tileToQuadkey([x, y, hashsize]));
+            }
+        }
+        return res;
     }
 
     openPopup(recordId:string) {
@@ -124,6 +137,9 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
         // List geohashes to request
         // We use geohashes in order to "tile" the request and to make theam easier to cache both on client & server
         let hashes = this.listHashes(bounds, nextState.viewport.zoom);
+
+        console.debug("Required hashes", hashes);
+
 
         let filtersForHash = (hash: string) => {
             let res = cloneDeep(filters);
@@ -220,19 +236,19 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
         let viewport : Viewport = {
             zoom : this.state.viewport.zoom +2,
             center : [coord.lat, coord.lon]
-        }
+        };
         this.setState({viewport});
     };
 
     updateFilters = () => {
         let filter = this.boundsToFilter(this.state.bounds);
         goToResettingPage(this.props, serializeFilters([filter]));
-    }
+    };
 
     isLocationFilterUpTodate() : boolean {
+
         // Current map box
         let filter = this.boundsToFilter(this.state.bounds);
-
 
         // URL filters
         let query = parseParams(this.props.location.search);
@@ -255,7 +271,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
                 let coord = record[this.locAttr.name] as ICoord;
                 let latln =  new LatLng(coord.lat, coord.lon);
 
-                let colorVal = record[this.colorAttr.name]
+                let colorVal = record[this.colorAttr.name];
                 let color = colorVal ? this.colorMap[colorVal].color : "white";
 
                 return <CircleMarker

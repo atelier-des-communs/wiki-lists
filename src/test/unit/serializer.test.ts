@@ -1,6 +1,8 @@
 import {clearRegistry, registerClass, classTag, toAnnotatedJson, toTypedObjects} from "../../shared/serializer";
 
-class A {};
+
+class A {
+}
 
 beforeEach(() => clearRegistry());
 

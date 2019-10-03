@@ -16,12 +16,11 @@ import {DbDefinition} from "../../shared/model/db-def";
 import {Filter, LocationFilter} from "../../shared/views/filters";
 import {ISort} from "../../shared/views/sort";
 import {toTypedObjects} from "../../shared/serializer";
-import {Cluster, findBestHashPrecision} from "../../shared/model/geo";
-import {encode as geohash, decode} from "ngeohash";
 import {BadRequestException, HttpError} from "../exceptions";
 import {flatMap} from "lodash";
 import {cache} from "../cache";
-
+import {cloneDeep} from "lodash";
+import * as tilebelt from "tilebelt";
 
 const SCHEMAS_COLLECTION = "schemas";
 const DB_COLLECTION_TEMPLATE = (name:string) => {return `db.${name}`};
@@ -121,12 +120,11 @@ function fromMongo(record : Record, attrMap: Map<Attribute>) {
     let res : any = {};
 
     // Loop on keys
-    for (let key in record) {
+    for (let key in attrMap) {
         let attr = attrMap[key];
-        if (!attr) {
-            throw new Error("Attribute not found " + key);
+        if (key in record) {
+            res[key] = attr.type.fromMongo(record[key]);
         }
-        res[key] = attr.type.fromMongo(record[key]);
     }
     return res;
 }
@@ -139,10 +137,15 @@ export async function setUpIndexesDb(dbName: string) {
 
     // Extract text index to single index with all text fields
     for (let attr of dbDef.schema.attributes) {
-        for (let index of attr.type.mongoIndex()) {
+        for (let index of attr.type.mongoIndex(attr.name)) {
             if (index == "text") {
                 textIndex[attr.name] = index;
-            } else {
+            } else if (typeof index == "object") {
+                console.debug("index object", index);
+                // Index specified directly as {attrkey : index}
+                await col.createIndex(index);
+
+            } else if (index) {
                 await col.createIndex({[attr.name]:index});
             }
         }
@@ -234,7 +237,7 @@ const SCHEMAS_CACHE : Map<DbDefinition> = {};
 export async function getDbDef(dbName: string) : Promise<DbDefinition> {
 
     if (dbName in SCHEMAS_CACHE) {
-        return SCHEMAS_CACHE[dbName];
+        return cloneDeep(SCHEMAS_CACHE[dbName]);
     }
 
     let db = await Connection.getDb();
@@ -250,7 +253,7 @@ export async function getDbDef(dbName: string) : Promise<DbDefinition> {
 
     SCHEMAS_CACHE[dbName] = res;
 
-    return res;
+    return cloneDeep(res);
 }
 
 
@@ -301,8 +304,8 @@ export class DbDataFetcher implements DataFetcher {
         if (search) {
             // Eech word need to be quoted for AND behavior
             let words = search.split(" ");
-            let quotedSearch = words.map(word => '\"' + word + '\"').join(" ")
-            console.debug("quoted search", quotedSearch)
+            let quotedSearch = words.map(word => '\"' + word + '\"').join(" ");
+            console.debug("quoted search", quotedSearch);
             mongoFilters.push({$text: {$search: quotedSearch}});
         }
 
@@ -369,11 +372,6 @@ export class DbDataFetcher implements DataFetcher {
 
         let locFilter : LocationFilter = locFilters[0] as LocationFilter;
 
-
-        let hashsize = findBestHashPrecision(zoom, 100);
-
-        // console.debug("zoom", zoom, "hash size", hashsize);
-
         let locAttr = locFilter.attr.name;
 
         let project = {
@@ -382,7 +380,7 @@ export class DbDataFetcher implements DataFetcher {
                 "$substr": [
                     "$location.properties.hash",
                     // Slice current records geohash for required length
-                    0, hashsize + 2]
+                    0, zoom + 2]
             },
             "record._id": "$_id",
             ["record." + locAttr] : "$" + locAttr,
@@ -393,7 +391,7 @@ export class DbDataFetcher implements DataFetcher {
             project["record." + field] = "$" + field;
         }
 
-        // debug("location", locFilter, "query", query);
+        debug("location", locFilter, "query", query);
 
         // We group twice because $slice is not avail on $group stage
         // and gathering all records for each group may exceed RAM
@@ -413,7 +411,7 @@ export class DbDataFetcher implements DataFetcher {
                 }
             },{
                 $group: {
-                    _id : {"$substr": ["$_id", 0, hashsize]},
+                    _id : {"$substr": ["$_id", 0, zoom]},
                     "count": {$sum:"$count"},
                     "records" :  { $push : "$record"}
                 }
@@ -425,18 +423,19 @@ export class DbDataFetcher implements DataFetcher {
         let clusters = await cursor.toArray();
 
         // debug("clusters", clusters);
-        debug("Parsed nb records ", clusters.map(cluster => cluster.records.length).reduce((a, b) => a+b, 0))
+        debug("Parsed nb records ", clusters.map(cluster => cluster.records.length).reduce((a, b) => a+b, 0));
 
         return flatMap(clusters, function (cluster) : Marker {
             if (cluster.count <= MARKERS_PER_CLUSTER) {
                 return cluster.records.map((record : Record) => fromMongo(record, attrMap));
             } else {
                 // Cluster id is the hash
-                let coord = decode(cluster._id)
-
+                let tile = tilebelt.quadkeyToTile(cluster._id);
+                let box = tilebelt.tileToBBOX(tile);
+                let lon = (box[0] + box[2]) / 2;
+                let lat = (box[1] + box[3]) / 2;
                 return [{
-                    lat : coord.latitude,
-                    lon : coord.longitude,
+                    lat, lon,
                     count : cluster.count
                 }]
             }
@@ -488,8 +487,6 @@ export class DbDataFetcher implements DataFetcher {
         ]);
 
         // console.log(JSON.stringify(await res.explain(), null, 4));
-
         return res.toArray();
     }
-
 }

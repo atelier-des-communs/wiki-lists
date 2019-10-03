@@ -8,7 +8,7 @@ interface CollapsibleProps {
 export class Collapsible extends React.Component<CollapsibleProps> {
     state:{
         open:boolean;
-    }
+    };
     constructor(props:CollapsibleProps) {
         super(props);
         let open = (typeof(this.props.open) == "undefined") ? true : this.props.open;

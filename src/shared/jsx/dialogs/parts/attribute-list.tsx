@@ -180,7 +180,7 @@ export class AttributeList extends React.Component<AttributeListProps> {
 
                 {typeExtra}
 
-            </Grid>
+            </Grid>;
 
             return <Segment key={attr.uid} >
 

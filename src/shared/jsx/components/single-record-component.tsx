@@ -46,4 +46,4 @@ export class SingleRecordComponent extends  React.Component<SingleRecordComponen
     }
 
 
-};
+}

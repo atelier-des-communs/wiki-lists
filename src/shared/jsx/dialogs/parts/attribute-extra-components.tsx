@@ -140,7 +140,7 @@ const EnumExtra: TypeExtraComponent<EnumType> = (props) => {
 export function typeExtraSwitch(props: TypeExtraProps<any>) {
     if (props.type) switch (props.type.tag) {
         case Types.ENUM :
-            return <EnumExtra {...props} />
+            return <EnumExtra {...props} />;
         case Types.TEXT :
             return <TextExtra {...props} />
     }

@@ -73,4 +73,4 @@ export const EditButtons: React.SFC<EditButtonsProps> = (props) => {
                 }}}
         />}
     </Button.Group>;
-}
+};

@@ -57,7 +57,7 @@ export const ErrorPlaceholder : React.SFC<ErrorPlaceholderProps> = (props) =>
      <ErrorsContext.Consumer>
         {({errors, displayedErrors}) => {
             let attrErrors = errors[props.attributeKey];
-            displayedErrors.push(props.attributeKey)
+            displayedErrors.push(props.attributeKey);
             return <ErrorLabel errors={oneToArray(attrErrors)} />
         }}
     </ErrorsContext.Consumer>;
@@ -123,7 +123,7 @@ export function getErrorPlaceholderValidators(element:React.ReactElement<{childr
         // Replace single error placeholder
         if (child.type == ErrorPlaceholder) {
             let props =(child.props as ErrorPlaceholderProps);
-            let valueValidators = oneToArray(props.validators)
+            let valueValidators = oneToArray(props.validators);
             let valueF = props.value;
 
             // Append validators

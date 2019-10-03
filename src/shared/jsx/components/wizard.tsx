@@ -19,7 +19,7 @@ export const WizardStep : React.SFC<WizardStepProps> = (props) => {
     return <>
         {props.children}
         </>;
-}
+};
 
 export class Wizard extends React.Component<GlobalContextProps & WizardProps> {
 

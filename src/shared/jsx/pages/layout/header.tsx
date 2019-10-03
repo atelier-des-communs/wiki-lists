@@ -40,7 +40,7 @@ export class Header extends  React.Component<GlobalContextProps>  {
                     </Button>
                 )}
             </Button.Group >;
-        }
+        };
 
         return <>
 

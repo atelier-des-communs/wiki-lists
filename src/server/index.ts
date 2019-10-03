@@ -16,7 +16,7 @@ import {config} from "./config";
 
 const MAX_AGE  = 30 * 24 * 3600 * 1000; // One month
 
-const LOGIN_TIME = 7 * 24 * 3600 * 100 // One week
+const LOGIN_TIME = 7 * 24 * 3600 * 100; // One week
 
 export default function initServer(dist_paths:string[]) : express.Express {
 

@@ -18,7 +18,7 @@ export const SINGLE_RECORD_PATH = (config : SharedConfig) => RECORDS_PATH(config
 export const LOGIN_PAGE_PATH = "/login";
 
 // Cookies
-export const COOKIE_DURATION = 31 * 24 * 3600 * 1000 // one month;
+export const COOKIE_DURATION = 31 * 24 * 3600 * 1000; // one month;
 
 export const COOKIE_PREFIX = "wl_";
 export const LANG_COOKIE = COOKIE_PREFIX + "lang";

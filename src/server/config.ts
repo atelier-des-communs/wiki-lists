@@ -15,7 +15,7 @@ export const config = {
 // Config shared with client (via serialization)
 export const sharedConfig : SharedConfig = {
     singleDb : config.SINGLE_BASE
-}
+};
 
 function getEnv(key:string, def:any = null) {
     if (process.env.hasOwnProperty(key)) {

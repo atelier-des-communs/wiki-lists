@@ -44,10 +44,10 @@ class _DbPageSwitch extends React.Component<DbPageProps>{
         let _ = props.messages;
         let db = props.db;
 
-        console.debug("Rendering db page switch with props : ", props)
+        console.debug("Rendering db page switch with props : ", props);
 
         if (!db) {
-            console.debug("Waiting fetch of schema ...")
+            console.debug("Waiting fetch of schema ...");
             return null;
         }
 
@@ -56,7 +56,7 @@ class _DbPageSwitch extends React.Component<DbPageProps>{
         let private_link = base_url +
             RECORDS_ADMIN_PATH(props.config).
                 replace(":db_name", getDbName(props)).
-                replace(":db_pass", db.secret)
+                replace(":db_pass", db.secret);
 
         let public_link = base_url +
             RECORDS_PATH(props.config).

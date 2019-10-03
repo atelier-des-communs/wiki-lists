@@ -52,7 +52,6 @@
     "@types/mongodb": "^3.1.3",
     "@types/mongoose": "^5.5.3",
     "@types/morgan": "^1.7.35",
-    "@types/ngeohash": "^0.6.2",
     "@types/node": "^8.0.2",
     "@types/node-uuid": "0.0.28",
     "@types/object-assign": "^4.0.30",
@@ -124,9 +123,11 @@
     "webpack-stats-plugin": "^0.2.1"
   },
   "dependencies": {
+    "@mapbox/tilebelt": "^1.0.1",
     "@types/md5": "^2.1.33",
     "@types/redis": "^2.8.13",
     "@types/response-time": "^2.3.4",
+    "@types/tilebelt": "^1.0.2",
     "axios": "^0.18.0",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.18.3",
@@ -153,7 +154,6 @@
     "md5": "^2.2.1",
     "mongodb": "^3.1.1",
     "mongoose": "^5.5.11",
-    "ngeohash": "^0.6.3",
     "object-assign": "^4.1.1",
     "passport": "^0.4.0",
     "passport-local": "^1.0.0",
@@ -177,6 +177,7 @@
     "semantic-ui-react": "^0.82.0",
     "shortid": "^2.2.14",
     "slugify": "^1.3.1",
+    "tilebelt": "^1.0.1",
     "xss": "^1.0.3"
   }
 }

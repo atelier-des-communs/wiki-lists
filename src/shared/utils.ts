@@ -63,7 +63,7 @@ export function arrayToMap<T>(arr : T[], keyFunc : (item:T) => string): Map<T> {
     var res : Map<T> = {};
     arr.forEach(function(item){
         res[keyFunc(item)] = item;
-    })
+    });
     return res;
 }
 
@@ -243,7 +243,7 @@ export function filterSingle<T>(values: T[], func : (val:T) => boolean, error:st
 
 // Pretty print of objects to console.log
 export function debug(...args: any[]) {
-    args = []
+    args = [];
     for(let i=0; i < arguments.length; i++) {
         let arg = arguments[i];
         if (typeof arg === "object") {

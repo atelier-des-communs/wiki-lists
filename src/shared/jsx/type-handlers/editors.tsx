@@ -221,5 +221,5 @@ export const ValueHandler = (props: ValueHandlerProps<any, any>) => {
         default:
             throw new Error( `Type not supported : ${props.type.tag}`);
     }
-}
+};
 

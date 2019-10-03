@@ -157,5 +157,5 @@ exports.client_config = (mode, name) => {
     res.output.chunkFilename = '[name].chunk.js';
 
     return res;
-}
+};
 

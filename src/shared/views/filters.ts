@@ -18,7 +18,7 @@ import {Record} from "../model/instances";
 import {extractSort, ISort, serializeSort} from "./sort";
 import {RouteComponentProps} from "react-router"
 import {ICoord} from "../model/geo";
-import {decode_bbox, encode} from "ngeohash";
+import * as tilebelt from "tilebelt";
 
 function queryParamName(attrName: string) {
     return `${attrName}.f`;
@@ -347,11 +347,12 @@ export class LocationFilter implements IFilter<ICoord> {
         // Direct hash ?
         if (queryParams[attr.name]) {
             this.geohash = queryParams[attr.name];
-            let box = decode_bbox(this.geohash);
-            this.minlat = box[0];
-            this.minlon = box[1];
-            this.maxlat = box[2];
-            this.maxlon = box[3];
+            let tile = tilebelt.quadkeyToTile(this.geohash);
+            let box = tilebelt.tileToBBOX(tile);
+            this.minlon = box[0];
+            this.minlat = box[1];
+            this.maxlon = box[2];
+            this.maxlat = box[3];
         } else {
             this.minlon = strToFloat(queryParams[paramMinLon(attr.name)]);
             this.maxlon = strToFloat(queryParams[paramMaxLon(attr.name)]);
@@ -363,6 +364,7 @@ export class LocationFilter implements IFilter<ICoord> {
 
     isAll() {
         return (
+            this.geohash == null &&
             this.minlon == null
             && this.minlat == null
             && this.maxlon == null
@@ -385,23 +387,34 @@ export class LocationFilter implements IFilter<ICoord> {
         if (this.isAll()) {
             return null;
         }
-        return {
-            [this.attr.name] : {
-                $geoWithin : {
-                    // We use GeoJson matching instead of $box, otherwize Mongo does not use indexes
-                    $geometry: {
-                        type: "Polygon" ,
-                        coordinates: [[
-                            [this.minlon, this.minlat],
-                            [this.minlon, this.maxlat],
-                            [this.maxlon, this.maxlat],
-                            [this.maxlon, this.minlat],
-                            [this.minlon, this.minlat],
-                        ]]
+        if (this.geohash) {
+
+            // Geohash ? => search prefix
+            return {
+                [this.attr.name + ".properties.hash" ] : {
+                    $regex: RegExp(`^${this.geohash}.*`),
+                }
+            }
+        } else {
+            // Use geo2d index
+            return {
+                [this.attr.name] : {
+                    $geoWithin : {
+                        // We use GeoJson matching instead of $box, otherwize Mongo does not use indexes
+                        $geometry: {
+                            type: "Polygon" ,
+                            coordinates: [[
+                                [this.minlon, this.minlat],
+                                [this.minlon, this.maxlat],
+                                [this.maxlon, this.maxlat],
+                                [this.maxlon, this.minlat],
+                                [this.minlon, this.minlat],
+                            ]]
+                        }
                     }
                 }
             }
-        };
+        }
     }
 }
 
@@ -562,7 +575,7 @@ export function clearFiltersOrSearch(schema: StructType, props: RouteComponentPr
     let queryParams = parseParams(props.location.search);
     let filters = extractFilters(schema, queryParams);
     let attrMap = attributesMap(schema);
-    let updatedParams = {}
+    let updatedParams = {};
     for (let attrName in filters) {
         let emptyFilter = serializeFilter(attrMap[attrName], null);
         updatedParams = {...updatedParams, ...emptyFilter}

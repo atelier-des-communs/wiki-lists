@@ -66,7 +66,7 @@ export const Info : React.SFC<InfoProps> = (props) => {
     return <Popup trigger={<Label size="small" circular compact color="blue" icon="info" />} >
         {nl2br(props.message)}
     </Popup>
-}
+};
 
 export function nl2br(text:string) {
    return text.split('\n').map(part => <>{part}<br/></>);

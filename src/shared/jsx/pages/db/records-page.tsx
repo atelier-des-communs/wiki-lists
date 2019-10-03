@@ -132,7 +132,7 @@ class AsyncSinglePage extends AsyncDataComponent<RecordsPageProps, RecordsProps>
         let ViewTypeSwitch = (recordsProps: { records: Record[] }) => {
             switch (viewType) {
                 case ViewType.TABLE :
-                    return <TableComponent {...props} {...recordsProps} />
+                    return <TableComponent {...props} {...recordsProps} />;
                 case ViewType.CARDS:
                     return <CardsComponent {...props} {...recordsProps} />;
                 default :
@@ -150,7 +150,7 @@ class AsyncSinglePage extends AsyncDataComponent<RecordsPageProps, RecordsProps>
                     onClick={() => clearFiltersOrSearch(db.schema, props)}>
                 {_.clear_filters}
             </Button>}
-        </div>
+        </div>;
 
         let Records = (props: { records: Record[] }) => {
             if (!props.records) {
@@ -300,7 +300,7 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
 
     state : {
         filtersSidebar : boolean;
-    }
+    };
 
     constructor(props:RecordsPageProps) {
         super(props);
@@ -336,7 +336,7 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
             </SafePopup>;
 
 
-        let SortByDropdown = () => <SortPopup {...props} schema={db.schema} />
+        let SortByDropdown = () => <SortPopup {...props} schema={db.schema} />;
 
         let UpdateSchemaButton = () => {
             if (!hasRight(props, AccessRight.ADMIN)) {
@@ -391,7 +391,7 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
                 options={groupOptions}
                 value={groupAttr}
                 onChange={(e, update) => goTo(props, updatedGroupBy(update.value as string))} />
-        }
+        };
 
         // FIXME : parse all this once
         let viewType = extractViewType(params);
@@ -432,7 +432,7 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
             floated={props.floated}
             onClick={() => this.toggleFilterSidebar()}
             title={_.toggle_filters}
-            icon={this.state.filtersSidebar ? "angle double left" : "angle double right"} />
+            icon={this.state.filtersSidebar ? "angle double left" : "angle double right"} />;
 
         return <>
 

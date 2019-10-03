@@ -2,7 +2,10 @@ import {arrayToMap, Map} from "../utils";
 import {classTag} from "../serializer";
 import {extend, includes} from "lodash";
 import {ICoord} from "./geo";
-import {encode as geohash} from "ngeohash";
+import * as tilebelt from "tilebelt";
+
+const GEOHASH_PRECISION = 22;
+
 
 export abstract class Type<T> {
     tag: string;
@@ -22,7 +25,7 @@ export abstract class Type<T> {
     }
 
     // Value to be used for mongo index creation
-    abstract mongoIndex() : (number|string)[];
+    abstract mongoIndex(attrname:string) : (any)[];
 
 }
 
@@ -45,7 +48,7 @@ export class BooleanType extends Type<boolean> {
         return (value === true || value === null || value === false)
     }
 
-    mongoIndex(): (1|string)[] {
+    mongoIndex(attrname:string) {
         return [1];
     }
 }
@@ -60,7 +63,7 @@ export class NumberType extends Type<number> {
         return (value === null || !isNaN(value))
     }
 
-    mongoIndex(): (1|string)[] {
+    mongoIndex(attrname:string) {
         return [1];
     }
 }
@@ -75,7 +78,7 @@ export class DatetimeType extends Type<Date> {
         return (value === null || value instanceof Date)
     }
 
-    mongoIndex() {
+    mongoIndex(attrname:string) {
         return [1];
     }
 }
@@ -94,12 +97,12 @@ export class LocationType extends Type<ICoord> {
         if (value == null || value.lon == null) {
             return null;
         }
+        let tile = tilebelt.pointToTile(value.lon, value.lat, GEOHASH_PRECISION);
+        let hash = tilebelt.tileToQuadkey(tile);
         return {
             type: "Point",
             coordinates : [value.lon, value.lat],
-            properties : {
-                "hash" : geohash(value.lat, value.lon, 10)
-            }
+            properties : {hash}
         }
     }
     fromMongo(value : any) : ICoord {
@@ -112,8 +115,10 @@ export class LocationType extends Type<ICoord> {
         }
     }
 
-    mongoIndex() {
-        return ["2dsphere"];
+    mongoIndex(attrname:string) {
+        return [
+            "2dsphere",
+            {[attrname + ".properties.hash"]: 1 }];
     }
 }
 
@@ -135,7 +140,7 @@ export class TextType extends Type<string> {
         return (value === null || typeof(value) === "string");
     }
 
-    mongoIndex() {
+    mongoIndex(attrname:string) {
         if (this.rich) {
             return ["text"];
         } else {
@@ -175,7 +180,7 @@ export class EnumType extends Type<string> {
        return (value == null || includes(values, value) );
     }
 
-    mongoIndex() {
+    mongoIndex(attrname:string) {
         return [1];
     }
 }
@@ -232,7 +237,7 @@ export class StructType extends Type<Map<any>> {
     sortable : false;
 
     constructor(attributes:Attribute[] = []) {
-        super()
+        super();
         this.attributes = attributes;
     }
 
@@ -256,7 +261,7 @@ export class StructType extends Type<Map<any>> {
         return true;
     }
 
-    mongoIndex() : (number | string)[]{
+    mongoIndex(attrname:string) : (number | string)[]{
         return [];
     }
 

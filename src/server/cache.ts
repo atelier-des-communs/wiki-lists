@@ -39,8 +39,8 @@ export function cache(
 
         // Build cache key with full arguments
         const params = args.map(a => stringify(a)).join();
-        const dbName = args[0]
-        const otherParams = stringify(params.slice(1))
+        const dbName = args[0];
+        const otherParams = stringify(params.slice(1));
         const key = dbName + ":" + methodName + ": " + md5(otherParams);
 
         // Get from cache or call method

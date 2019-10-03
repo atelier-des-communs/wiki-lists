@@ -44,7 +44,7 @@ export const AttributeDisplayComponent : React.SFC<AttributeDisplayComponent> = 
 
             <span style={{marginLeft:"1em"}} ><b>{ellipsis(attrLabel(attr, _))}</b></span>
 
-        </div>}
+        </div>};
 
     return <>
         <div style={{padding:"1em"}}>
@@ -62,4 +62,4 @@ export const AttributeDisplayComponent : React.SFC<AttributeDisplayComponent> = 
 
         </div>
     </>
-}
+};

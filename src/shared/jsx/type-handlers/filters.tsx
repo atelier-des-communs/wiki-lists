@@ -342,7 +342,7 @@ class _SearchComponent extends React.Component<SearchCompoentProps> {
 
     getSearch = (props:SearchCompoentProps) => {
         return extractSearch(parseParams(props.location.search))
-    }
+    };
 
     constructor(props:SearchCompoentProps) {
         super(props);

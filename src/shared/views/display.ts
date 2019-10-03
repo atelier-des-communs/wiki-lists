@@ -30,7 +30,7 @@ export function serializeDisplay(displays : Map<boolean>, schema:StructType, con
         let attr = attrMap[attrName];
         let defaultDisp = attr.display[context];
         let paramName = attrNameToQueryParam(attrName);
-        let val = parseBool(displays[attrName])
+        let val = parseBool(displays[attrName]);
         res[paramName] = (val == defaultDisp) ? null : (val ? "1" : "0");
     }
     return res;

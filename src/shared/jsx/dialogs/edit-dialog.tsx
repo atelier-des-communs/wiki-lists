@@ -62,7 +62,7 @@ export class EditDialog extends ValidatingDialog<EditDialogProps> {
             let callback = (newValue: any) => {
                 this.record[attr.name] = newValue;
                 console.log("Record edit updated", this.record);
-            }
+            };
 
             return <Grid.Column mobile={16} computer={typeIsWide(attr.type) ? 16 : 8}>
             <Form.Field key={attr.name} >

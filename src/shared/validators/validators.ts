@@ -33,7 +33,7 @@ export function mergeErrors(it : IterableIterator<ValidationErrors>) : Validatio
             let val = errors[key];
 
             if (key in res) {
-                res[key] = oneToArray(res[key]).concat(oneToArray(val));;
+                res[key] = oneToArray(res[key]).concat(oneToArray(val));
             } else {
                 res[key] = val;
             }

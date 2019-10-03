@@ -14,13 +14,13 @@ let languages : LanguageWithMessages[] = [
 
 if (config.LANGS) {
 
-    let langs = config.LANGS.split(",")
+    let langs = config.LANGS.split(",");
     languages = languages.filter(lang => langs.indexOf(lang.key) > -1);
     console.info("LANGS", langs, "filtered :", languages.length)
 }
 
 export function selectLanguage(req: Request) : LanguageWithMessages {
-    let key = (req as any).language
+    let key = (req as any).language;
     return languages.filter(lang => lang.key == key)[0];
 }
 

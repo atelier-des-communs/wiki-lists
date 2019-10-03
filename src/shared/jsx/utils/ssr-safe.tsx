@@ -73,5 +73,5 @@ export const SafePopup : React.SFC<PopupProps> = (props) => {
             {props.children}
         </Popup>
     </SsrSafe>
-}
+};
 
