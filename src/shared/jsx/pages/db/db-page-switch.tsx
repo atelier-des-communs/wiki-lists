@@ -23,7 +23,7 @@ import {DbDefinition} from "../../../model/db-def";
 import {nl2br} from "../../utils/utils";
 import {getDbName} from "../../../utils";
 
-type DbPageProps =
+export type DbPageProps =
     PageProps<DbPathParams> &
     DbProps & // mapped from redux react
     ReduxEventsProps &

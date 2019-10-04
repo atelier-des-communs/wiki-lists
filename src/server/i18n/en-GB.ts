@@ -135,7 +135,8 @@ export let messages : IMessages = {
     },
 
     update_list_from_map : "Filter list for this area",
-    search : "search"
+    search : "search",
+    no_results: "pas de résultat"
 
 };
 

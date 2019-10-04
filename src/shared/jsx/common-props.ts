@@ -31,9 +31,7 @@ export interface RecordsProps {
     records : Record[];
 }
 
-export interface SingleRecordPropsOnly {
-    record: Record,
-    large?:boolean}
+export interface SingleRecordPropsOnly {record: Record}
 
 export type SingleRecordProps = SingleRecordPropsOnly & DbProps;
 

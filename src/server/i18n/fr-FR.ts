@@ -143,7 +143,8 @@ export let messages : IMessages = {
 
     update_list_from_map : "Filtrer la liste dans cette zone",
 
-    search : "recherche"
+    search : "recherche",
+    no_results: "no result"
 
 };
 

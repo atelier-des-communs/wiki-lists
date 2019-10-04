@@ -49,6 +49,7 @@ export class RecordPopup extends AsyncDataComponent<RecordPopupProps, Record> {
                     <SingleRecordComponent
                         {...this.props}
                         record={this.asyncData}
+                        large={false}
                     /> : null}
             </Modal.Content>
 

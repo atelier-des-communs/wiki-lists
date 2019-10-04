@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, Checkbox, Divider, Grid, Header, Icon, Input, Popup, Segment} from "semantic-ui-react";
+import {Button, Checkbox, Divider, Grid, Header, Icon, Input, Popup, Segment, Search, SearchResultProps} from "semantic-ui-react";
 import {
     BooleanFilter,
     clearFiltersOrSearch,
@@ -15,16 +15,30 @@ import {
 } from "../../views/filters";
 import {RouteComponentProps, withRouter} from "react-router";
 import {Attribute, StructType, TextType, Types} from "../../model/types";
-import {copyArr, goTo, goToResettingPage, isIn, parseParams, remove, stopPropag, strToInt} from "../../utils";
+import {
+    copyArr,
+    getDbName,
+    goTo,
+    goToResettingPage,
+    isIn,
+    parseParams,
+    remove,
+    stopPropag,
+    strToInt
+} from "../../utils";
 import * as debounce from "debounce";
 import {SafePopup} from "../utils/ssr-safe";
 import {attrLabel, ellipsis} from "../utils/utils";
 import {ValueHandler} from "./editors";
 import {MessagesProps} from "../../i18n/messages";
 import {ResponsiveButton} from "../components/responsive";
+import {GlobalContextProps} from "../context/global-context";
+import {dbNameSSR} from "../../../server/utils";
+import {DbPageProps} from "../pages/db/db-page-switch";
+import {Autocomplete} from "../../api";
 
 
-const DEBOUNCE_DELAY= 1000;
+const DEBOUNCE_DELAY= 500;
 
 interface IFiltersComponentProps extends MessagesProps {
     schema:StructType;
@@ -32,7 +46,7 @@ interface IFiltersComponentProps extends MessagesProps {
 
 
 // Main siwtch on attribute type
-interface SingleFilterProps<T> extends RouteComponentProps<{}>, MessagesProps {
+interface SingleFilterProps<T> extends DbPageProps  {
     attr: Attribute;
     filter: T;
 }
@@ -79,19 +93,67 @@ class BooleanFilterComponent extends AbstractSingleFilter<BooleanFilter> {
 
 class TextFilterComponent extends AbstractSingleFilter<TextFilter> {
 
-    // Debounced update
-    update = debounce((value: string) => {
+
+    state : {
+        loading : boolean;
+        value : string;
+        results : SearchResultProps[] }
+
+    constructor(props: SingleFilterProps<TextFilter>) {
+        super(props);
+        this.state = {loading:false, value:null, results:[]}
+    }
+
+    updateFilter(value:string) {
         let newFilter = Object.create(this.props.filter);
         newFilter.search = value;
         this.setFilter(newFilter);
+    }
+
+    autocomplete = debounce(  (newVal:string) => {
+
+        this.setState({loading:true});
+
+        this.props.dataFetcher.autocomplete(
+            getDbName(this.props),
+            this.props.filter.attr.name,
+            newVal).then((results) => {
+                let searchResults = results.map((res:Autocomplete) : SearchResultProps => {
+                    return {
+                        title : res.value,
+                        description: "" + res.score
+                    }
+                });
+                this.setState({results:searchResults, loading:false})
+            });
+
     }, DEBOUNCE_DELAY);
 
+    // Debounced update
+    updateValue(value:string) {
+        this.setState({value});
+        this.autocomplete(value);
+    }
+
+    selectResult(result:SearchResultProps) {
+        this.updateValue(result.title);
+        this.updateFilter(result.title);
+    }
+
     render() {
-        return <Input
+        let _ = this.props.messages;
+        return <Search
             icon="filter"
             size="mini"
-            defaultValue={this.props.filter.search}
-            onChange={(e, value) => this.update(value.value)}/>
+            noResultsMessage={_.no_results}
+            loading={this.state.loading}
+            onResultSelect={(e, data) => {this.selectResult(data.result)}}
+            onSearchChange={(e, data) => {this.updateValue(data.value)}}
+            onKeyPress = {(e:any) => {if (e.key == 'Enter') {this.updateFilter(this.state.value)}}}
+            results={this.state.results}
+            value={this.state.value}
+            showNoResults={false}
+        />
     }
 }
 
@@ -188,7 +250,7 @@ class EnumFilterComponent extends AbstractSingleFilter<EnumFilter> {
 
 /* Switch on attribute type : may return null in case filter is not supported */
 // FIXME : change switch to proper registration of types / components
-export function singleFilter(props : RouteComponentProps<{}> & MessagesProps, attr:Attribute, filter:Filter | null) {
+export function singleFilter(props : DbPageProps, attr:Attribute, filter:Filter | null) {
 
     let _ = props.messages;
 
@@ -248,7 +310,7 @@ export function singleFilter(props : RouteComponentProps<{}> & MessagesProps, at
 }
 
 /** Return an array of filter components, for the ones that have filters */
-function getFilters(props: IFiltersComponentProps & RouteComponentProps<{}>) {
+function getFilters(props: IFiltersComponentProps & DbPageProps) {
     let queryParams = parseParams(props.location.search);
     let filters = extractFilters(props.schema, queryParams);
 
@@ -258,9 +320,9 @@ function getFilters(props: IFiltersComponentProps & RouteComponentProps<{}>) {
         .filter((res) => res.comp != null);
 }
 
-export class FilterSidebar extends React.Component<IFiltersComponentProps & RouteComponentProps<{}>> {
+export class FilterSidebar extends React.Component<IFiltersComponentProps & DbPageProps> {
 
-    constructor(props:IFiltersComponentProps & RouteComponentProps<{}>) {
+    constructor(props:IFiltersComponentProps & DbPageProps) {
         super(props);
     }
 
@@ -285,7 +347,7 @@ export class FilterSidebar extends React.Component<IFiltersComponentProps & Rout
 }
 
 /* Filter popup */
-export const FiltersPopup : React.SFC<IFiltersComponentProps & RouteComponentProps<{}>> = (props) => {
+export const FiltersPopup : React.SFC<IFiltersComponentProps & DbPageProps> = (props) => {
 
     let _ = props.messages;
 

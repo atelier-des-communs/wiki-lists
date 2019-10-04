@@ -380,7 +380,7 @@ export class DbDataFetcher implements DataFetcher {
                 "$substr": [
                     "$location.properties.hash",
                     // Slice current records geohash for required length
-                    0, zoom + 2]
+                    0, zoom + 3]
             },
             "record._id": "$_id",
             ["record." + locAttr] : "$" + locAttr,
@@ -414,6 +414,12 @@ export class DbDataFetcher implements DataFetcher {
                     _id : {"$substr": ["$_id", 0, zoom]},
                     "count": {$sum:"$count"},
                     "records" :  { $push : "$record"}
+                }
+            }, {
+                $project: {
+                    _id : "$_id",
+                    "records" : {$slice : ["$records", MARKERS_PER_CLUSTER]},
+                    "count" : "$count"
                 }
             }
         ]);
@@ -460,12 +466,14 @@ export class DbDataFetcher implements DataFetcher {
             throw new BadRequestException(`${attr} is not a simple text field`);
         }
 
-        let res = col.aggregate([
+        let regex = ".*" + query.split(" ").join(".*") + ".*";
+
+        let res = await col.aggregate([
             {
                 $match : {
                     $text: {$search: query},
                     [attrName] : {
-                        $regex : `.*${query}.*`,
+                        $regex : regex,
                         $options : 'i'
                     }
                 }
@@ -484,9 +492,10 @@ export class DbDataFetcher implements DataFetcher {
             {
                 $limit: AUTOCOMPLETE_NUM
             }
-        ]);
+        ]).toArray();
 
-        // console.log(JSON.stringify(await res.explain(), null, 4));
-        return res.toArray();
+        return res.map((item) => ({
+            value : item._id, score:item.count
+        }));
     }
 }

@@ -45,7 +45,8 @@ export class CardsComponent extends React.Component<CardsProps> {
                         <Card.Content>
                             <SingleRecordComponent
                                 {...props}
-                                record={record} />
+                                record={record}
+                                large={false} />
                         </Card.Content>
                     </Card>
                 </Grid.Column>)}

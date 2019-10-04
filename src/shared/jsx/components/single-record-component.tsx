@@ -6,7 +6,12 @@ import {ValueHandler} from "../type-handlers/editors";
 import {Attribute} from "../../model/types";
 import {MessagesProps} from "../../i18n/messages";
 
-type SingleRecordComponentProps = SingleRecordProps & RouteComponentProps<{}> & MessagesProps;
+
+type LargeProp = {
+    large:boolean;
+}
+
+type SingleRecordComponentProps = SingleRecordProps & RouteComponentProps<{}> & MessagesProps & LargeProp;
 
 const NAME_ELLIPSIS = 20;
 

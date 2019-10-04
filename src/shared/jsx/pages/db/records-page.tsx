@@ -253,6 +253,12 @@ export class AsyncPaging extends AsyncDataComponent<RecordsPageProps, CountProps
 
         if (nbPages > 1) {
             let Paging =  () => <Pagination
+                boundaryRange={0}
+                defaultActivePage={1}
+                ellipsisItem={null}
+                firstItem={null}
+                lastItem={null}
+                siblingRange={2}
                 totalPages={nbPages}
                 activePage={page}
                 onPageChange={(e, {activePage}) => {this.goToPage(activePage)}}
