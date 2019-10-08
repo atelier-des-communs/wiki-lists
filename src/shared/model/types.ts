@@ -1,4 +1,4 @@
-import {arrayToMap, Map} from "../utils";
+import {arrayToMap, Map, slug} from "../utils";
 import {classTag} from "../serializer";
 import {extend, includes} from "lodash";
 import {ICoord} from "./geo";
@@ -16,16 +16,17 @@ export abstract class Type<T> {
     // FIXME :should be on SS only
 
     // By default we store values as is
-    toMongo(value : T) : any {
-        return value;
+    toMongo(attrname:string, value : T) : any {
+        return {[attrname]: value};
     }
 
+    // @value the value of the field [attrname] in the mongo record
     fromMongo(value : any) : T {
         return value;
     }
 
     // Value to be used for mongo index creation
-    abstract mongoIndex(attrname:string) : (any)[];
+    abstract mongoIndex(attrname:string) : Map<number | string>;
 
 }
 
@@ -49,7 +50,7 @@ export class BooleanType extends Type<boolean> {
     }
 
     mongoIndex(attrname:string) {
-        return [1];
+        return {[attrname]:1};
     }
 }
 
@@ -64,7 +65,7 @@ export class NumberType extends Type<number> {
     }
 
     mongoIndex(attrname:string) {
-        return [1];
+        return {attrname:1};
     }
 }
 
@@ -79,7 +80,7 @@ export class DatetimeType extends Type<Date> {
     }
 
     mongoIndex(attrname:string) {
-        return [1];
+        return {attrname:1};
     }
 }
 
@@ -93,18 +94,21 @@ export class LocationType extends Type<ICoord> {
         return (value === null || ('lat' in value && 'lon' in value));
     }
 
-    toMongo(value:ICoord) : any {
+    toMongo(attrname:string, value:ICoord) : any {
         if (value == null || value.lon == null) {
-            return null;
+            return {[attrname] : null};
         }
         let tile = tilebelt.pointToTile(value.lon, value.lat, GEOHASH_PRECISION);
         let hash = tilebelt.tileToQuadkey(tile);
         return {
-            type: "Point",
-            coordinates : [value.lon, value.lat],
-            properties : {hash}
+            [attrname] :{
+                type: "Point",
+                coordinates : [value.lon, value.lat],
+                properties : {hash}
+            }
         }
     }
+
     fromMongo(value : any) : ICoord {
         if (value == null) {
             return null;
@@ -116,9 +120,9 @@ export class LocationType extends Type<ICoord> {
     }
 
     mongoIndex(attrname:string) {
-        return [
-            "2dsphere",
-            {[attrname + ".properties.hash"]: 1 }];
+        return {
+            [attrname + ".properties.hash"]: 1,
+            [attrname] : "2dsphere"}
     }
 }
 
@@ -140,12 +144,26 @@ export class TextType extends Type<string> {
         return (value === null || typeof(value) === "string");
     }
 
-    mongoIndex(attrname:string) {
-        if (this.rich) {
-            return ["text"];
-        } else {
-            return [1, "text"];
+    toMongo(attrname: string, value: string): any {
+        let res = super.toMongo(attrname, value);
+
+        // For simple text, add technical column of split words, for fast search
+        let slugified = value ? slug(value, " ").split(" ") : null;
+        if (!this.rich) {
+            res[attrname + "$"] = slugified;
         }
+        return res;
+    }
+
+    mongoIndex(attrname:string) {
+        let res : Map<any> = {
+            [attrname]:"text"
+        };
+
+        if (!this.rich) {
+            res[attrname + "$"] = 1;
+        }
+        return res;
     }
 
 }
@@ -181,7 +199,7 @@ export class EnumType extends Type<string> {
     }
 
     mongoIndex(attrname:string) {
-        return [1];
+        return {[attrname] : 1};
     }
 }
 
@@ -261,8 +279,8 @@ export class StructType extends Type<Map<any>> {
         return true;
     }
 
-    mongoIndex(attrname:string) : (number | string)[]{
-        return [];
+    mongoIndex(attrname:string) {
+        return {};
     }
 
     // FIXME : recursively transform value to / from mongo ?

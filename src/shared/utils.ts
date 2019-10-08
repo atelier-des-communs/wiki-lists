@@ -22,6 +22,17 @@ export function  mapValues<T>(map: {[key:string] : T}) : Array<T> {
     return Object.keys(map).map(key => map[key]);
 }
 
+/** One line for creating maps from arrays */
+export function  buildMap<T>(list: T[], func: (item:T) => [string, any] ) : Map<any> {
+    let res : Map<any> = {};
+    for (let item of list) {
+        let [k, val] = func(item);
+        res[k] = val;
+    }
+    return res;
+}
+
+
 
 
 export type OneOrMany<T> = T | T[];
@@ -196,8 +207,9 @@ export function floatToStr(value:number) {
     return value + "";
 }
 
-export function slug(input:string) {
-    return slugify(input, {remove: /[*+~.()'"!:@\\?]/g, lower: true})
+export function slug(input:string, replacement='-') {
+    // FIXME safer slug ?
+    return slugify(input, {replacement, remove: /[*+~.()'"!:;@\\?\[\]#]/g, lower: true})
 }
 
 

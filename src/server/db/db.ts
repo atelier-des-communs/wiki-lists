@@ -6,7 +6,18 @@ import {validateSchemaAttributes} from "../../shared/validators/schema-validator
 import {dieIfErrors, ValidationException} from "../../shared/validators/validators";
 import {validateRecord} from "../../shared/validators/record-validator";
 import {Autocomplete, AUTOCOMPLETE_URL, DataFetcher, Marker, SECRET_COOKIE} from "../../shared/api";
-import {arrayToMap, debug, filterSingle, isIn, Map, mapMap, mapValues, oneToArray} from "../../shared/utils";
+import {
+    arrayToMap,
+    buildMap,
+    debug,
+    filterSingle,
+    isIn,
+    Map,
+    mapMap,
+    mapValues,
+    oneToArray,
+    slug
+} from "../../shared/utils";
 import {IMessages} from "../../shared/i18n/messages";
 import {AccessRight} from "../../shared/access";
 import {getAccessRights} from "../utils";
@@ -19,7 +30,7 @@ import {toTypedObjects} from "../../shared/serializer";
 import {BadRequestException, HttpError} from "../exceptions";
 import {flatMap} from "lodash";
 import {cache} from "../cache";
-import {cloneDeep} from "lodash";
+import {cloneDeep, assign, isEmpty} from "lodash";
 import * as tilebelt from "tilebelt";
 
 const SCHEMAS_COLLECTION = "schemas";
@@ -108,8 +119,7 @@ function toMongo(record : Record, attrMap: Map<Attribute>) {
 
     // Loop on keys
     for (let key in record) {
-        let attr = attrMap[key];
-        res[key] = attr.type.toMongo(record[key]);
+        res = assign(res, attrMap[key].type.toMongo(key, record[key]));
     }
     return res;
 }
@@ -137,21 +147,23 @@ export async function setUpIndexesDb(dbName: string) {
 
     // Extract text index to single index with all text fields
     for (let attr of dbDef.schema.attributes) {
-        for (let index of attr.type.mongoIndex(attr.name)) {
-            if (index == "text") {
-                textIndex[attr.name] = index;
-            } else if (typeof index == "object") {
-                console.debug("index object", index);
-                // Index specified directly as {attrkey : index}
-                await col.createIndex(index);
 
-            } else if (index) {
-                await col.createIndex({[attr.name]:index});
+        let indexes = attr.type.mongoIndex(attr.name);
+
+        for (let key in indexes) {
+            let index = indexes[key];
+            if (index == "text") {
+                // Tet indexes are merged into a single index
+                textIndex[key] = index;
+            } else {
+
+                let res= await col.createIndex({[key]:index});
+                console.debug(`Creating index for attr : ${attr.name}`, key, index, `res : ${res}`);
             }
         }
     }
 
-    if (textIndex) {
+    if (! isEmpty(textIndex)) {
         await col.createIndex(textIndex, {"name" : "text_index"});
     }
 }
@@ -466,17 +478,17 @@ export class DbDataFetcher implements DataFetcher {
             throw new BadRequestException(`${attr} is not a simple text field`);
         }
 
-        let regex = ".*" + query.split(" ").join(".*") + ".*";
+        // Split and simplify words
+        let searchWords = query.split(" ").map((val) => slug(val));
+        let matchExpr = searchWords.map((word) => ({
+            [attrName + "$"] : {$regex : `^${word}.*`
+        }}));
 
         let res = await col.aggregate([
             {
-                $match : {
-                    $text: {$search: query},
-                    [attrName] : {
-                        $regex : regex,
-                        $options : 'i'
-                    }
-                }
+                $match : matchExpr.length == 1 ?
+                    matchExpr[0] :
+                    {$and: matchExpr}
             },
             {
                 $group: {
