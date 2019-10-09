@@ -19,6 +19,7 @@ import {extractSort, ISort, serializeSort} from "./sort";
 import {RouteComponentProps} from "react-router"
 import {ICoord} from "../model/geo";
 import * as tilebelt from "tilebelt";
+import {startsWith} from "lodash";
 
 function queryParamName(attrName: string) {
     return `${attrName}.f`;
@@ -112,18 +113,26 @@ export class TextFilter implements IFilter<string> {
     tag = Types.TEXT;
     attr: Attribute;
     search: string;
+    exact:boolean;
     searchNorm : string;
 
     // No filter : accepting all
     constructor(attr:Attribute, queryParams: Map<string> = {}) {
         this.attr = attr;
+        this.exact = false;
         let queryValue = queryParams[queryParamName(attr.name)];
+
         if (empty(queryValue)) {
             this.search = null;
             this.searchNorm = null;
         } else {
-            this.search = queryValue;
-            this.searchNorm = normalize(queryValue);
+            if (startsWith(queryValue, "=")) {
+                this.search = queryValue.substr(1);
+                this.exact = true
+            } else {
+                this.search = queryValue;
+            }
+            this.searchNorm = normalize(this.search);
         }
     }
 
@@ -146,8 +155,11 @@ export class TextFilter implements IFilter<string> {
         if (this.isAll()) {
             return null;
         }
-        // FIXME : use text search instead
-        return {[this.attr.name] : new RegExp(normalize(this.search), 'i')};
+        return {
+            [this.attr.name] :
+                this.exact ?
+                    this.search :
+                    new RegExp(normalize(this.search), 'i')};
     }
 }
 
@@ -159,7 +171,7 @@ export function serializeTextFilter(attrName: string, filter:TextFilter) {
     if (!filter || filter.isAll()) {
         return {[paramName] :null};
     } else {
-        return {[paramName]: filter.search};
+        return {[paramName]: (filter.exact ? "=" : "") + filter.search};
     }
 }
 

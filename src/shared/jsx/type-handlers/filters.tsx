@@ -93,7 +93,6 @@ class BooleanFilterComponent extends AbstractSingleFilter<BooleanFilter> {
 
 class TextFilterComponent extends AbstractSingleFilter<TextFilter> {
 
-
     state : {
         loading : boolean;
         value : string;
@@ -104,9 +103,11 @@ class TextFilterComponent extends AbstractSingleFilter<TextFilter> {
         this.state = {loading:false, value:null, results:[]}
     }
 
-    updateFilter(value:string) {
-        let newFilter = Object.create(this.props.filter);
+    updateFilter(value:string, exact:boolean=false) {
+        let newFilter : TextFilter = Object.create(this.props.filter);
         newFilter.search = value;
+        newFilter.exact = exact;
+        console.debug("filter", newFilter);
         this.setFilter(newFilter);
     }
 
@@ -137,7 +138,7 @@ class TextFilterComponent extends AbstractSingleFilter<TextFilter> {
 
     selectResult(result:SearchResultProps) {
         this.updateValue(result.title);
-        this.updateFilter(result.title);
+        this.updateFilter(result.title, true);
     }
 
     render() {
@@ -152,7 +153,7 @@ class TextFilterComponent extends AbstractSingleFilter<TextFilter> {
             onKeyPress = {(e:any) => {if (e.key == 'Enter') {this.updateFilter(this.state.value)}}}
             results={this.state.results}
             value={this.state.value}
-            showNoResults={false}
+            showNoResults={this.state.value && !this.state.loading}
         />
     }
 }
@@ -248,65 +249,58 @@ class EnumFilterComponent extends AbstractSingleFilter<EnumFilter> {
     }
 }
 
-/* Switch on attribute type : may return null in case filter is not supported */
-// FIXME : change switch to proper registration of types / components
-export function singleFilter(props : DbPageProps, attr:Attribute, filter:Filter | null) {
-
-    let _ = props.messages;
-
+let ResetButton = (props: DbPageProps & {attr:Attribute}) =>  {
+    let {messages:_, attr} = props;
     let clearFilter = () => {
         let queryParams = serializeFilter(attr, null);
         goToResettingPage(props, queryParams);
     };
+    return <p style={{float:"right"}}>
+        <Button
+            circular size="small"
+            icon="delete"
+            title={_.clear_filter}
+            onClick={stopPropag(clearFilter)} />
+    </p>
+}
 
-    let filterComp = null;
+/* Switch on attribute type : may return null in case filter is not supported */
+// FIXME : change switch to proper registration of types / components
+let FilterComponent = (props : DbPageProps, attr:Attribute, filter:Filter | null) => {
+
+    let {messages: _} = props;
 
     switch(attr.type.tag) {
 
         case Types.BOOLEAN :
-            filterComp = <BooleanFilterComponent
+            return <BooleanFilterComponent
                 {...props}
                 attr={attr}
                 filter={filter as BooleanFilter || new BooleanFilter(attr)} />;
-                break;
+
 
         case Types.ENUM :
-            filterComp = <EnumFilterComponent
+            return <EnumFilterComponent
                 {...props}
                 attr={attr}
                 filter={filter as EnumFilter || new EnumFilter(attr)} />;
-            break;
 
         case Types.TEXT :
-            filterComp = <TextFilterComponent
+            return <TextFilterComponent
                 {...props}
                 attr={attr}
                 filter={filter as TextFilter || new TextFilter(attr)} />;
-            break;
 
 
         case Types.NUMBER :
-            filterComp = <NumberFilterComponent
+            return <NumberFilterComponent
                 {...props}
                 attr={attr}
                 filter={filter as NumberFilter || new NumberFilter(attr)} />;
-            break;
-
         default:
             // Filter not supported for this type
             return null;
     }
-
-    return <>
-        {filter &&
-         <Button
-            circular size="mini" compact  floated="right"
-            icon="delete"
-            title={_.clear_filter}
-            onClick={stopPropag(clearFilter)} />
-        }
-        {filterComp}
-    </>
 }
 
 /** Return an array of filter components, for the ones that have filters */
@@ -315,9 +309,11 @@ function getFilters(props: IFiltersComponentProps & DbPageProps) {
     let filters = extractFilters(props.schema, queryParams);
 
     return props.schema.attributes
+        // display only filters that are parts of currently displayed attributes
         .filter(attr => !attr.system && attr.display.summary)
-        .map((attr) => ({attr, comp:singleFilter(props, attr, filters[attr.name])}))
-        .filter((res) => res.comp != null);
+        .map((attr) => ({
+                attr,
+                filter:filters[attr.name]}));
 }
 
 export class FilterSidebar extends React.Component<IFiltersComponentProps & DbPageProps> {
@@ -331,17 +327,22 @@ export class FilterSidebar extends React.Component<IFiltersComponentProps & DbPa
         let _ = props.messages;
 
         return <div>
-            {getFilters(props).map( item => <>
-                <Header  attached="top" as="h5">
-                    {ellipsis(attrLabel(item.attr, _))}
-                </Header>
-                <Segment attached >
-                    <div key={item.attr.name} >
-                        { item.comp }
-                    </div>
-                </Segment>
-                </>
-            )}
+            {getFilters(props).map(
+                ({filter, attr}) => {
+                    let filtercomp = FilterComponent(props, attr, filter);
+                    if (!filtercomp) return null;
+                    return <>
+                            <Header  attached="top" as="h5">
+                                {ellipsis(attrLabel(attr, _))}
+                                {filter && <ResetButton {...props} attr={attr} />}
+                            </Header>
+                            <Segment attached >
+                                <div key={attr.name} >
+                                    { filtercomp }
+                                </div>
+                            </Segment>
+                        </>
+                    })}
         </div>
     }
 }
@@ -370,17 +371,22 @@ export const FiltersPopup : React.SFC<IFiltersComponentProps & DbPageProps> = (p
         <Popup.Content>
             <Header as={"h3"}>{_.filters}</Header>
         <Grid columns={12}>
-            {getFilters(props).map( item =>
-                <Grid.Column mobile={12} tablet={6} computer={4}>
+            {getFilters(props).map( ({filter, attr}) => {
+
+                let filtercomp = FilterComponent(props, attr, filter);
+                if (!filtercomp) return null;
+
+                return <Grid.Column mobile={12} tablet={6} computer={4}>
                     <Header as="h4">
-                        {ellipsis(attrLabel(item.attr, _))}
+                        {ellipsis(attrLabel(attr, _))}
+                        {filter && <ResetButton {...props} attr={attr}/>}
                     </Header>
                     <Divider/>
-                    <div key={item.attr.name} >
-                        { item.comp }
+                    <div key={attr.name}>
+                        {filtercomp}
                     </div>
                 </Grid.Column>
-            )}
+            })}
         </Grid>
         </Popup.Content>
     </SafePopup>

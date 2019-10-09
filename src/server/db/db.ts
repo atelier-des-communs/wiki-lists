@@ -158,12 +158,12 @@ export async function setUpIndexesDb(dbName: string) {
             } else {
 
                 let res= await col.createIndex({[key]:index});
-                console.debug(`Creating index for attr : ${attr.name}`, key, index, `res : ${res}`);
+                console.info(`Creating index for attr : ${attr.name}`, key, index, `res : ${res}`);
             }
         }
     }
 
-    if (! isEmpty(textIndex)) {
+    if (!isEmpty(textIndex)) {
         await col.createIndex(textIndex, {"name" : "text_index"});
     }
 }
@@ -310,6 +310,9 @@ export class DbDataFetcher implements DataFetcher {
 
     baseQuery(dbName: string, filters: Map<Filter> = {}, search:string=null) : {} {
 
+
+        console.debug("Input filters", JSON.stringify(filters))
+
         // Build mongo filters
         let mongoFilters = mapValues(filters).map(f => f.mongoFilter()).filter(f => f !== null);
 
@@ -403,7 +406,7 @@ export class DbDataFetcher implements DataFetcher {
             project["record." + field] = "$" + field;
         }
 
-        debug("location", locFilter, "query", query);
+        debug("location", locFilter, "\nquery", JSON.stringify(query));
 
         // We group twice because $slice is not avail on $group stage
         // and gathering all records for each group may exceed RAM
@@ -480,16 +483,17 @@ export class DbDataFetcher implements DataFetcher {
 
         // Split and simplify words
         let searchWords = query.split(" ").map((val) => slug(val));
-        let matchExpr = searchWords.map((word) => ({
+        let matchExprs = searchWords.map((word) => ({
             [attrName + "$"] : {$regex : `^${word}.*`
         }}));
 
+        // AND for several words
+        let match = matchExprs.length == 1 ? matchExprs[0] : {$and: matchExprs}
+
+        console.debug("Match expression", match)
+
         let res = await col.aggregate([
-            {
-                $match : matchExpr.length == 1 ?
-                    matchExpr[0] :
-                    {$and: matchExpr}
-            },
+            {$match:match},
             {
                 $group: {
                     _id: "$" + attrName,

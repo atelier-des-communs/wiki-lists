@@ -119,6 +119,7 @@ export let restDataFetcher : DataFetcher = {
     },
 
     async autocomplete(dbName: string, attrName: string, query: string): Promise<Autocomplete[]> {
+        console.debug("Auto complete :", query);
         let url = AUTOCOMPLETE_URL.
             replace(":db_name", dbName).
             replace(":attr", attrName)
