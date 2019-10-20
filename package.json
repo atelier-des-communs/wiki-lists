@@ -12,7 +12,7 @@
   },
   "betterScripts": {
     "watch": {
-      "command": "npm run clean && node ./bin/bundler/dev.js  && concurrent \"node ./bin/server/hotReload.js \" \"nodemon ./bin/server --watch dist -e js,jsx,ts,tsx\" --kill-others",
+      "command": "node ./bin/bundler/dev.js  && concurrent \"node ./bin/server/hotReload.js \" \"nodemon ./bin/server --watch dist -e js,jsx,ts,tsx\" --kill-others",
       "env": {
         "NODE_ENV": "development"
       }
@@ -67,6 +67,7 @@
     "@types/react-redux": "^4.4.45",
     "@types/react-router": "^4.0.12",
     "@types/react-router-dom": "^4.0.5",
+    "@types/react-router-hash-link": "^1.2.1",
     "@types/redux-devtools": "^3.0.38",
     "@types/redux-devtools-dock-monitor": "^1.1.31",
     "@types/redux-devtools-log-monitor": "^1.0.31",
@@ -167,6 +168,7 @@
     "react-redux": "^5.0.5",
     "react-router": "^4.1.1",
     "react-router-dom": "^4.1.1",
+    "react-router-hash-link": "^1.2.2",
     "redis": "^2.8.0",
     "redis-lru": "^0.6.0",
     "redux": "^4.0.1",

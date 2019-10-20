@@ -11,6 +11,7 @@ export let messages : IMessages = {
 
     add_item : "Ajouter un élement",
     edit_item : "Éditer",
+    zoom_on_item : "Zoomer sur cet élément",
     view_item : "Voir",
     delete_item : "Supprimer",
     columns : "Collones",
@@ -89,6 +90,7 @@ export let messages : IMessages = {
     missing_name : "Il devrait y avoir au moins un champ texte marqué comme 'nom'",
 
     no_element : "Aucun élement trouvé",
+    elements : "éléments",
     unknown_attribute : "Attribut inconnu",
     mandatory_attribute : "Attribut obligatoire",
 
@@ -124,6 +126,7 @@ export let messages : IMessages = {
     should_not_be_empty : "Ne doit pas être vide",
     slug_regexp_no_match: "Doit être composé uniquement de 0-9 a-z '-' et '_'",
     db_not_available : "Ce nom est déjà pris",
+
 
     powered_by : "propulsé par",
 

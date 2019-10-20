@@ -17,6 +17,7 @@ export abstract class ValidatingDialog<T extends CloseableDialog> extends React.
         super(props);
     }
 
+    // Should raise a ValidatingException upon problems
     abstract async validateInternal() : Promise<void>;
 
     async validate() {

@@ -12,6 +12,7 @@ export let messages : IMessages = {
     add_item : "Add item",
     edit_item : "Edit item",
     view_item : "View item",
+    zoom_on_item : "Zoom on item",
     delete_item : "Delete item",
     columns : "Columns",
     cancel : "Cancel",
@@ -86,6 +87,8 @@ export let messages : IMessages = {
     missing_name : "There should be at least one text field marked as 'name'",
 
     no_element : "Nothing here",
+
+    elements : "elements",
     unknown_attribute : "Unknown attribute",
     mandatory_attribute : "Attribute is mandatory",
 

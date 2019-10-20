@@ -247,7 +247,7 @@ export function getDbName(props : RouteComponentProps<DbPathParams> & GlobalCont
 export function filterSingle<T>(values: T[], func : (val:T) => boolean, error:string="Should have single match") : T {
     let candidates = values.filter(func);
     if (candidates.length != 1) {
-        throw new Error(error);
+        return null;
     }
     return candidates[0];
 }
@@ -267,3 +267,6 @@ export function debug(...args: any[]) {
     console.debug.apply(null, args);
 }
 
+export function closeTo(a:number, b:number, epsilon:number=0.0000001) {
+    return Math.abs(a - b) < epsilon;
+}

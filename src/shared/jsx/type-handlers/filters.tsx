@@ -36,9 +36,11 @@ import {GlobalContextProps} from "../context/global-context";
 import {dbNameSSR} from "../../../server/utils";
 import {DbPageProps} from "../pages/db/db-page-switch";
 import {Autocomplete} from "../../api";
+import {viewPortToQuery} from "../pages/db/map";
 
 
 const DEBOUNCE_DELAY= 500;
+const CITY_ZOOM = 14;
 
 interface IFiltersComponentProps extends MessagesProps {
     schema:StructType;
@@ -47,17 +49,12 @@ interface IFiltersComponentProps extends MessagesProps {
 
 // Main siwtch on attribute type
 interface SingleFilterProps<T> extends DbPageProps  {
+    updateFilter : (newFilter:T) => void;
     attr: Attribute;
     filter: T;
 }
 
-abstract class AbstractSingleFilter<T extends Filter> extends React.Component<SingleFilterProps<T>> {
-
-    // Update the filter by pushing query params in URL
-    setFilter = (newFilter: T) => {
-        let queryParams = serializeFilter(this.props.attr, newFilter);
-        goToResettingPage(this.props, queryParams);
-    }
+abstract class AbstractSingleFilter<T extends Filter, U={}> extends React.Component<SingleFilterProps<T> & U> {
 }
 
 class BooleanFilterComponent extends AbstractSingleFilter<BooleanFilter> {
@@ -73,7 +70,7 @@ class BooleanFilterComponent extends AbstractSingleFilter<BooleanFilter> {
                 onClick={() => {
                     let newFilter = Object.create(filter);
                     newFilter.showTrue = ! filter.showTrue;
-                    this.setFilter(newFilter);
+                    this.props.updateFilter(newFilter);
                 }} />
            &nbsp;
             <Checkbox
@@ -82,16 +79,17 @@ class BooleanFilterComponent extends AbstractSingleFilter<BooleanFilter> {
                 onClick={() => {
                     let newFilter =  Object.create(filter);
                     newFilter.showFalse = ! filter.showFalse;
-                    this.setFilter(newFilter);
+                    this.props.updateFilter(newFilter);
                 }} />
             <br/>
         </>
     }
 }
 
-
-
-class TextFilterComponent extends AbstractSingleFilter<TextFilter> {
+interface TextFilterExtraProps {
+    geofilter ?: boolean;
+}
+export class TextFilterComponent extends AbstractSingleFilter<TextFilter, TextFilterExtraProps> {
 
     state : {
         loading : boolean;
@@ -100,15 +98,24 @@ class TextFilterComponent extends AbstractSingleFilter<TextFilter> {
 
     constructor(props: SingleFilterProps<TextFilter>) {
         super(props);
-        this.state = {loading:false, value:null, results:[]}
+        this.state = {
+            loading:false,
+            value:props.filter.search || "",
+            results:[]}
+    }
+
+    componentWillReceiveProps(nextProps: Readonly<SingleFilterProps<TextFilter>>, nextContext: any): void {
+        if (nextProps.filter.search != this.props.filter.search
+            && nextProps.filter.search != this.state.value) {
+            this.setState({value:nextProps.filter.search || ""})
+        }
     }
 
     updateFilter(value:string, exact:boolean=false) {
         let newFilter : TextFilter = Object.create(this.props.filter);
         newFilter.search = value;
         newFilter.exact = exact;
-        console.debug("filter", newFilter);
-        this.setFilter(newFilter);
+        this.props.updateFilter(newFilter);
     }
 
     autocomplete = debounce(  (newVal:string) => {
@@ -118,11 +125,14 @@ class TextFilterComponent extends AbstractSingleFilter<TextFilter> {
         this.props.dataFetcher.autocomplete(
             getDbName(this.props),
             this.props.filter.attr.name,
-            newVal).then((results) => {
+            newVal,
+            this.props.geofilter).then((results) => {
                 let searchResults = results.map((res:Autocomplete) : SearchResultProps => {
+                    let {value, score, ...other} = res;
                     return {
-                        title : res.value,
-                        description: "" + res.score
+                        title : value,
+                        description: "" + score,
+                        ...other
                     }
                 });
                 this.setState({results:searchResults, loading:false})
@@ -133,12 +143,28 @@ class TextFilterComponent extends AbstractSingleFilter<TextFilter> {
     // Debounced update
     updateValue(value:string) {
         this.setState({value});
-        this.autocomplete(value);
+        if (value && value.length > 2) {
+            this.autocomplete(value);
+        }
     }
 
     selectResult(result:SearchResultProps) {
         this.updateValue(result.title);
         this.updateFilter(result.title, true);
+
+
+        if (this.props.geofilter) {
+
+            let lat = (result.minlat + result.maxlat) / 2;
+            let lon = (result.minlon + result.maxlon) / 2;
+
+            // Update query to change map view
+            let query = viewPortToQuery({
+                center: [lat, lon],
+                zoom: CITY_ZOOM,
+            });
+            goTo(this.props, query);
+        }
     }
 
     render() {
@@ -150,7 +176,7 @@ class TextFilterComponent extends AbstractSingleFilter<TextFilter> {
             loading={this.state.loading}
             onResultSelect={(e, data) => {this.selectResult(data.result)}}
             onSearchChange={(e, data) => {this.updateValue(data.value)}}
-            onKeyPress = {(e:any) => {if (e.key == 'Enter') {this.updateFilter(this.state.value)}}}
+            onKeyPress = {(e:any) => {if (!this.props.geofilter && e.key == 'Enter') {this.updateFilter(this.state.value)}}}
             results={this.state.results}
             value={this.state.value}
             showNoResults={this.state.value && !this.state.loading}
@@ -164,13 +190,13 @@ class NumberFilterComponent extends AbstractSingleFilter<NumberFilter> {
     updateMin = debounce((min: number) => {
         let newFilter = Object.create(this.props.filter);
         newFilter.min = min;
-        this.setFilter(newFilter);
+        this.props.updateFilter(newFilter);
     }, DEBOUNCE_DELAY);
 
     updateMax = debounce((max: number) => {
         let newFilter = Object.create(this.props.filter);
         newFilter.max = max;
-        this.setFilter(newFilter);
+        this.props.updateFilter(newFilter);
     }, DEBOUNCE_DELAY);
 
 
@@ -199,8 +225,11 @@ class NumberFilterComponent extends AbstractSingleFilter<NumberFilter> {
     }
 }
 
+interface EnumFilterExtraProps {
+    nbCols ?: number;
+}
 
-class EnumFilterComponent extends AbstractSingleFilter<EnumFilter> {
+export class EnumFilterComponent extends AbstractSingleFilter<EnumFilter, EnumFilterExtraProps> {
 
     toggleValue(value: string) {
         let filter = this.props.filter;
@@ -211,20 +240,21 @@ class EnumFilterComponent extends AbstractSingleFilter<EnumFilter> {
         } else {
             newFilter.showValues.push(value);
         }
-        this.setFilter(newFilter);
+        this.props.updateFilter(newFilter);
     }
 
     toggleEmpty() {
         let filter = this.props.filter;
         let newFilter = Object.create(filter);
         newFilter.showEmpty = !filter.showEmpty;
-        this.setFilter(newFilter);
+        this.props.updateFilter(newFilter);
     }
 
     render() {
         let _ = this.props.messages;
         let filter = this.props.filter;
-        let checkboxes = filter.allValues().map(val => (<div>
+        let nbCols : any = this.props.nbCols || 1;
+        let checkboxes = filter.allValues().map(val => (<Grid.Column style={{padding:"0.2rem"}}>
             <Checkbox
                 key={val}
                 checked={isIn(filter.showValues, val)}
@@ -236,16 +266,18 @@ class EnumFilterComponent extends AbstractSingleFilter<EnumFilter> {
                 editMode={false}
                 onClick={() => this.toggleValue(val)}
                 style={{cursor:"pointer"}} />
-        </div>));
+        </Grid.Column>));
 
-        return <div>
+        return <Grid fluid stackable columns={nbCols} style={{padding:"1em"}}>
+            <Grid.Column style={{padding:"0.2rem"}}>
             <Checkbox
                 key="empty"
                 label={_.empty}
                 checked={filter.showEmpty}
                 onClick={() => this.toggleEmpty()}/>
+            </Grid.Column>
             {checkboxes}
-        </div>
+        </Grid>
     }
 }
 
@@ -270,12 +302,18 @@ let FilterComponent = (props : DbPageProps, attr:Attribute, filter:Filter | null
 
     let {messages: _} = props;
 
+    let updateFilter = (newFilter: any) => {
+        let queryParams = serializeFilter(attr, newFilter);
+        goToResettingPage(props, queryParams);
+    }
+
     switch(attr.type.tag) {
 
         case Types.BOOLEAN :
             return <BooleanFilterComponent
                 {...props}
                 attr={attr}
+                updateFilter={updateFilter}
                 filter={filter as BooleanFilter || new BooleanFilter(attr)} />;
 
 
@@ -283,12 +321,15 @@ let FilterComponent = (props : DbPageProps, attr:Attribute, filter:Filter | null
             return <EnumFilterComponent
                 {...props}
                 attr={attr}
+                updateFilter={updateFilter}
                 filter={filter as EnumFilter || new EnumFilter(attr)} />;
 
         case Types.TEXT :
             return <TextFilterComponent
                 {...props}
                 attr={attr}
+                updateFilter={updateFilter}
+                geofilter={attr.geofilter}
                 filter={filter as TextFilter || new TextFilter(attr)} />;
 
 
@@ -296,6 +337,7 @@ let FilterComponent = (props : DbPageProps, attr:Attribute, filter:Filter | null
             return <NumberFilterComponent
                 {...props}
                 attr={attr}
+                updateFilter={updateFilter}
                 filter={filter as NumberFilter || new NumberFilter(attr)} />;
         default:
             // Filter not supported for this type

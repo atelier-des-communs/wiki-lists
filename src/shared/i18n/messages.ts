@@ -21,6 +21,8 @@ export interface IMessages {
 
     add_item : string;
     edit_item : string;
+    zoom_on_item: any;
+
     view_item : string;
     delete_item : string;
     columns : string;
@@ -94,6 +96,7 @@ export interface IMessages {
     is_name_help : string;
     missing_name : string;
 
+    elements:string,
     no_element : string;
     unknown_attribute : string;
     invalid_value : string;

@@ -194,34 +194,35 @@ export async function createRecordsDb(dbName: string, records : Record[], _:IMes
     let col = await Connection.getDbCollection(dbName);
     let dbDef = await getDbDef(dbName);
 
-
-
     for (let record of records) {
 
         // Validate record
         dieIfErrors(validateRecord(record, dbDef.schema, _, true));
 
-
-        if (record._id) {
-            throw new Error("New records should not have _id yet");
+        if (!record._id) {
+            record._id = shortid.generate();
         }
-
-        record._id = shortid.generate();
-
-        if (typeof(record._pos) == "undefined" || record._pos == null) {
-            // Use current timestamp for position : avoid searching for largest _pos in db
-            record._pos = Date.now();
-        }
-
-        record._creationTime = new Date();
+        record._updateTime = new Date();
     }
 
     let attrMap = arrayToMap(dbDef.schema.attributes, attr => attr.name);
     records = records.map(record => toMongo(record, attrMap));
 
-    let res = await col.insertMany(records);
-
-    return records.map(record => fromMongo(record, attrMap));
+    var bulk = col.initializeUnorderedBulkOp();
+    for (let record of records) {
+        bulk
+            .find({_id: record._id})
+            .upsert().update(
+                {
+                    $set: record,
+                    $setOnInsert: {_creationTime: new Date()}});
+    }
+    await bulk.execute();
+    if (records.length == 1) {
+        return records.map(record => fromMongo(record, attrMap));
+    } else {
+        return []
+    }
 }
 
 export async function deleteRecordDb(dbName: string, id : string) : Promise<boolean> {
@@ -472,12 +473,16 @@ export class DbDataFetcher implements DataFetcher {
     }
 
     @cache
-    async autocomplete(dbName: string, attrName: string, query: string): Promise<Autocomplete[]> {
+    async autocomplete(dbName: string, attrName: string, query: string, geo:boolean=false): Promise<Autocomplete[]> {
         let col = await Connection.getDbCollection(dbName);
         let dbDef = await this.getDbDefinition(dbName);
 
+        if (!query || query.length < 3) {
+            throw new BadRequestException('Query too small : 3 chars min');
+        }
+
         let attr =  filterSingle(dbDef.schema.attributes, attr => attr.name == attrName);
-        if (attr.type.tag != Types.TEXT || (attr.type as TextType).rich) {
+        if (!attr || attr.type.tag != Types.TEXT || (attr.type as TextType).rich) {
             throw new BadRequestException(`${attr} is not a simple text field`);
         }
 
@@ -492,26 +497,52 @@ export class DbDataFetcher implements DataFetcher {
 
         console.debug("Match expression", match)
 
-        let res = await col.aggregate([
-            {$match:match},
-            {
-                $group: {
-                    _id: "$" + attrName,
-                    "count": {
-                        $sum: 1
-                    },
-                }
-            },
-            {
-                $sort : {count: -1}
-            },
-            {
-                $limit: AUTOCOMPLETE_NUM
+        let groupExpr : any = {
+            _id: "$" + attrName,
+            "count": {$sum: 1}};
+        if (geo) {
+            groupExpr = {...groupExpr,
+                "minlon" : {$min : {$arrayElemAt : ["$location.coordinates", 0]}},
+                "maxlon" : {$max : {$arrayElemAt : ["$location.coordinates", 0]}},
+                "minlat" : {$min : {$arrayElemAt : ["$location.coordinates", 1]}},
+                "maxlat" : {$max : {$arrayElemAt : ["$location.coordinates", 1]}}
             }
-        ]).toArray();
+        }
 
-        return res.map((item) => ({
-            value : item._id, score:item.count
-        }));
+        // Cache collection exists for auto complete ?
+        let db = await Connection.getDb();
+        let cacheColName = DB_COLLECTION_TEMPLATE(dbName) + '.' + attrName;
+        let cacheCol = await db.listCollections({name: cacheColName}).next();
+        let res;
+        if (cacheCol) {
+            console.debug(`${cacheColName}  found : using cache collection for autocomplete`)
+            res = db.collection(cacheColName).aggregate([
+                {$match:match},
+                {$sort : {count: -1}},
+                {$limit: AUTOCOMPLETE_NUM}]);
+        } else {
+            console.debug(`${cacheColName} not found : using regular collection for autocomplete`)
+             res = col.aggregate([
+                {$match:match},
+                {$group: groupExpr},
+                {$sort : {count: -1}},
+                {$limit: AUTOCOMPLETE_NUM}
+            ]);
+        }
+
+        return (await res.toArray()).map((item) => {
+            let res : Autocomplete = {
+                value : item._id,
+                score: item.count}
+            if (geo) {
+                res =
+                    {...res,
+                    minlon: item.minlon,
+                    maxlon: item.maxlon,
+                    minlat: item.minlat,
+                    maxlat: item.maxlat}
+            }
+            return res;
+        });
     }
 }

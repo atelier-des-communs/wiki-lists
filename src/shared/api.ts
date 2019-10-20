@@ -85,7 +85,8 @@ export type Marker = Record | Cluster;
 
 export interface Autocomplete {
     value:string,
-    score:number
+    score:number,
+    [x:string]: any
 }
 
 // Generic reader interface, implemented directly with DB access for SSR, or as rest client on Browser
@@ -100,5 +101,5 @@ export interface DataFetcher {
     getDbDefinition(dbName:string) : Promise<DbDefinition>;
 
 
-    autocomplete(dbName:string, attrName:string, query:string) : Promise<Autocomplete[]>;
+    autocomplete(dbName:string, attrName:string, query:string, geo?:boolean) : Promise<Autocomplete[]>;
 }

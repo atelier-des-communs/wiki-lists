@@ -118,12 +118,14 @@ export let restDataFetcher : DataFetcher = {
         return await get<number>(url);
     },
 
-    async autocomplete(dbName: string, attrName: string, query: string): Promise<Autocomplete[]> {
+    async autocomplete(dbName: string, attrName: string, query: string, geo:boolean=false): Promise<Autocomplete[]> {
         console.debug("Auto complete :", query);
         let url = AUTOCOMPLETE_URL.
             replace(":db_name", dbName).
             replace(":attr", attrName)
-        + "?" + QueryString.stringify({q:query});
+        + "?" + QueryString.stringify({
+                q:query,
+                geo});
         return await get<Autocomplete[]>(url)
     }
 };

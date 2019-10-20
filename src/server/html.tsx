@@ -84,6 +84,7 @@ function renderHtml(head:SSRHeadSetter, html:string, context:IMarshalledContext=
     return `<!DOCTYPE html>
 		<html>
 			<head>
+			    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 				<meta charset="UTF-8">
 				
 				<title>${title}</title>
@@ -93,7 +94,7 @@ function renderHtml(head:SSRHeadSetter, html:string, context:IMarshalledContext=
 				<meta name="referrer" content="no-referrer">
 				
 				<meta name="og:title" content="${title}" />
-				<meta property="og:image" content=${config.ROOT_URL}${socialPreview}" />
+				<meta property="og:image" content="${socialPreview}" />
 				
 				<link rel="shortcut icon" type="image/png" href="/static/img/favicon.png"/>
 				<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.css" />

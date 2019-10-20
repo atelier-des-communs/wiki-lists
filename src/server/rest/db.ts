@@ -32,7 +32,7 @@ import {toAnnotatedJson, toTypedObjects} from "../../shared/serializer";
 import {DbDefinition} from "../../shared/model/db-def";
 import * as mung from "express-mung";
 import {extractSort} from "../../shared/views/sort";
-import {oneToArray, slug, sortBy, strToInt} from "../../shared/utils";
+import {oneToArray, parseBool, slug, sortBy, strToInt} from "../../shared/utils";
 import {extractFilters, extractSearch} from "../../shared/views/filters";
 import * as responseTime from "response-time";
 
@@ -46,6 +46,7 @@ async function addItemsAsync(req:Request) : Promise<Record[] | Record> {
             records,
             selectLanguage(req).messages);
     } else {
+        // Single one ?
         return createRecordsDb(
             dbNameSSR(req),
             oneToArray(records),
@@ -164,7 +165,8 @@ export function setUp(server:Express) {
         returnPromise(res, new DbDataFetcher(req).autocomplete(
             dbNameSSR(req),
             req.params.attr,
-            req.query.q));
+            req.query.q,
+            parseBool(req.query.geo)));
     });
 
     server.get(GET_ITEMS_URL, async function (req: Request, res: Response) {

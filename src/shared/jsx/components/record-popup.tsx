@@ -14,6 +14,7 @@ import {Modal} from 'semantic-ui-react';
 
 type RecordPopupProps = GlobalContextProps & MessagesProps & RouteComponentProps<{}> & DbProps & {
     recordId:string,
+    large:boolean,
     onClose : () => void};
 
 export class RecordPopup extends AsyncDataComponent<RecordPopupProps, Record> {
@@ -49,7 +50,6 @@ export class RecordPopup extends AsyncDataComponent<RecordPopupProps, Record> {
                     <SingleRecordComponent
                         {...this.props}
                         record={this.asyncData}
-                        large={false}
                     /> : null}
             </Modal.Content>
 

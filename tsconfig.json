@@ -1,5 +1,6 @@
 {
 	"compilerOptions": {
+		"noImplicitThis": true,
 		"module": "esnext",
 		"moduleResolution": "node",
 		"target": "ES5",

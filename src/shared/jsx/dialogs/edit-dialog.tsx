@@ -37,14 +37,6 @@ export class EditDialog extends ValidatingDialog<EditDialogProps> {
         this.record = {...props.record};
     }
 
-    open() {
-        let newState = {
-            loading:false,
-            ... (this.props.create) ?
-                {value:{}} : {}};
-        this.setState(newState);
-    }
-
     async validateInternal() {
         await this.props.onUpdate(this.record);
     }
@@ -59,25 +51,28 @@ export class EditDialog extends ValidatingDialog<EditDialogProps> {
 
             // Update record for this attribute upon change
             // Don't update state : we don't want a redraw here
-            let callback = (newValue: any) => {
-                this.record[attr.name] = newValue;
-                console.log("Record edit updated", this.record);
-            };
+            let callback = (newValue: any) => {this.record[attr.name] = newValue;};
 
             return <Grid.Column mobile={16} computer={typeIsWide(attr.type) ? 16 : 8}>
             <Form.Field key={attr.name} >
-                <Header size="small" title={attr.isMandatory && _.mandatory_attribute}>
+                <Header
+                    size="small"
+                    title={attr.isMandatory && _.mandatory_attribute}>
+
                     {attrLabel(attr, _)}
+
                     {attr.isMandatory && <Label circular color="red" size="tiny" empty />}
-                    </Header>
+                </Header>
+
                 <ValueHandler
                     {...this.props}
                     editMode={true}
                     value={this.record[attr.name]}
                     type={attr.type}
-                    onValueChange={callback}
-                />
+                    onValueChange={callback} />
+
                 <ErrorPlaceholder attributeKey={attr.name} />
+
             </Form.Field>
             </Grid.Column>
 

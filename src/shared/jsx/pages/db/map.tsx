@@ -7,7 +7,7 @@ import {Cluster, ICoord} from "../../../model/geo";
 import {Record} from "../../../model/instances";
 import {CircleMarker, Map as MapEl, TileLayer, Tooltip, Viewport} from "react-leaflet";
 import {LatLng, LatLngBounds} from "leaflet";
-import {arrayToMap, getDbName, goToResettingPage, Map, parseParams} from "../../../utils";
+import {arrayToMap, closeTo, getDbName, goTo, goToResettingPage, Map, parseParams} from "../../../utils";
 import {
     extractFilters,
     extractSearch,
@@ -21,6 +21,7 @@ import {createUpdateMarkersAction} from "../../../redux";
 import {cloneDeep, isEqual} from "lodash";
 import Control from 'react-leaflet-control';
 import {Button} from 'semantic-ui-react';
+import {CRS, Point} from "leaflet";
 import {Marker} from "../../../api";
 import stringify from "json-stringify-deterministic";
 import {RecordPopup} from "../../components/record-popup";
@@ -37,14 +38,68 @@ const DEFAULT_BOUNDS = new LatLngBounds(
     new LatLng(42, -5),
     new LatLng(50, 8));
 
+// FIXME hardcoded
+const SIZE_ATTR = "superficie_locaux";
+const SIZE_MIN_VAL = 100;
+const SIZE_MAX_VAL = 20000;
+const MAX_RADIUS=30;
+const MIN_RADIUS=5;
+
+
+let BOUND_PX_EXTENT = 1000;
+
+type IState = {
+    popupRecordId:string,
+    viewport:Viewport};
+
+
+const ZOOM_QUERY_KEY = "map.z";
+const CENTER_QUERY_KEY = "map.c";
+
+
+function sameViewport(vp1:Viewport, vp2:Viewport) {
+    return vp1.zoom == vp2.zoom
+        && closeTo(vp1.center[0], vp2.center[0])
+        && closeTo(vp1.center[1], vp2.center[1])
+}
+
+// Transform view port to URL query params
+export function viewPortToQuery(viewport : Viewport) : Map<any> {
+    // Default view port ?
+    if (sameViewport(viewport, DEFAULT_VIEWPORT)) {
+        return {
+            [ZOOM_QUERY_KEY] : null,
+            [CENTER_QUERY_KEY] : null
+        }
+    } else {
+        let tile = tilebelt.pointToTile(
+            viewport.center[1],
+            viewport.center[0],
+            23);
+        return {
+            [ZOOM_QUERY_KEY]: viewport.zoom,
+            [CENTER_QUERY_KEY] : tilebelt.tileToQuadkey(tile)
+        }
+    }
+}
+
+function queryToViewport(query : Map<any>) : Viewport {
+    if (!(CENTER_QUERY_KEY in query)) {
+        return DEFAULT_VIEWPORT;
+    } else {
+        let bbox = tilebelt.tileToBBOX(tilebelt.quadkeyToTile(query[CENTER_QUERY_KEY]));
+        return {
+            center: [bbox[1], bbox[0]],
+            zoom: parseInt(query[ZOOM_QUERY_KEY])
+        }
+    }
+}
+
 export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
 
     className = "RecordsMap";
 
-    state : {
-        popupRecordId:string,
-        bounds : LatLngBounds,
-        viewport:Viewport};
+    state : IState;
 
     locAttr : Attribute;
     colorAttr : Attribute;
@@ -54,7 +109,6 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
         super(props);
         this.state = {
             popupRecordId:null,
-            bounds : DEFAULT_BOUNDS,
             viewport:DEFAULT_VIEWPORT};
 
         // Get the location attribute
@@ -66,6 +120,19 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
         this.colorMap = arrayToMap((this.colorAttr.type as EnumType).values, (enumVal) => enumVal.value);
 
         console.debug("Color map", this.colorMap);
+    }
+
+    static viewportToBounds(viewport: Viewport) : LatLngBounds {
+        // WGS 84
+        let crs = CRS.EPSG4326;
+        let center = new LatLng(viewport.center[0], viewport.center[1]);
+        let centerPoint = crs.latLngToPoint(center, viewport.zoom);
+        console.debug("center point", center, centerPoint);
+        let minPt  = new Point(centerPoint.x - BOUND_PX_EXTENT, centerPoint.y - BOUND_PX_EXTENT);
+        let maxPt  = new Point(centerPoint.x + BOUND_PX_EXTENT, centerPoint.y + BOUND_PX_EXTENT);
+        return new LatLngBounds(
+            crs.pointToLatLng(minPt, viewport.zoom),
+            crs.pointToLatLng(maxPt, viewport.zoom));
     }
 
     // List geo hashes for covering area with specifc zoom
@@ -103,7 +170,18 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
         this.setState({popupRecordId:null});
     }
 
-    boundsToFilter(bounds:LatLngBounds) {
+    // Update map center and zoom from upfront change of URL
+    componentWillReceiveProps(nextProps: Readonly<MapProps>, nextContext: any): void {
+        let currViewport = queryToViewport(parseParams(this.props.location.search));
+        let nextViewport = queryToViewport(parseParams(nextProps.location.search));
+        console.debug("viewports", currViewport, nextViewport, this.state.viewport);
+        if (!sameViewport(currViewport, nextViewport) && !sameViewport(this.state.viewport, nextViewport)) {
+            this.setState({viewport:nextViewport});
+        }
+    }
+
+    viewportToFilter(viewport:Viewport) {
+        let bounds = RecordsMap.viewportToBounds(viewport);
         let locFilter = new LocationFilter(this.locAttr);
         locFilter.minlon = bounds.getWest();
         locFilter.maxlon = bounds.getEast();
@@ -121,7 +199,9 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
         });
     }
 
-    fetchData(props: MapProps, nextState:any): Promise<Marker[]>|Marker[] {
+
+
+    fetchData(props: MapProps, nextState:IState): Promise<Marker[]>|Marker[] {
 
         // console.debug("fetch data called for map");
 
@@ -130,7 +210,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
         let search = extractSearch(query);
         let filters = extractFilters(props.db.schema, query);
 
-        let bounds : LatLngBounds = nextState.bounds;
+        let bounds : LatLngBounds = RecordsMap.viewportToBounds(nextState.viewport);
 
         // console.debug("Geo bounds", bounds, "zoom", nextState.viewport.zoom);
 
@@ -181,11 +261,12 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
                 console.debug("key not in cache, fetching", hash, cacheKey);
 
                 // Fetch markers for this geohash
+                // XXX Suze
                 promises.push(props.dataFetcher.getRecordsGeo(
                     getDbName(props),
                     nextState.viewport.zoom,
                     updatedFilters, search,
-                    [this.colorAttr.name]).then((markers) =>
+                    [this.colorAttr.name, SIZE_ATTR]).then((markers) =>
                 {
                     return {cacheKey, markers};
                 }));
@@ -224,12 +305,8 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
     }
 
     onViewportChanged = (viewport: Viewport) => {
-
-        let bounds = (this.refs.map as any).leafletElement.getBounds();
-        this.setState({viewport, bounds});
-
-        // Update URL with geo filter
-        // goTo(this.props, serializeFilters([filter]));
+        this.setState({viewport});
+        goTo(this.props, viewPortToQuery(viewport));
     };
 
     zoomOn(coord :ICoord) {
@@ -241,14 +318,14 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
     };
 
     updateFilters = () => {
-        let filter = this.boundsToFilter(this.state.bounds);
+        let filter = this.viewportToFilter(this.state.viewport);
         goToResettingPage(this.props, serializeFilters([filter]));
     };
 
     isLocationFilterUpTodate() : boolean {
 
         // Current map box
-        let filter = this.boundsToFilter(this.state.bounds);
+        let filter = this.viewportToFilter(this.state.viewport);
 
         // URL filters
         let query = parseParams(this.props.location.search);
@@ -256,6 +333,10 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
 
         return isEqual(filters[this.locAttr.name], filter);
     }
+
+    resetViewPort = () => {
+        this.onViewportChanged(DEFAULT_VIEWPORT);
+    };
 
     render() {
 
@@ -274,15 +355,21 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
                 let colorVal = record[this.colorAttr.name];
                 let color = colorVal ? this.colorMap[colorVal].color : "white";
 
+                let sizeVal = record[SIZE_ATTR] || SIZE_MIN_VAL;
+                if (sizeVal < SIZE_MIN_VAL) sizeVal = SIZE_MIN_VAL;
+                if (sizeVal > SIZE_MAX_VAL) sizeVal = SIZE_MAX_VAL;
+                let radius = MIN_RADIUS + (sizeVal - SIZE_MIN_VAL) / (SIZE_MAX_VAL - SIZE_MIN_VAL) * (MAX_RADIUS - MIN_RADIUS);
+
+
                 return <CircleMarker
                     key={record._id}
                     center={latln}
                     onClick={() => this.openPopup((item as Record)._id)}
-                    fillOpacity={1}
+                    fillOpacity={0.7}
                     fillColor={color}
                     color="black"
-                    weight={2}
-                    radius={10} />
+                    weight={1}
+                    radius={radius} />
             } else {
                 let cluster = item as Cluster;
                 // Cluster has direct coordinates
@@ -291,10 +378,12 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
                 return <CircleMarker
                     key={latln.toString()}
                     center={latln}
-                    radius={30}
-                    stroke={false}
+                    radius={25}
+                    weight={10}
+                    color="#dfd512"
+                    opacity={0.3}
                     fillColor="#dfd512"
-                    fillOpacity={1}
+                    fillOpacity={0.8}
                     onClick={() => this.zoomOn(cluster)} >
                     <Tooltip permanent direction="center" className="count-tooltip" >
                         {cluster.count}
@@ -314,7 +403,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
         };
 
         return <><MapEl
-
+            id="map"
             viewport={this.state.viewport}
             onViewportChanged={this.onViewportChanged}
             style={{height:'500px', width:'100%'}} scrollWheelZoom={false}
@@ -325,11 +414,22 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-            {this.isLocationFilterUpTodate() ? null : <Control position="bottomleft" >
-                <Button icon="filter" onClick={this.updateFilters} primary>
-                    {_.update_list_from_map}
+            {this.isLocationFilterUpTodate() ? null :
+                <Control position="bottomleft" >
+                    <Button
+                        icon="filter"
+                        onClick={this.updateFilters}
+                        primary
+                        content={_.update_list_from_map}
+                        size="small" compact />
+                </Control>}
+
+            <Control position="topleft" >
+                <Button icon="home"
+                        onClick={this.resetViewPort}
+                        size="small" compact >
                 </Button>
-            </Control>}
+            </Control>
 
             <Markers />
 
@@ -339,6 +439,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
                     {...this.props}
                     recordId={this.state.popupRecordId}
                     onClose={() => this.closePopup()}
+                    large={true}
                 /> : null}
             </>
     }

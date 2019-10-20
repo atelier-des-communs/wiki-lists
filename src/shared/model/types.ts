@@ -132,6 +132,7 @@ export class TextType extends Type<string> {
     tag = Types.TEXT;
     rich:boolean = false;
 
+
     get sortable() {
         return ! this.rich;
     }
@@ -157,7 +158,7 @@ export class TextType extends Type<string> {
 
     mongoIndex(attrname:string) {
         let res : Map<any> = {
-            [attrname]:"text"
+            [attrname]:1
         };
 
         if (!this.rich) {
@@ -236,6 +237,10 @@ export class Attribute {
     uid?: string;
     name: string;
     label?: string;
+
+    // FIXME : For vigibati only => use text filter as geo filter zooming on extent
+    geofilter ?: boolean= false;
+
     type: Type<any>;
     isName?: boolean = false;
     isMandatory?: boolean = false;

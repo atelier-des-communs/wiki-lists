@@ -45,6 +45,7 @@ import {extractSort} from "../../../views/sort";
 import {RecordsMap} from "./map";
 import {AsyncDataComponent} from "../../async/async-data-component";
 import stringify from "json-stringify-deterministic";
+import {AddAlertDialog} from "../../dialogs/alert-dialog";
 
 
 type RecordsPageProps =
@@ -246,22 +247,31 @@ export class AsyncPaging extends AsyncDataComponent<RecordsPageProps, CountProps
             return null;
         }
 
+        let _ = this.props.messages;
         let query = parseParams(this.props.location.search);
         let page : number = strToInt(query.page) || 1;
 
         let nbPages = Math.ceil(this.asyncData.count / ITEMS_PER_PAGE);
 
         if (nbPages > 1) {
-            let Paging =  () => <Pagination
-                boundaryRange={0}
-                defaultActivePage={1}
-                firstItem={null}
-                lastItem={null}
-                siblingRange={2}
-                totalPages={nbPages}
-                activePage={page}
-                onPageChange={(e, {activePage}) => {this.goToPage(activePage)}}
-            />;
+            let Paging = () =>
+                <div style={{marginTop:"0.5em"}}>
+                    <Pagination
+                        size='small'
+                        compact
+                        boundaryRange={0}
+                        defaultActivePage={1}
+                        firstItem={null}
+                        lastItem={null}
+                        siblingRange={2}
+                        totalPages={nbPages}
+                        activePage={page}
+                        onPageChange={(e, {activePage}) => {this.goToPage(activePage)}} />
+
+                <span style={{color:"gray"}}>
+                    &nbsp;{this.asyncData.count} {_.elements}
+                </span>
+            </div>;
 
             return <>
                     <Paging />
@@ -340,6 +350,20 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
             </>
             </SafePopup>;
 
+        let AddAlertButton = () => <SafeClickWrapper
+            trigger={onOpen =>
+                <Button
+                    color="yellow"
+                    icon="bell"
+                    content="Recevoir des alertes par email"
+                    onClick={onOpen} />}
+            render={onClose =>
+                <AddAlertDialog
+                    {...props}
+                    close={onClose} />
+            } >
+        </SafeClickWrapper>
+
 
         let SortByDropdown = () => <SortPopup {...props} schema={db.schema} />;
 
@@ -401,6 +425,23 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
         // FIXME : parse all this once
         let viewType = extractViewType(params);
 
+        <SafeClickWrapper
+            trigger={onOpen =>
+                <Button
+                    primary style={{marginBottom:"1em"}}
+                    icon="plus" content={_.add_item}
+                    onClick={onOpen}/>}
+            render={onClose =>
+                <EditDialog
+                    {...props}
+                    record={{}}
+                    schema={props.db.schema}
+                    create={true}
+                    onUpdate={props.onCreate}
+                    close={onClose} />
+            } >
+        </SafeClickWrapper>
+
         let ViewTypeButtons = () => <Button.Group basic style={{marginRight:"10px"}}>
             <Button icon="table"
                     title={`${_.view_type} : ${_.table_view}`}
@@ -441,19 +482,13 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
 
         return <>
 
-
-
             {/** <DownloadButton /> */}
-
 
             <div className="no-print">
                 <UpdateSchemaButton/>
             </div>
 
-            <div>
-
-
-                <SortByDropdown />
+            { /** <div>
 
                 {
                     // <GroupByButton />
@@ -468,17 +503,17 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
                 <SearchComponent {...props} schema={db.schema} />
 
             </div>
+             **/}
+
+             <AddAlertButton />
 
             <div style={{display:"flex"}}>
+
                 {this.state.filtersSidebar &&
-                <div className="no-print large-screen-only"
-                     style={{
-                         paddingTop: "1em",
-                         paddingRight: "1em"}}>
+                <div className="no-print large-screen-only" style={{paddingTop: "1em", paddingRight: "1em", maxWidth:"230px"}}>
                     <SideBarButton floated={"right"} />
                     <FilterSidebar {...props} schema={db.schema} />
-                </div>
-                }
+                </div>}
 
                 <div style={{flexGrow:1, paddingTop: "1em"}}>
 
@@ -494,6 +529,8 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
 
                         <ViewTypeButtons />
 
+                        <SortByDropdown />
+
                         <AsyncPaging {...props} >
                             <AsyncSinglePage {...props} />
                         </AsyncPaging>
@@ -501,9 +538,8 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
                     </div>
 
                 </div>
-            </div>
-        </>;
-
+            </div>;
+        </>
     }
 }
 
