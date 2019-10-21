@@ -109,7 +109,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
         super(props);
         this.state = {
             popupRecordId:null,
-            viewport:DEFAULT_VIEWPORT};
+            viewport:queryToViewport(parseParams(props.location.search))};
 
         // Get the location attribute
         let locationAttrs = props.db.schema.attributes.filter(attr => attr.type.tag == Types.LOCATION);
@@ -338,12 +338,9 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
         this.onViewportChanged(DEFAULT_VIEWPORT);
     };
 
-    render() {
-
-        console.debug("Rendering map");
+    renderLoaded() {
 
         let _ = this.props.messages;
-
 
         let toMarker = (item : Record | Cluster) => {
             if (item.hasOwnProperty("_id")) {

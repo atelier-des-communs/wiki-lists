@@ -13,6 +13,7 @@ import {LANG_COOKIE, COOKIE_DURATION} from "../shared/api";
 import * as mongoose from "mongoose";
 import '../shared/model';
 import {config} from "./config";
+import {parseBool} from "../shared/utils";
 
 const MAX_AGE  = 30 * 24 * 3600 * 1000; // One month
 
@@ -37,9 +38,11 @@ export default function initServer(dist_paths:string[]) : express.Express {
     // Pretty print JSON result
     server.set('json spaces', 2);
 
-    // TODO : Use nginx to serve static files instead of NodeJS
-    for (let path of dist_paths) {
-        server.use('/static', express.static(path, {maxAge: MAX_AGE}));
+    // Static files : may be served by nginx (better)
+    if (parseBool(config.SERVE_STATIC)) {
+        for (let path of dist_paths) {
+            server.use('/static', express.static(path, {maxAge: MAX_AGE}));
+        }
     }
 
     setUpAuth(server);
@@ -48,7 +51,6 @@ export default function initServer(dist_paths:string[]) : express.Express {
 
     // Should be last, as it contains 404 page
     setUpHtml(server);
-
 
     return server;
 }

@@ -20,7 +20,7 @@ import {
     getDbName,
     goTo,
     goToResettingPage,
-    isIn,
+    isIn, Map,
     parseParams,
     remove,
     stopPropag,
@@ -32,8 +32,6 @@ import {attrLabel, ellipsis} from "../utils/utils";
 import {ValueHandler} from "./editors";
 import {MessagesProps} from "../../i18n/messages";
 import {ResponsiveButton} from "../components/responsive";
-import {GlobalContextProps} from "../context/global-context";
-import {dbNameSSR} from "../../../server/utils";
 import {DbPageProps} from "../pages/db/db-page-switch";
 import {Autocomplete} from "../../api";
 import {viewPortToQuery} from "../pages/db/map";
@@ -49,7 +47,8 @@ interface IFiltersComponentProps extends MessagesProps {
 
 // Main siwtch on attribute type
 interface SingleFilterProps<T> extends DbPageProps  {
-    updateFilter : (newFilter:T) => void;
+    // FIXME : extraUrlParams used only for geo records, for cemntering the map ... bad design
+    updateFilter : (newFilter:T, extraUrlParams?:Map<String>) => void;
     attr: Attribute;
     filter: T;
 }
@@ -111,22 +110,24 @@ export class TextFilterComponent extends AbstractSingleFilter<TextFilter, TextFi
         }
     }
 
-    updateFilter(value:string, exact:boolean=false) {
+    updateFilter(value:string, exact:boolean=false, extraQuery:Map<string>=null) {
         let newFilter : TextFilter = Object.create(this.props.filter);
         newFilter.search = value;
         newFilter.exact = exact;
-        this.props.updateFilter(newFilter);
+        this.props.updateFilter(newFilter, extraQuery);
     }
 
     autocomplete = debounce(  (newVal:string) => {
 
         this.setState({loading:true});
 
-        this.props.dataFetcher.autocomplete(
-            getDbName(this.props),
-            this.props.filter.attr.name,
-            newVal,
-            this.props.geofilter).then((results) => {
+        this.props.dataFetcher
+            .autocomplete(
+                getDbName(this.props),
+                this.props.filter.attr.name,
+                newVal,
+                this.props.geofilter)
+            .then((results) => {
                 let searchResults = results.map((res:Autocomplete) : SearchResultProps => {
                     let {value, score, ...other} = res;
                     return {
@@ -152,19 +153,20 @@ export class TextFilterComponent extends AbstractSingleFilter<TextFilter, TextFi
         this.updateValue(result.title);
         this.updateFilter(result.title, true);
 
-
+        let extraQuery:Map<string> = null;
         if (this.props.geofilter) {
 
             let lat = (result.minlat + result.maxlat) / 2;
             let lon = (result.minlon + result.maxlon) / 2;
 
             // Update query to change map view
-            let query = viewPortToQuery({
+            extraQuery = viewPortToQuery({
                 center: [lat, lon],
                 zoom: CITY_ZOOM,
             });
-            goTo(this.props, query);
         }
+        this.updateFilter(result.title, true, extraQuery);
+
     }
 
     render() {
@@ -184,7 +186,12 @@ export class TextFilterComponent extends AbstractSingleFilter<TextFilter, TextFi
     }
 }
 
-class NumberFilterComponent extends AbstractSingleFilter<NumberFilter> {
+interface NumberFilterExtraProps {
+    hidemin?:boolean;
+    hidemax?:boolean;
+}
+
+export class NumberFilterComponent extends AbstractSingleFilter<NumberFilter, NumberFilterExtraProps> {
 
     // Debounced update
     updateMin = debounce((min: number) => {
@@ -204,23 +211,23 @@ class NumberFilterComponent extends AbstractSingleFilter<NumberFilter> {
         let _ = this.props.messages;
 
         return <>
-        <div style={{marginBottom:"0.5em"}}>
-            <Input
-                size="mini"
-                type="number"
-                label={_.min}
-                defaultValue={this.props.filter.min}
-                onChange={(e, value) => this.updateMin(strToInt(value.value))}/>
-        </div>
+            {!this.props.hidemin && <div style={{marginBottom:"0.5em"}}>
+                <Input
+                    size="mini"
+                    type="number"
+                    label={_.min}
+                    defaultValue={this.props.filter.min}
+                    onChange={(e, value) => this.updateMin(strToInt(value.value))}/>
+            </div>}
 
-        <div>
-            <Input
-                size="mini"
-                type="number"
-                label={_.max}
-                defaultValue={this.props.filter.max}
-                onChange={(e, value) => this.updateMax(strToInt(value.value))}/>
-        </div>
+            {!this.props.hidemax && <div>
+                <Input
+                    size="mini"
+                    type="number"
+                    label={_.max}
+                    defaultValue={this.props.filter.max}
+                    onChange={(e, value) => this.updateMax(strToInt(value.value))}/>
+            </div>}
         </>
     }
 }
@@ -294,7 +301,7 @@ let ResetButton = (props: DbPageProps & {attr:Attribute}) =>  {
             title={_.clear_filter}
             onClick={stopPropag(clearFilter)} />
     </p>
-}
+};
 
 /* Switch on attribute type : may return null in case filter is not supported */
 // FIXME : change switch to proper registration of types / components
@@ -302,10 +309,13 @@ let FilterComponent = (props : DbPageProps, attr:Attribute, filter:Filter | null
 
     let {messages: _} = props;
 
-    let updateFilter = (newFilter: any) => {
+    let updateFilter = (newFilter: any, extraQuery: Map<string>) => {
         let queryParams = serializeFilter(attr, newFilter);
+        if (extraQuery) {
+            queryParams = {...queryParams, ...extraQuery};
+        }
         goToResettingPage(props, queryParams);
-    }
+    };
 
     switch(attr.type.tag) {
 

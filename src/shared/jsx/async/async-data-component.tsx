@@ -76,6 +76,15 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps, DataType>
         this.doFetch(nextProps, nextState);
     }
 
+    abstract renderLoaded() : React.ReactNode;
+
+    render() {
+        return <div>
+            {this.loading && <div style={{position:'absolute', borderTop:"2px solid red"}}> </div>}
+            {this.renderLoaded()}
+        </div>
+    }
+
 
 }
 
@@ -99,7 +108,7 @@ export function withAsyncData<OwnProps,AsyncProps>(
                 return fetchData(props);
             }
 
-            public render() {
+            public renderLoaded() {
                 return <WrappedComponent {...this.props} {...this.asyncData} />;
             }
         }

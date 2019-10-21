@@ -45,7 +45,9 @@ import {extractSort} from "../../../views/sort";
 import {RecordsMap} from "./map";
 import {AsyncDataComponent} from "../../async/async-data-component";
 import stringify from "json-stringify-deterministic";
-import {AddAlertDialog} from "../../dialogs/alert-dialog";
+import {withAsyncImport} from "../../async/async-import-component";
+import {DbPageProps} from "./db-page-switch";
+import {CloseableDialog} from "../../dialogs/common-dialog";
 
 
 type RecordsPageProps =
@@ -110,7 +112,7 @@ class AsyncSinglePage extends AsyncDataComponent<RecordsPageProps, RecordsProps>
         }
     }
 
-    render() {
+    renderLoaded() {
 
         if (this.asyncData == null) {
             // FIXME Loading ?
@@ -242,7 +244,7 @@ export class AsyncPaging extends AsyncDataComponent<RecordsPageProps, CountProps
         goTo(this.props, {page: intToStr(pageNum)});
     }
 
-    render() {
+    renderLoaded() {
         if (this.asyncData == null) {
             return null;
         }
@@ -263,7 +265,7 @@ export class AsyncPaging extends AsyncDataComponent<RecordsPageProps, CountProps
                         defaultActivePage={1}
                         firstItem={null}
                         lastItem={null}
-                        siblingRange={2}
+                        siblingRange={1}
                         totalPages={nbPages}
                         activePage={page}
                         onPageChange={(e, {activePage}) => {this.goToPage(activePage)}} />
@@ -309,6 +311,7 @@ function AddItemButton(props: RecordsPageProps) {
 
 const SIDEBAR_LS_KEY = "filtersSidebar";
 
+const AsyncAddAlertDialog= withAsyncImport<DbPageProps & CloseableDialog, {}>(() => import("../../dialogs/alert-dialog").then(module => module.AddAlertDialog));
 
 // Main component
 class _RecordsPage extends React.Component<RecordsPageProps> {
@@ -358,7 +361,7 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
                     content="Recevoir des alertes par email"
                     onClick={onOpen} />}
             render={onClose =>
-                <AddAlertDialog
+                <AsyncAddAlertDialog
                     {...props}
                     close={onClose} />
             } >

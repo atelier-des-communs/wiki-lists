@@ -24,7 +24,7 @@ export function withAsyncImport<ComponentProps, Void>(
         }
 
 
-        render() {
+        renderLoaded() {
             if (this.asyncData == null) {
                 return null;
             } else {

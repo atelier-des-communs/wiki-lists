@@ -53,7 +53,7 @@ class _SingleRecordPage extends AsyncDataComponent<SingleRecordPageProps, Record
         }
     }
 
-    render() {
+    renderLoaded() {
 
         let props = this.props;
         let {db, head, messages} = this.props;

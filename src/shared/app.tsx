@@ -22,7 +22,7 @@ export class App extends React.Component<GlobalContextProps> {
         super(props);
     }
 
-    render(){
+    render() {
 
         let props = this.props;
         let _ = props.messages;

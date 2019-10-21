@@ -54,7 +54,7 @@ class SSRHeadSetter implements HeadSetter {
 }
 
 // Load CDN paths from manifest file
-// Acrivated for prod only
+// Activated for prod only
 let cdnPaths : string[] = [];
 const MANIFEST_FILE = process.cwd() + '/dist/client/manifest.json';
 if (fs.existsSync(MANIFEST_FILE)) {
@@ -84,17 +84,18 @@ function renderHtml(head:SSRHeadSetter, html:string, context:IMarshalledContext=
     return `<!DOCTYPE html>
 		<html>
 			<head>
-			    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+			   
 				<meta charset="UTF-8">
 				
 				<title>${title}</title>
 		
 				<meta name="description" content="${description}" />
 				
+				<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 				<meta name="referrer" content="no-referrer">
 				
 				<meta name="og:title" content="${title}" />
-				<meta property="og:image" content="${socialPreview}" />
+				<meta property="og:image" content="${config.ROOT_URL}${socialPreview}" />
 				
 				<link rel="shortcut icon" type="image/png" href="/static/img/favicon.png"/>
 				<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.css" />
@@ -120,9 +121,7 @@ function renderHtml(head:SSRHeadSetter, html:string, context:IMarshalledContext=
 
 async function renderApp(req:Request) : Promise<ContentWithStatus> {
 
-
     let head = new SSRHeadSetter();
-
     let lang = selectLanguage(req);
 
     let baseurl = req.url.split("?")[0];
@@ -159,9 +158,6 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
                 // Ignore : we should not set cookies on server side
             }
         };
-
-        let sharedConfig : SharedConfig = {
-            singleDb : config.SINGLE_BASE};
 
         // Render HTML several time, until all async promises have been resolved
         // This is the way we do async data fetching on SSR

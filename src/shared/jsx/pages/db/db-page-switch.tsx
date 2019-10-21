@@ -19,9 +19,11 @@ import back from "../../../img/back.png";
 import {Button, Message} from "semantic-ui-react";
 import {AccessRight, hasRight} from "../../../access";
 import {toTypedObjects} from "../../../serializer";
-import {DbDefinition} from "../../../model/db-def";
 import {nl2br} from "../../utils/utils";
 import {getDbName} from "../../../utils";
+
+// FIXME: Find a way to only import this when required
+import { SemanticToastContainer } from 'react-semantic-toasts';
 
 export type DbPageProps =
     PageProps<DbPathParams> &
@@ -84,6 +86,12 @@ class _DbPageSwitch extends React.Component<DbPageProps>{
                     </Link>
                 </div>
             </Header>
+
+
+            <div style={{position:"absolute", right:"1em"}}>
+            <SemanticToastContainer position="top-right" animation="fade" />
+            </div>
+
             <div style={{margin: "1em"}}>
 
 
@@ -121,6 +129,7 @@ class _DbPageSwitch extends React.Component<DbPageProps>{
                 </Switch>
             </div>
         </>
+
     }
 }
 

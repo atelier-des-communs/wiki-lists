@@ -33,13 +33,12 @@ export class CardsComponent extends React.Component<CardsProps> {
                     <Card fluid className="hoverable">
                         <Card.Content  >
                             <Card.Header >
-
+                                <div style={{position:"absolute", right:"0.5rem"}} className="super-shy" >
+                                    <EditButtons {...props} record={record} />
+                                </div>
                                 <Link to={recordURL(record._id)}>
                                     {recordName(props.db.schema, record)}
                                 </Link>
-                                <div style={{float:"right"}} className="super-shy" >
-                                    <EditButtons {...props} record={record} />
-                                </div>
                             </Card.Header>
                         </Card.Content>
                         <Card.Content>

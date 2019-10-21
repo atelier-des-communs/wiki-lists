@@ -1,6 +1,7 @@
 import Axios, {AxiosPromise} from "axios";
 import {Record} from "../../shared/model/instances";
 import {
+    ADD_ALERT_URL,
     ADD_ITEM_URL, Autocomplete, AUTOCOMPLETE_URL,
     CHECK_DB_NAME, COUNT_ITEMS_URL,
     CREATE_DB_URL,
@@ -42,6 +43,12 @@ export async function updateSchema(dbName: string, schema:StructType) : Promise<
     return await post<StructType>(
         UPDATE_SCHEMA_URL.replace(":db_name", dbName),
         schema);
+}
+
+export async function addAlert(dbName:string, email:string, captcha:string, filters: Map<string>) : Promise<boolean> {
+    return await post<boolean>(
+        ADD_ALERT_URL.replace(":db_name", dbName),
+        {email, captcha, filters});
 }
 
 /** Return the image of the update item, as saved in DB */

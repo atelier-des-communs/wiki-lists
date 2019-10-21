@@ -1,51 +1,74 @@
 import * as React from "react";
 import {CloseableDialog, ValidatingDialog} from "./common-dialog";
 import {ValidationErrors, ValidationException} from "../../validators/validators";
-import {nonSystemAttributes} from "../../model/instances";
 import {Button, Form, Grid, Header, Icon, Label, Message, Modal, Input} from "semantic-ui-react";
-import {attrLabel, typeIsWide} from "../utils/utils";
-import {ValueHandler} from "../type-handlers/editors";
 import {ErrorPlaceholder, ErrorsContext, RemainingErrorsPlaceholder} from "../utils/validation-errors";
 import {DbPageProps} from "../pages/db/db-page-switch";
-import {EnumFilter, extractFilters, Filter, TextFilter} from "../../views/filters";
-import {empty, emptyMap, filterSingle, Map, parseParams} from "../../utils";
-import {EnumFilterComponent, TextFilterComponent} from "../type-handlers/filters";
+import {EnumFilter, extractFilters, NumberFilter, serializeFilters, TextFilter} from "../../views/filters";
+import {
+    buildMap, empty,
+    emptyMap,
+    filterSingle,
+    getDbName,
+    Map,
+    mapKeyVals,
+    mapMap,
+    mapValues,
+    parseParams
+} from "../../utils";
+import {EnumFilterComponent, NumberFilterComponent, TextFilterComponent} from "../type-handlers/filters";
 import {Attribute} from "../../model/types";
+import {isEqual} from "lodash";
+import {addAlert} from "../../../client/rest/client-db";
+import { toast } from 'react-semantic-toasts';
+import ReCAPTCHA from "react-google-recaptcha";
 
 
 const CITY_ATTR = "commune";
 const TYPE_ATTR = "type";
+const AREA_ATTR = "superficie_locaux";
+
+type IState = {
+    loading: boolean,
+        filters :
+            {
+                [CITY_ATTR] : TextFilter,
+                [TYPE_ATTR] : EnumFilter,
+                [AREA_ATTR] : NumberFilter}
+        email:string,
+        captcha:string,
+        count:number;
+    errors:ValidationErrors}
 
 export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDialog> {
 
-    state : {
-        loading: boolean,
-        cityFilter : TextFilter,
-        typeFilter : EnumFilter,
-        email:string,
-        count:number;
-        errors:ValidationErrors};
+    state : IState;
 
-    cityAttr : Attribute;
-    typeAttr : Attribute;
-
+    attrs : Map<Attribute> = {};
 
     constructor(props: DbPageProps) {
         super(props);
 
         let filters = extractFilters(props.db.schema, parseParams(props.location.search));
-        this.cityAttr = filterSingle(this.props.db.schema.attributes, (attr) => attr.name == CITY_ATTR);
-        this.typeAttr = filterSingle(this.props.db.schema.attributes, (attr) => attr.name == TYPE_ATTR);
+
+        // Extract attributes
+        for (let key of [CITY_ATTR, TYPE_ATTR, AREA_ATTR]) {
+            this.attrs[key] = filterSingle(this.props.db.schema.attributes, (attr) => attr.name == key);
+        }
 
         this.state =  {
             loading: false,
             email:"",
+            captcha: null,
             count:null,
-            cityFilter : filters[CITY_ATTR] as TextFilter || new TextFilter(this.cityAttr),
-            typeFilter : filters[TYPE_ATTR] as EnumFilter || new EnumFilter(this.typeAttr),
+            filters :{
+                [CITY_ATTR] : filters[CITY_ATTR] as TextFilter || new TextFilter(this.attrs[CITY_ATTR]),
+                [TYPE_ATTR] : filters[TYPE_ATTR] as EnumFilter || new EnumFilter(this.attrs[TYPE_ATTR]),
+                [AREA_ATTR] : filters[AREA_ATTR] as NumberFilter || new NumberFilter(this.attrs[AREA_ATTR]),
+            },
             errors:{}};
 
-        this.updateCount();
+        this.updateCount(this.state);
     }
 
     async validateInternal() {
@@ -54,7 +77,7 @@ export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDial
 
         let errors : Map<string> = {};
 
-        if (!this.state.cityFilter || !this.state.cityFilter.exact) {
+        if (!this.state.filters[CITY_ATTR] || !this.state.filters[CITY_ATTR].exact) {
             errors[CITY_ATTR] = "Veuillez choisir une commune"
         }
 
@@ -64,17 +87,40 @@ export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDial
             errors["email"] = "Email invalide"
         }
 
+        if (empty(this.state.captcha)) {
+            errors["captcha"] = "Veuillez cocher le captcha";
+        }
+
         if (!emptyMap(errors)) {
             throw new ValidationException(errors);
         }
+
+        await addAlert(
+            getDbName(this.props),
+            this.state.email,
+            this.state.captcha,
+            serializeFilters(mapValues(this.state.filters)));
+
+        toast({
+            type: "info",
+            title: 'Alerte enregistrée',
+            time: 4000,
+            description : "Vous êtes abonné aux alertes"
+        });
     }
 
-    async updateCount() {
-        if (this.state.cityFilter.exact) {
-            let count = await this.props.dataFetcher.countRecords(this.props.db.name, {
-                [CITY_ATTR]: this.state.cityFilter,
-                [TYPE_ATTR]: this.state.typeFilter,
-            });
+    componentWillUpdate(nextProps: Readonly<DbPageProps & CloseableDialog>, nextState: Readonly<IState>, nextContext: any): void {
+        if (!isEqual(this.state.filters, nextState.filters)) {
+            this.updateCount(nextState);
+        }
+    }
+
+    async updateCount(nextState: Readonly<IState>) {
+        if (nextState.filters[CITY_ATTR].exact) {
+            let count = await this.props.dataFetcher
+                .countRecords(
+                    this.props.db.name,
+                    nextState.filters);
             this.setState({count})
         }
     }
@@ -83,7 +129,7 @@ export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDial
 
         let _ = this.props.messages;
 
-        let tensPerMonth = this.state.count && Math.floor(this.state.count / (24 * 10));
+        let fivePerMonth = this.state.count && Math.floor(this.state.count / (24 * 5));
 
         return <ErrorsContext.Provider value={{errors:this.state.errors, displayedErrors:[]}}>
 
@@ -95,31 +141,55 @@ export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDial
                 <Header icon='bell' content="S'abonner aux alertes"/>
 
                 <Modal.Content>
-                    <Form>
-                        <Form.Field  width={7} >
-                            <Header
-                                size="small"
-                                title={_.mandatory_attribute}>
+                    <Form >
+                        <Form.Group >
+                            <Form.Field  >
+                                <Header
+                                    size="small"
+                                    title={_.mandatory_attribute}>
 
-                                Commune
+                                    Commune
 
-                                <Label circular color="red" size="tiny" empty />
-                            </Header>
+                                    <Label circular color="red" size="tiny" empty />
+                                </Header>
 
-                            <TextFilterComponent
-                                {...this.props}
-                                attr={this.cityAttr}
-                                updateFilter={(filter) => {
-                                    this.setState({cityFilter:filter});
-                                    this.updateCount();
-                                }}
-                                filter={this.state.cityFilter} />
+                                <TextFilterComponent
+                                    {...this.props}
+                                    attr={this.attrs[CITY_ATTR]}
+                                    updateFilter={(filter) => {this.setState(
+                                        {filters: {
+                                            ...this.state.filters,
+                                                [CITY_ATTR]:filter}});}}
+                                    filter={this.state.filters[CITY_ATTR]} />
 
-                            <ErrorPlaceholder attributeKey={CITY_ATTR} />
+                                <ErrorPlaceholder attributeKey={CITY_ATTR} />
 
-                        </Form.Field>
+                            </Form.Field>
 
-                        <Form.Field  width={7} >
+                            <Form.Field  >
+                                <Header
+                                    size="small"
+                                    title={_.mandatory_attribute}>
+
+                                    Superficie minimale des locaux
+
+                                </Header>
+
+                                <NumberFilterComponent
+                                    {...this.props}
+                                    hidemax={true}
+                                    attr={this.attrs[AREA_ATTR]}
+                                    updateFilter={(filter) => {this.setState(
+                                        {filters: {
+                                                ...this.state.filters,
+                                                [AREA_ATTR]:filter}});}}
+                                    filter={this.state.filters[AREA_ATTR]} />
+
+                            </Form.Field>
+
+                        </Form.Group>
+
+                        <Form.Field >
 
                             <Header size="small">
                                 Type de construction
@@ -127,41 +197,57 @@ export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDial
 
                             <EnumFilterComponent
                                 {...this.props}
-                                attr={this.typeAttr}
-                                updateFilter={(filter) => {
-                                    this.setState({typeFilter:filter});
-                                    this.updateCount();
-                                }}
-                                filter={this.state.typeFilter}
-                                nbCols={3} />
+                                attr={this.attrs[TYPE_ATTR]}
+                                updateFilter={(filter) => {this.setState(
+                                    {filters: {
+                                            ...this.state.filters,
+                                            [TYPE_ATTR]:filter}});}}
+                                filter={this.state.filters[TYPE_ATTR]}
+                                nbCols={4} />
 
                         </Form.Field>
 
-                        <Form.Field width={7} >
-                            <Header
-                                size="small"
-                                title={_.mandatory_attribute}>
+                        <Form.Group >
 
-                                Email
+                            <Form.Field >
+                                <Header
+                                    title={_.mandatory_attribute}
+                                >
+                                    Email
+                                    <Label circular color="red" size="tiny" empty />
+                                </Header>
+                                    <Input size="small" type="email" onChange={(e, data) => {
+                                        this.setState({email: data.value});
+                                    }} />
+                                    <ErrorPlaceholder attributeKey="email" />
 
-                                <Label circular color="red" size="tiny" empty />
-                            </Header>
+                                    <Message size="small" >
+                                        Votre email ne sera ni diffusé ni utilisé autrement que pour ces alertes.
+                                    </Message>
 
-                            <Input type="email" onChange={(e, data) => {
-                                this.setState({email: data.value});
-                            }} />
 
-                            <ErrorPlaceholder attributeKey="email" />
+                            </Form.Field>
+                            <Form.Field >
+                                <Header
+                                    title={_.mandatory_attribute}>
+                                    Captcha
+                                    <Label circular color="red" size="tiny" empty />
+                                </Header>
 
-                            <Message content={"Votre email ne sera ni diffusé ni utilisé autrement que pour ces alertes. "} />
+                                <ReCAPTCHA
+                                    sitekey={this.props.config.captcha_key}
+                                    onChange={(token) => this.setState({captcha:token})}
+                                />
+                                <ErrorPlaceholder attributeKey="captcha" />
 
-                        </Form.Field>
+                            </Form.Field>
+                        </Form.Group>
 
                     </Form>
 
                     { this.state.count != null &&
                     <Message warning >
-                        Vous recevrez un email mensuel avec {tensPerMonth * 10} à {(tensPerMonth + 1) * 10} projets de permis.<br/>
+                        Vous recevrez un email mensuel avec {fivePerMonth * 5} à {(fivePerMonth + 1) * 5} projets de permis.<br/>
                         Affinez les filtres si vous souhaitez en recevoir moins.
                     </Message>}
 

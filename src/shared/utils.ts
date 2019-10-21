@@ -17,6 +17,18 @@ export function  mapMap<T, O>(map: {[key:string] : T}, callback: Callback<T, O>)
     return Object.keys(map).map(key => callback(key, map[key]));
 }
 
+/** Apply function on a map, returns new map */
+export function  mapKeyVals<T, O>(map: {[key:string] : T}, callback: Callback<T, O>) : Map<O> {
+    let res : Map<O> = {};
+    for (let key of Object.keys(map)) {
+        res[key] = callback(key, map[key]);
+    }
+    return res;
+}
+
+
+
+
 /** Return all values of a map */
 export function  mapValues<T>(map: {[key:string] : T}) : Array<T> {
     return Object.keys(map).map(key => map[key]);

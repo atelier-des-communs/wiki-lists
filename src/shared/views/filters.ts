@@ -5,7 +5,6 @@ import {
     intToStr,
     isIn,
     Map,
-    mapMap,
     mapValues,
     parseParams,
     sortBy,
@@ -182,14 +181,14 @@ export class EnumFilter implements IFilter<string> {
     showEmpty:boolean;
 
     // No filter : accepting all
-    constructor(attr:Attribute, queryParams:Map<string>= {}) {
+    constructor(attr:Attribute, queryParams:Map<string>= null) {
 
         this.attr = attr;
         let allValues = this.allValues();
 
-        let queryValue = queryParams[queryParamName(attr.name)];
+        let queryValue = (queryParams == null)? null : queryParams[queryParamName(attr.name)];
 
-        if (queryValue == null) {
+        if (empty(queryValue)) {
             // No filter = All values + empty
             this.showValues = allValues;
             this.showEmpty = true;
@@ -568,8 +567,8 @@ export function hasFiltersOrSearch(schema: StructType, props: RouteComponentProp
     return (Object.keys(filters).length > 0) || search;
 }
 
-export function serializeFilters(filters: Filter[]) {
-    let res= {};
+export function serializeFilters(filters: Filter[]) : Map<string> {
+    let res : Map<string> = {};
     filters.map(function(filter:Filter) {
         res = {...res, ...serializeFilter(filter.attr, filter)};
     });

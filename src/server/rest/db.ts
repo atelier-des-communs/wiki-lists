@@ -1,4 +1,5 @@
 import {
+    ADD_ALERT_URL,
     ADD_ITEM_URL, API_BASE_URL, AUTOCOMPLETE_URL,
     CHECK_DB_NAME,
     COOKIE_DURATION, COUNT_ITEMS_URL,
@@ -12,6 +13,7 @@ import {
     UPDATE_SCHEMA_URL
 } from "../../shared/api";
 import {
+    addAlertDb,
     checkAvailability,
     createDb,
     createRecordsDb,
@@ -32,9 +34,16 @@ import {toAnnotatedJson, toTypedObjects} from "../../shared/serializer";
 import {DbDefinition} from "../../shared/model/db-def";
 import * as mung from "express-mung";
 import {extractSort} from "../../shared/views/sort";
-import {oneToArray, parseBool, slug, sortBy, strToInt} from "../../shared/utils";
-import {extractFilters, extractSearch} from "../../shared/views/filters";
+import {empty, Map, oneToArray, parseBool, slug, sortBy, strToInt} from "../../shared/utils";
+import {extractFilters, extractSearch, Filter} from "../../shared/views/filters";
 import * as responseTime from "response-time";
+import {unwrapAxiosResponse} from "../../client/rest/common";
+import {config} from "../config";
+import {BadRequestException} from "../exceptions";
+import * as request from "request-promise";
+
+
+const CAPTCHA_CHECK_URL="https://www.google.com/recaptcha/api/siteverify"
 
 async function addItemsAsync(req:Request) : Promise<Record[] | Record> {
     let records = req.body as Record | Record[];
@@ -96,6 +105,34 @@ async function createDbAsync(req:Request, res:Response) : Promise<boolean>{
     return true;
 }
 
+async function addAlertAsync(req:Request, res:Response) : Promise<boolean> {
+
+    let filters = req.body.filters as Map<string>;
+    let email = req.body.email as string;
+
+    if (empty(req.body.captcha)) {
+        throw new BadRequestException("Captcha is required");
+    }
+
+    let captchares : any = await request({
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        method:"POST",
+        uri: CAPTCHA_CHECK_URL,
+        form: {
+            response : req.body.captcha,
+            secret : config.CAPTCHA_SECRET},
+        json:true
+    });
+
+    console.debug("Captcha response", captchares);
+
+    if (!captchares.success) {
+        throw new BadRequestException("Invalid captcha");
+    }
+
+    return await addAlertDb(dbNameSSR(req), email, filters);
+}
+
 function sanitizeJson(input:any) {
     let xssFunc = (obj: any, prop: string, value: any) : any => {
         if (typeof(value) == "string") {
@@ -150,6 +187,10 @@ export function setUp(server:Express) {
 
     server.post(CREATE_DB_URL, function (req: Request, res: Response) {
         returnPromise(res, createDbAsync(req, res));
+    });
+
+    server.post(ADD_ALERT_URL, function (req: Request, res: Response) {
+        returnPromise(res, addAlertAsync(req, res));
     });
 
     server.get(CHECK_DB_NAME, function (req: Request, res: Response) {

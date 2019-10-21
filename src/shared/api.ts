@@ -48,6 +48,7 @@ export const COUNT_ITEMS_URL = "/api/:db_name/count";
 export const AUTOCOMPLETE_URL = "/api/:db_name/autocomplete/:attr";
 export const GET_DB_DEFINITION_URL = "/api/:db_name/definition";
 
+export const ADD_ALERT_URL = "/api/:db_name/add_alert";
 
 // Auth
 export const LOGIN_URL = "/api/auth/login";
@@ -68,7 +69,8 @@ export const DOWNLOAD_JSON_URL  = "/json/:db_name";
 export const VALIDATION_ERROR_STATUS_CODE = 444;
 
 export interface SharedConfig {
-    singleDb : string;
+    singleDb : string,
+    captcha_key : string
 }
 
 // Marshalled JSON within the page, containing static & config data
@@ -78,6 +80,7 @@ export interface IMarshalledContext {
     lang:string,
     supportedLanguages: Language[],
     config : SharedConfig;
+
 }
 
 

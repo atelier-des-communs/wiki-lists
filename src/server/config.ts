@@ -8,13 +8,17 @@ export const config = {
     DB_NAME : getEnv("DB_NAME", "wikilist"),
     DB_PORT : getEnv("DB_PORT", "27017"),
     LANGS : getEnv("LANGS", ""),
+    SERVE_STATIC : getEnv("SERVE_STATIC", 1),
     SINGLE_BASE : getEnv("SINGLE_BASE", ""),
+    CAPTCHA_KEY : getEnv("CAPTCHA_KEY"),
+    CAPTCHA_SECRET : getEnv("CAPTCHA_SECRET"),
 };
 
 
 // Config shared with client (via serialization)
 export const sharedConfig : SharedConfig = {
-    singleDb : config.SINGLE_BASE
+    singleDb : config.SINGLE_BASE,
+    captcha_key : config.CAPTCHA_KEY
 };
 
 function getEnv(key:string, def:any = null) {

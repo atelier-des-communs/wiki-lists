@@ -36,7 +36,7 @@ export class RecordPopup extends AsyncDataComponent<RecordPopupProps, Record> {
         }
     }
 
-    render() {
+    renderLoaded() {
         return <Modal open={true} onClose={this.props.onClose} closeIcon >
             <Modal.Header>
                 {(this.asyncData) ?

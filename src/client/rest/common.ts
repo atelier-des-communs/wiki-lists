@@ -22,7 +22,6 @@ export function unwrapAxiosResponse<T>(promise : AxiosPromise<T>) : Promise<T> {
             throw new ValidationException(error.response.data);
 
         } else {
-
             alert("A network error happened : " + error);
             throw error;
         }

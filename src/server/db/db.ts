@@ -35,6 +35,7 @@ import * as tilebelt from "tilebelt";
 
 const SCHEMAS_COLLECTION = "schemas";
 const DB_COLLECTION_TEMPLATE = (name:string) => {return `db.${name}`};
+const ALERTS_COLLECTION = "alerts";
 
 const MARKERS_PER_CLUSTER = 20;
 const AUTOCOMPLETE_NUM = 10;
@@ -231,6 +232,15 @@ export async function deleteRecordDb(dbName: string, id : string) : Promise<bool
     if (res.deletedCount != 1) {
         throw Error(`No record deleted with id: ${id}`);
     }
+    return true;
+}
+
+export async function addAlertDb(dbName: string, email:string, filters:Map<string>) : Promise<boolean> {
+    let db = await Connection.getDb();
+    let alertsCol = db.collection(ALERTS_COLLECTION);
+    await alertsCol.findOneAndUpdate({email},
+        {$set : {email, filters}},
+        {upsert:true});
     return true;
 }
 
