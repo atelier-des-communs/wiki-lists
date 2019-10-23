@@ -32,6 +32,7 @@ import {flatMap} from "lodash";
 import {cache} from "../cache";
 import {cloneDeep, assign, isEmpty} from "lodash";
 import * as tilebelt from "tilebelt";
+import {ApproxCluster} from "../../shared/model/geo";
 
 const SCHEMAS_COLLECTION = "schemas";
 const DB_COLLECTION_TEMPLATE = (name:string) => {return `db.${name}`};
@@ -39,6 +40,9 @@ const ALERTS_COLLECTION = "alerts";
 
 const MARKERS_PER_CLUSTER = 20;
 const AUTOCOMPLETE_NUM = 10;
+
+// Min zoom from which to separate approximate locations
+const MIN_ZOOM_APPROX = 12
 
 /* Singleton instance */
 class  Connection {
@@ -279,6 +283,7 @@ export async function getDbDef(dbName: string) : Promise<DbDefinition> {
     return cloneDeep(res);
 }
 
+const APPROX_HASH = "approx";
 
 // DataFetcher for SSR : direct access to DB
 export class DbDataFetcher implements DataFetcher {
@@ -375,7 +380,9 @@ export class DbDataFetcher implements DataFetcher {
         let attrMap = arrayToMap(dbDef.schema.attributes, attr => attr.name);
 
         return records.map(record => fromMongo(record, attrMap))
-    }
+    };
+
+
 
 
     @cache
@@ -400,14 +407,26 @@ export class DbDataFetcher implements DataFetcher {
 
         let locAttr = locFilter.attr.name;
 
+        let subStrExpr = {
+            "$substr": [
+                "$location.properties.hash",
+                // Group geohash (slice) by 3 levels smaller than current zoom
+                // We do that as workaround to limit number of records,
+                // since we cannot "slice" the $push command at $group step (yet ...)
+                0, zoom + 3]};
+
+        // Above a given zoom, we split approx location into a separate group
+        let approxLocExpr = {
+            $cond : {
+                if : "$loc_approx",
+                then: APPROX_HASH,
+                else: subStrExpr
+            }
+        }
+
         let project = {
             _id: 1,
-            "geohash": {
-                "$substr": [
-                    "$location.properties.hash",
-                    // Slice current records geohash for required length
-                    0, zoom + 3]
-            },
+            "geohash": (zoom >= MIN_ZOOM_APPROX) ? approxLocExpr : subStrExpr,
             "record._id": "$_id",
             ["record." + locAttr] : "$" + locAttr,
         };
@@ -457,8 +476,13 @@ export class DbDataFetcher implements DataFetcher {
         // debug("clusters", clusters);
         debug("Parsed nb records ", clusters.map(cluster => cluster.records.length).reduce((a, b) => a+b, 0));
 
-        return flatMap(clusters, function (cluster) : Marker {
-            if (cluster.count <= MARKERS_PER_CLUSTER) {
+        let res =  flatMap(clusters, function (cluster) : Marker {
+            if (cluster._id == APPROX_HASH) {
+                return {
+                    approx:true,
+                    count : cluster.count
+                } as ApproxCluster
+            } else if (cluster.count <= MARKERS_PER_CLUSTER) {
                 return cluster.records.map((record : Record) => fromMongo(record, attrMap));
             } else {
                 // Cluster id is the hash
@@ -472,6 +496,9 @@ export class DbDataFetcher implements DataFetcher {
                 }]
             }
         })
+
+        console.debug("Markers", res);
+        return res;
     }
 
     @cache

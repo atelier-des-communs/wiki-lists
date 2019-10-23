@@ -10,4 +10,8 @@ export interface ICoord  {
 export interface Cluster extends ICoord {
     count:number;
 }
+export class ApproxCluster {
+    approx = true;
+    count:number;
+}
 

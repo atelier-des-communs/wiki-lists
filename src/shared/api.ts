@@ -6,7 +6,7 @@ import {Language} from "./i18n/messages";
 import {Map} from "./utils";
 import {Filter} from "./views/filters";
 import {ISort} from "./views/sort";
-import {Cluster} from "./model/geo";
+import {ApproxCluster, Cluster} from "./model/geo";
 import {dbNameSSR} from "../server/utils";
 
 
@@ -84,7 +84,7 @@ export interface IMarshalledContext {
 }
 
 
-export type Marker = Record | Cluster;
+export type Marker = Record | Cluster | ApproxCluster;
 
 export interface Autocomplete {
     value:string,

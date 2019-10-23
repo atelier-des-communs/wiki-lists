@@ -3,11 +3,20 @@ import * as React from 'react';
 import {GlobalContextProps} from "../../context/global-context";
 import {DbPathParams, DbProps, PageProps} from "../../common-props";
 import {AsyncDataComponent} from "../../async/async-data-component";
-import {Cluster, ICoord} from "../../../model/geo";
+import {ApproxCluster, Cluster, ICoord} from "../../../model/geo";
 import {Record} from "../../../model/instances";
 import {CircleMarker, Map as MapEl, TileLayer, Tooltip, Viewport} from "react-leaflet";
 import {LatLng, LatLngBounds} from "leaflet";
-import {arrayToMap, closeTo, getDbName, goTo, goToResettingPage, Map, parseParams} from "../../../utils";
+import {
+    arrayToMap,
+    closeTo,
+    getDbName,
+    goTo,
+    goToResettingPage,
+    Map,
+    parseBool,
+    parseParams
+} from "../../../utils";
 import {
     extractFilters,
     extractSearch,
@@ -20,7 +29,7 @@ import {DispatchProp} from "react-redux";
 import {createUpdateMarkersAction} from "../../../redux";
 import {cloneDeep, isEqual} from "lodash";
 import Control from 'react-leaflet-control';
-import {Button} from 'semantic-ui-react';
+import {Button, Label} from 'semantic-ui-react';
 import {CRS, Point} from "leaflet";
 import {Marker} from "../../../api";
 import stringify from "json-stringify-deterministic";
@@ -55,6 +64,7 @@ type IState = {
 
 const ZOOM_QUERY_KEY = "map.z";
 const CENTER_QUERY_KEY = "map.c";
+const FROM_MAP_KEY = "map.f";
 
 
 function sameViewport(vp1:Viewport, vp2:Viewport) {
@@ -64,12 +74,12 @@ function sameViewport(vp1:Viewport, vp2:Viewport) {
 }
 
 // Transform view port to URL query params
-export function viewPortToQuery(viewport : Viewport) : Map<any> {
+export function viewPortToQuery(viewport : Viewport, fromMap: number=0) : Map<any> {
     // Default view port ?
     if (sameViewport(viewport, DEFAULT_VIEWPORT)) {
         return {
             [ZOOM_QUERY_KEY] : null,
-            [CENTER_QUERY_KEY] : null
+            [CENTER_QUERY_KEY] : null,
         }
     } else {
         let tile = tilebelt.pointToTile(
@@ -78,7 +88,8 @@ export function viewPortToQuery(viewport : Viewport) : Map<any> {
             23);
         return {
             [ZOOM_QUERY_KEY]: viewport.zoom,
-            [CENTER_QUERY_KEY] : tilebelt.tileToQuadkey(tile)
+            [CENTER_QUERY_KEY] : tilebelt.tileToQuadkey(tile),
+            [FROM_MAP_KEY] : fromMap, // Usefull to prevent infinite loop of viewport updates due to rounding errors
         }
     }
 }
@@ -172,8 +183,13 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
 
     // Update map center and zoom from upfront change of URL
     componentWillReceiveProps(nextProps: Readonly<MapProps>, nextContext: any): void {
+        let nextParams = parseParams(nextProps.location.search);
+        if (parseBool(nextParams[FROM_MAP_KEY])) {
+            return;
+        }
+
         let currViewport = queryToViewport(parseParams(this.props.location.search));
-        let nextViewport = queryToViewport(parseParams(nextProps.location.search));
+        let nextViewport = queryToViewport(nextParams);
         console.debug("viewports", currViewport, nextViewport, this.state.viewport);
         if (!sameViewport(currViewport, nextViewport) && !sameViewport(this.state.viewport, nextViewport)) {
             this.setState({viewport:nextViewport});
@@ -192,6 +208,10 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
 
     filterMarkers(markers : (Cluster|Record)[], bounds:LatLngBounds): (Cluster|Record)[] {
         return markers.filter(marker => {
+            if (marker.hasOwnProperty("approx")) {
+                // Cluster of approximate locations
+                return true;
+            }
             let coord : ICoord = marker.hasOwnProperty("_id") ?
                 (marker as Record)[this.locAttr.name] as ICoord
                 : marker as Cluster;
@@ -250,7 +270,6 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
             if (cacheKey in props.store.getState().geoMarkers) {
 
                 // console.debug("key in cache", hash, cacheKey);
-
                 let markers = props.store.getState().geoMarkers[cacheKey];
 
                 // Add markers synchronously
@@ -306,7 +325,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
 
     onViewportChanged = (viewport: Viewport) => {
         this.setState({viewport});
-        goTo(this.props, viewPortToQuery(viewport));
+        goTo(this.props, viewPortToQuery(viewport, 1));
     };
 
     zoomOn(coord :ICoord) {
@@ -342,8 +361,9 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
 
         let _ = this.props.messages;
 
-        let toMarker = (item : Record | Cluster) => {
+        let toMarker = (item : Marker) => {
             if (item.hasOwnProperty("_id")) {
+
                 // Record ? => get its location attribute
                 let record = (item as Record);
                 let coord = record[this.locAttr.name] as ICoord;
@@ -352,6 +372,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
                 let colorVal = record[this.colorAttr.name];
                 let color = colorVal ? this.colorMap[colorVal].color : "white";
 
+                // Compute size
                 let sizeVal = record[SIZE_ATTR] || SIZE_MIN_VAL;
                 if (sizeVal < SIZE_MIN_VAL) sizeVal = SIZE_MIN_VAL;
                 if (sizeVal > SIZE_MAX_VAL) sizeVal = SIZE_MAX_VAL;
@@ -367,8 +388,12 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
                     color="black"
                     weight={1}
                     radius={radius} />
+            } else if ((item as ApproxCluster).approx) {
+                // Approx cluster, do not display as marker
+                return null
             } else {
                 let cluster = item as Cluster;
+
                 // Cluster has direct coordinates
                 let latln = new LatLng(cluster.lat, cluster.lon);
 
@@ -388,6 +413,11 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
                 </CircleMarker>
             }
         };
+
+        // Find possible "approx" clusters
+        let approxNumber = !this.asyncData ? 0 : this.asyncData
+            .filter(marker => (marker as ApproxCluster).approx)
+            .reduce((sum, marker : ApproxCluster) => sum + marker.count, 0);
 
         const Markers = () => {
             if (this.asyncData == null) {
@@ -420,6 +450,13 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
                         content={_.update_list_from_map}
                         size="small" compact />
                 </Control>}
+
+            {
+                approxNumber > 0 &&
+                <Control position="bottomleft" >
+                    <Label content={`+ ${approxNumber} non géolocalisés`}/>
+                </Control>
+            }
 
             <Control position="topleft" >
                 <Button icon="home"

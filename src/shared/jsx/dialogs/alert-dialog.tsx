@@ -216,15 +216,13 @@ export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDial
                                     Email
                                     <Label circular color="red" size="tiny" empty />
                                 </Header>
-                                    <Input size="small" type="email" onChange={(e, data) => {
+
+                                <p>Votre email ne sera ni diffusé ni utilisé autrement que pour ces alertes.</p>
+
+                                <Input size="small" type="email" onChange={(e, data) => {
                                         this.setState({email: data.value});
                                     }} />
                                     <ErrorPlaceholder attributeKey="email" />
-
-                                    <Message size="small" >
-                                        Votre email ne sera ni diffusé ni utilisé autrement que pour ces alertes.
-                                    </Message>
-
 
                             </Form.Field>
                             <Form.Field >
@@ -248,7 +246,7 @@ export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDial
                     { this.state.count != null &&
                     <Message warning >
                         Vous recevrez un email mensuel avec {fivePerMonth * 5} à {(fivePerMonth + 1) * 5} projets de permis.<br/>
-                        Affinez les filtres si vous souhaitez en recevoir moins.
+                        Affinez les filtres pour en recevoir moins.
                     </Message>}
 
                 </Modal.Content>
