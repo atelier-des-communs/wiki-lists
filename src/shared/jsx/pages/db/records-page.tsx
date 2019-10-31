@@ -4,7 +4,7 @@ import {Button, Dropdown, Header, Responsive, Pagination} from 'semantic-ui-reac
 import {EditDialog} from "../../dialogs/edit-dialog";
 import {attributesMap, Types} from "../../../model/types";
 import {getDbName, goTo, intToStr, mapMap, mapValues, parseParams, strToInt} from "../../../utils";
-import {SafeClickWrapper, SafePopup} from "../../utils/ssr-safe";
+import {ButtonWrapper, SafeClickWrapper, SafePopup} from "../../utils/ssr-safe";
 import {DispatchProp} from "react-redux";
 import * as QueryString from "querystring";
 import {RouteComponentProps} from "react-router"
@@ -291,22 +291,17 @@ export class AsyncPaging extends AsyncDataComponent<RecordsPageProps, CountProps
 function AddItemButton(props: RecordsPageProps) {
     let _ = props.messages;
     return hasRight(props, AccessRight.EDIT) &&
-            <SafeClickWrapper
-                trigger={onOpen =>
-                    <Button
-                        primary style={{marginBottom:"1em"}}
-                        icon="plus" content={_.add_item}
-                        onClick={onOpen}/>}
-                render={onClose =>
-                    <EditDialog
-                        {...props}
-                        record={{}}
-                        schema={props.db.schema}
-                        create={true}
-                        onUpdate={props.onCreate}
-                        close={onClose} />
-                } >
-            </SafeClickWrapper>
+        <ButtonWrapper
+            primary style={{marginBottom:"1em"}}
+            icon="plus" content={_.add_item}
+            render={onClose =>
+            <EditDialog
+                {...props}
+                record={{}}
+                schema={props.db.schema}
+                create={true}
+                onUpdate={props.onCreate}
+                close={onClose} /> } />
 }
 
 const SIDEBAR_LS_KEY = "filtersSidebar";
@@ -353,20 +348,13 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
             </>
             </SafePopup>;
 
-        let AddAlertButton = () => <SafeClickWrapper
-            trigger={onOpen =>
-                <Button
-                    color="yellow"
-                    icon="bell"
-                    content="Recevoir des alertes par email"
-                    onClick={onOpen} />}
-            render={onClose =>
-                <AsyncAddAlertDialog
-                    {...props}
-                    close={onClose} />
-            } >
-        </SafeClickWrapper>
-
+        let AddAlertButton = () =>
+            <ButtonWrapper
+                color="teal"
+                icon="bell"
+                content="Recevoir des alertes par email"
+                render={onClose =>
+                    <AsyncAddAlertDialog {...props} close={onClose} />} />;
 
         let SortByDropdown = () => <SortPopup {...props} schema={db.schema} />;
 
@@ -428,23 +416,6 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
         // FIXME : parse all this once
         let viewType = extractViewType(params);
 
-        <SafeClickWrapper
-            trigger={onOpen =>
-                <Button
-                    primary style={{marginBottom:"1em"}}
-                    icon="plus" content={_.add_item}
-                    onClick={onOpen}/>}
-            render={onClose =>
-                <EditDialog
-                    {...props}
-                    record={{}}
-                    schema={props.db.schema}
-                    create={true}
-                    onUpdate={props.onCreate}
-                    close={onClose} />
-            } >
-        </SafeClickWrapper>
-
         let ViewTypeButtons = () => <Button.Group basic style={{marginRight:"10px"}}>
             <Button icon="table"
                     title={`${_.view_type} : ${_.table_view}`}
@@ -455,9 +426,6 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
                     active={viewType == ViewType.CARDS}
                     onClick={() => setViewType(ViewType.CARDS)}/>
         </Button.Group>;
-
-
-
 
         let AttributeDisplayButton = () => <SafePopup position="bottom left" trigger={
             <ResponsiveButton
@@ -507,6 +475,8 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
 
             </div>
              **/}
+
+            <FiltersPopup {...props} schema={db.schema}/>
 
              <AddAlertButton />
 

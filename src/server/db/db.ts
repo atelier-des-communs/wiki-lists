@@ -9,7 +9,7 @@ import {Autocomplete, AUTOCOMPLETE_URL, DataFetcher, Marker, SECRET_COOKIE} from
 import {
     arrayToMap,
     buildMap,
-    debug,
+    debug, empty, emptyList,
     filterSingle,
     isIn,
     Map,
@@ -532,40 +532,42 @@ export class DbDataFetcher implements DataFetcher {
         // AND for several words
         let match = matchExprs.length == 1 ? matchExprs[0] : {$and: matchExprs}
 
-        console.debug("Match expression", match)
-
-        let groupExpr : any = {
-            _id: "$" + attrName,
-            "count": {$sum: 1}};
-        if (geo) {
-            groupExpr = {...groupExpr,
-                "minlon" : {$min : {$arrayElemAt : ["$location.coordinates", 0]}},
-                "maxlon" : {$max : {$arrayElemAt : ["$location.coordinates", 0]}},
-                "minlat" : {$min : {$arrayElemAt : ["$location.coordinates", 1]}},
-                "maxlat" : {$max : {$arrayElemAt : ["$location.coordinates", 1]}}
-            }
-        }
+        console.debug("Match expression", match);
 
         // Cache collection exists for auto complete ?
         let db = await Connection.getDb();
         let cacheColName = DB_COLLECTION_TEMPLATE(dbName) + '.' + attrName;
         let cacheCol = await db.listCollections({name: cacheColName}).next();
-        let res;
-        if (cacheCol) {
-            console.debug(`${cacheColName}  found : using cache collection for autocomplete`)
-            res = db.collection(cacheColName).aggregate([
-                {$match:match},
-                {$sort : {count: -1}},
-                {$limit: AUTOCOMPLETE_NUM}]);
-        } else {
-            console.debug(`${cacheColName} not found : using regular collection for autocomplete`)
-             res = col.aggregate([
-                {$match:match},
-                {$group: groupExpr},
-                {$sort : {count: -1}},
-                {$limit: AUTOCOMPLETE_NUM}
-            ]);
+        if (cacheCol == null) {
+
+            console.debug("Cache collection not found : creating it")
+
+            // Cache collection not found => create it
+            let groupInstruction: Map<any> = {
+                _id: "$" + attrName,
+                "count": {$sum: 1},
+                [attrName + "$"]: {$first: "$" + attrName + "$"}
+            };
+
+            if (geo) {
+                // FIXME : location attr name hardcoded
+                groupInstruction["minlon"] = {$min: {$arrayElemAt: ["$location.coordinates", 0]}};
+                groupInstruction["maxlon"] = {$max: {$arrayElemAt: ["$location.coordinates", 0]}};
+                groupInstruction["minlat"] = {$min: {$arrayElemAt: ["$location.coordinates", 1]}};
+                groupInstruction["maxlat"] = {$max: {$arrayElemAt: ["$location.coordinates", 1]}};
+            }
+
+            await col.aggregate([
+                {$group: groupInstruction},
+                {$out: cacheColName}]).toArray();
+
+            await db.collection(cacheColName).createIndex({[attrName + "$"] : 1});
         }
+
+        let res = db.collection(cacheColName).aggregate([
+            {$match:match},
+            {$sort : {count: -1}},
+            {$limit: AUTOCOMPLETE_NUM}]);
 
         return (await res.toArray()).map((item) => {
             let res : Autocomplete = {

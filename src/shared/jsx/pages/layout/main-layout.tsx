@@ -1,7 +1,29 @@
 import * as React from "react";
-import "../../../img/logo.png";
+import logoWikilist from "../../../../shared/img/wikilist-logo.png";
 import {Header} from "./header";
 import {GlobalContextProps} from "../../context/global-context";
+import {Segment} from "semantic-ui-react";
+
+export const WIKILIST_URL = "https://github.com/atelier-des-communs/wiki-lists";
+
+export const Footer = (props:GlobalContextProps) => {
+
+    let _ = props.messages;
+
+    return <Segment inverted vertical style={{padding: "2rem", marginTop: "3em"}}>
+
+        <div style={{textAlign: "right"}}>
+            {_.powered_by}
+            <a href={WIKILIST_URL} >
+                <img
+                    src={logoWikilist}
+                    width="100"
+                    style={{cursor: 'pointer', verticalAlign: "middle"}} />
+            </a>
+        </div>
+
+    </Segment>
+}
 
 export class MainLayout extends React.Component<GlobalContextProps> {
 
@@ -9,8 +31,8 @@ export class MainLayout extends React.Component<GlobalContextProps> {
         super(props);
     }
 
-    goToHome() {
-        window.location.href = "/";
+    goTo(url:string) {
+        window.location.href = url;
     }
 
     render() {
@@ -25,13 +47,13 @@ export class MainLayout extends React.Component<GlobalContextProps> {
 
                 <div style={{textAlign: "center"}}>
                     <img
-                        src="/static/img/logo.png"
+                        src={logoWikilist}
                         width="300"
                         style={pointerCursor}
-                        onClick={() => this.goToHome()}/>
+                        onClick={() => this.goTo("/")}/>
                     <br/>
                     <span
-                        onClick={() => this.goToHome()}
+                        onClick={() => this.goTo("/")}
                         style={{...pointerCursor, fontSize: "large"}}>
                     {_.site_title}</span>
                 </div>
@@ -39,6 +61,8 @@ export class MainLayout extends React.Component<GlobalContextProps> {
             </Header>
 
             {props.children}
+
+            <Footer {...props} />
 
         </>
     }

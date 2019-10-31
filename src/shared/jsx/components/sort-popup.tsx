@@ -21,6 +21,8 @@ export const SortPopup : React.SFC<SortProps> = (props) => {
     let {schema} = props;
     let _ = props.messages;
 
+    let mainAttributes = props.schema.attributes.filter(attr => attr.display.summary);
+
     let setSort = (attrName:string, asc:boolean) => {
         let newSort : ISort = {key:attrName, asc};
         goToResettingPage(props, serializeSort(newSort));
@@ -64,15 +66,15 @@ export const SortPopup : React.SFC<SortProps> = (props) => {
         <div style={{padding:"1em"}}>
             <Header as="h3">{_.sort_by}</Header>
 
-            {schema.attributes
+            {mainAttributes
                 .filter(attr => !attr.system)
                 .map(singleAttrSort)}
 
             <Header as="h4">{_.system_attributes}</Header>
 
-            {schema.attributes
+            {props.schema.attributes
                 .filter(attr => attr.system)
-                .map(singleAttrSort)}
+                .map(singleAttrSort)}}
         </div>
 
     </SafePopup>

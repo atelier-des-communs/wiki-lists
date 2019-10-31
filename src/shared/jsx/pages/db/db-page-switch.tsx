@@ -14,7 +14,6 @@ import {RecordsPage} from "./records-page";
 import {SingleRecordPage} from "./single-record-page";
 import {Header} from "../layout/header";
 import {Link} from 'react-router-dom';
-import logo from "../../../img/logo.png" ;
 import back from "../../../img/back.png";
 import {Button, Message} from "semantic-ui-react";
 import {AccessRight, hasRight} from "../../../access";
@@ -24,6 +23,7 @@ import {getDbName} from "../../../utils";
 
 // FIXME: Find a way to only import this when required
 import { SemanticToastContainer } from 'react-semantic-toasts';
+import {Footer} from "../layout/main-layout";
 
 export type DbPageProps =
     PageProps<DbPathParams> &
@@ -76,15 +76,6 @@ class _DbPageSwitch extends React.Component<DbPageProps>{
                 </h1>
                 <h4>{nl2br(db.description)}</h4>
 
-                <div style={{textAlign: "right"}}>
-                    {_.powered_by}
-                    <Link to="/" >
-                        <img
-                        src={logo}
-                        width="100"
-                        style={{cursor: 'pointer', verticalAlign: "middle"}} />
-                    </Link>
-                </div>
             </Header>
 
 
@@ -128,6 +119,9 @@ class _DbPageSwitch extends React.Component<DbPageProps>{
                     <Route path={RECORDS_PATH(props.config)} render={(props:RouteComponentProps<DbPathParams>) => <RecordsPage {...this.props} {...props}  />}/>
                 </Switch>
             </div>
+
+            <Footer {...props} />
+
         </>
 
     }

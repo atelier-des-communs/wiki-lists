@@ -1,7 +1,7 @@
 import {
     ADD_ALERT_URL,
     ADD_ITEM_URL, API_BASE_URL, AUTOCOMPLETE_URL,
-    CHECK_DB_NAME,
+    CHECK_DB_NAME, CLEAR_CACHE,
     COOKIE_DURATION, COUNT_ITEMS_URL,
     CREATE_DB_URL,
     DELETE_ITEM_URL,
@@ -41,6 +41,7 @@ import {unwrapAxiosResponse} from "../../client/rest/common";
 import {config} from "../config";
 import {BadRequestException} from "../exceptions";
 import * as request from "request-promise";
+import {clearCache} from "../cache";
 
 
 const CAPTCHA_CHECK_URL="https://www.google.com/recaptcha/api/siteverify"
@@ -66,6 +67,12 @@ async function addItemsAsync(req:Request) : Promise<Record[] | Record> {
 async function setupIndexes(req:Request) : Promise<boolean> {
     await requiresRight(req, AccessRight.ADMIN);
     setUpIndexesDb(dbNameSSR(req));
+    return true;
+}
+
+async function resetCache(req:Request) : Promise<boolean> {
+    await requiresRight(req, AccessRight.ADMIN);
+    clearCache();
     return true;
 }
 
@@ -183,6 +190,10 @@ export function setUp(server:Express) {
 
     server.post(INIT_INDEXES_URL, function (req: Request, res: Response) {
         returnPromise(res, setupIndexes(req));
+    });
+
+    server.post(CLEAR_CACHE, function (req: Request, res: Response) {
+        returnPromise(res, resetCache(req));
     });
 
     server.post(CREATE_DB_URL, function (req: Request, res: Response) {

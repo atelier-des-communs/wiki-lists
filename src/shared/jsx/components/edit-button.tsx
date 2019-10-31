@@ -1,12 +1,11 @@
 import {DbPathParams, PageProps, ReduxEventsProps, SingleRecordProps} from "../common-props";
 import {HashLink} from "react-router-hash-link"
 import {Button} from "semantic-ui-react"
-import {SafeClickWrapper} from "../utils/ssr-safe";
+import {ButtonWrapper, SafeClickWrapper} from "../utils/ssr-safe";
 import * as React from "react";
 import {EditDialog} from "../dialogs/edit-dialog";
 import {AccessRight, hasRight} from "../../access";
 import {filterSingle, goTo, goToUrl, updatedQuery} from "../../utils";
-import {singleRecordLink} from "../../api";
 import {RecordPopup} from "./record-popup";
 import {LocationType, Types} from "../../model/types";
 import {viewPortToQuery} from "../pages/db/map";
@@ -36,25 +35,17 @@ export const EditButtons: React.SFC<EditButtonsProps> = (props) => {
 
     return <Button.Group basic>
 
-        {!props.hideViewButton &&
-            <SafeClickWrapper
-                trigger={ (onOpen) =>
-                    <Button
+        {!props.hideViewButton && <ButtonWrapper
                         className="shy"
                         icon="eye"
                         title={_.view_item}
                         size="mini" basic compact
-                        onClick={onOpen} >
-                    </Button>}
-                render = {(onClose) =>
-                    <RecordPopup
-                        {...props}
-                        recordId={recordId}
-                        onClose={onClose}
-                        large={true}
-                    /> }>
-            </SafeClickWrapper>
-        }
+                        render = {(onClose) =>
+                            <RecordPopup
+                                {...props}
+                                recordId={recordId}
+                                onClose={onClose}
+                                large={true} />} />}
 
         {locationAttr && props.record[locationAttr.name] != null && !props.record.loc_approx &&
             <HashLink to={zoomUrl() + "#map"} >
@@ -67,24 +58,20 @@ export const EditButtons: React.SFC<EditButtonsProps> = (props) => {
         }
 
         {hasRight(props, AccessRight.EDIT) &&
-            <SafeClickWrapper
-                trigger={(onOpen) =>
-                    <Button
-                        className="shy"
-                        icon="edit"
-                        title={_.edit_item}
-                        onClick={onOpen}
-                        size="mini" basic compact/>}
-                    render= {(onClose) =>
-                    <EditDialog
-                        {...props}
-                        record={props.record}
-                        schema={props.db.schema}
-                        create={false}
-                        close={onClose}
-                        onUpdate={props.onUpdate} />}>
-            </SafeClickWrapper>
-        }
+        <ButtonWrapper
+            className="shy"
+            icon="edit"
+            title={_.edit_item}
+            size="mini" basic compact
+            render= {(onClose) =>
+                <EditDialog
+                     {...props}
+                    record={props.record}
+                    schema={props.db.schema}
+                    create={false}
+                    close={onClose}
+                    onUpdate={props.onUpdate} />}>
+        </ButtonWrapper>}
 
 
         {hasRight(props, AccessRight.DELETE) &&

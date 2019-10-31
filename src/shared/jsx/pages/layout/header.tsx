@@ -1,9 +1,7 @@
 import * as React from "react";
-import "../../../img/logo.png";
 import {Button, Flag} from "semantic-ui-react";
 import {LANG_COOKIE, LOGIN_PAGE_PATH} from "../../../api";
 import {GlobalContextProps} from "../../context/global-context";
-import {Link} from "react-router-dom";
 
 /** Common header : showing language switch and login */
 export class Header extends  React.Component<GlobalContextProps>  {
@@ -54,10 +52,11 @@ export class Header extends  React.Component<GlobalContextProps>  {
             <LangSelector />
 
             <div style={{
-                padding:"3em",
-                marginBottom:"3em",
+                padding:"1rem",
+                marginBottom:"2rem",
                 backgroundColor:"white",
-                boxShadow: "0px 0px 10px 2px rgba(0,0,0,0.58)"
+                boxShadow: "0px 0px 10px 2px rgba(0,0,0,0.58)",
+                minHeight:"250px"
             }}>
                 {props.children}
             </div>

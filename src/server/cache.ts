@@ -6,7 +6,7 @@ import {config} from "./config";
 import {parseBool} from "../shared/utils";
 import stringify from 'json-stringify-deterministic';
 
-const NB_CACHE_ITEMS = 10000;
+const NB_CACHE_ITEMS = config.NB_CACHE_ITEMS;
 const client = redis.createClient();
 const lruCache = lru(client, NB_CACHE_ITEMS);
 
@@ -50,4 +50,8 @@ export function cache(
         });
     };
     return propertyDesciptor;
+}
+
+export function clearCache() {
+    lruCache.reset();
 }

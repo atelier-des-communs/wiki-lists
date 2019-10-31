@@ -12,6 +12,7 @@ export const config = {
     SINGLE_BASE : getEnv("SINGLE_BASE", ""),
     CAPTCHA_KEY : getEnv("CAPTCHA_KEY"),
     CAPTCHA_SECRET : getEnv("CAPTCHA_SECRET"),
+    NB_CACHE_ITEMS : parseInt(getEnv("NB_CACHE_ITEMS", 100000))
 };
 
 

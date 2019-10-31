@@ -1,5 +1,6 @@
-import {Popup, PopupProps} from "semantic-ui-react";
+import {Popup, PopupProps, Button, ButtonProps} from "semantic-ui-react";
 import * as React from "react";
+import {RecordPopup} from "../components/record-popup";
 
 type NoSSRProps = {
     onSSR: React.ReactNode,
@@ -30,9 +31,12 @@ export class SsrSafe extends React.Component<NoSSRProps> {
     }
 }
 
-export interface SafeWrapperProps {
-    trigger: (onOpen : () => void) => JSX.Element;
+export interface RenderProps {
     render : (onClose :() => void) => JSX.Element;
+}
+
+export interface SafeWrapperProps extends RenderProps {
+    trigger: (onOpen : () => void) => JSX.Element;
 }
 
 /** A Dialog, safe to render on server side, without Portals, since it only render the "dialog" part when clicked */
@@ -63,6 +67,18 @@ export class SafeClickWrapper extends React.Component<SafeWrapperProps> {
         </>;
 
     }
+}
+
+export const ButtonWrapper = (props:RenderProps & ButtonProps) => {
+    let {render, ...others} = props;
+    return <SafeClickWrapper
+        trigger={(onOpen) =>
+            <Button
+                {...others}
+                onClick={onOpen}>
+            </Button>}
+        render={render} >
+    </SafeClickWrapper>
 }
 
 export const SafePopup : React.SFC<PopupProps> = (props) => {

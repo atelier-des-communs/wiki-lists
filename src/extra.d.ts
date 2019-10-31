@@ -33,6 +33,7 @@ declare module "redis-lru" {
 
     class Cache  {
         getOrSet<T>(key:string, func:() => T, maxAge:number) : Promise<T>;
+        reset() : void;
     }
 
     export default function lru(redis:any, nbitems:number) : Cache;
@@ -43,11 +44,11 @@ declare module "json-stringify-deterministic" {
 }
 
 declare module "*.png" {
-    const value: any;
+    const value: string;
     export default value;
 }
 
 declare module "*.jpg" {
-    const value: any;
+    const value: string;
     export default value;
 }

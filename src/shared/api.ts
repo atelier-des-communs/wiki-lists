@@ -34,8 +34,6 @@ export function singleRecordLink(config:SharedConfig, dbName: string, recordId:s
         .replace(":id", recordId);
 }
 
-
-
 // REST
 export const API_BASE_URL = "/api";
 export const ADD_ITEM_URL = "/api/:db_name/create";
@@ -62,6 +60,7 @@ export const UPDATE_SCHEMA_URL = "/api/update-schema/:db_name";
 
 // Admin setup
 export const INIT_INDEXES_URL = "/api/create_indexes/:db_name";
+export const CLEAR_CACHE = "/api/clear-cache";
 
 export const DOWNLOAD_XLS_URL  = "/xls/:db_name";
 export const DOWNLOAD_JSON_URL  = "/json/:db_name";
