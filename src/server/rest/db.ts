@@ -36,12 +36,13 @@ import * as mung from "express-mung";
 import {extractSort} from "../../shared/views/sort";
 import {empty, Map, oneToArray, parseBool, slug, sortBy, strToInt} from "../../shared/utils";
 import {extractFilters, extractSearch, Filter} from "../../shared/views/filters";
-import * as responseTime from "response-time";
+
 import {unwrapAxiosResponse} from "../../client/rest/common";
 import {config} from "../config";
-import {BadRequestException} from "../exceptions";
+import {BadRequestException, HttpError} from "../exceptions";
 import * as request from "request-promise";
 import {clearCache} from "../cache";
+import {NotFoundPage} from "../../shared/jsx/pages/not-found";
 
 
 const CAPTCHA_CHECK_URL="https://www.google.com/recaptcha/api/siteverify"
@@ -167,9 +168,6 @@ export function setUp(server:Express) {
     // Add middleware in input / output to transform into json with type information
     server.use(API_BASE_URL, safeInput);
     server.use(API_BASE_URL, mung.json(decorateOutput));
-    server.use(API_BASE_URL, responseTime((req, res, time) => {
-        console.debug("Ellapsed time", time);
-    }));
 
     // Routes
     server.post(ADD_ITEM_URL, function (req: Request, res: Response) {
@@ -209,7 +207,11 @@ export function setUp(server:Express) {
     });
 
     server.get(GET_ITEM_URL, function (req: Request, res: Response) {
-        returnPromise(res, new DbDataFetcher(req).getRecord(dbNameSSR(req), req.params.id));
+        returnPromise(res, new DbDataFetcher(req).getRecord(dbNameSSR(req), req.params.id).then(
+            record => {
+                if (record == null) throw new HttpError(404, "Record not found");
+                return record;
+            }));
     });
 
     server.get(AUTOCOMPLETE_URL, function (req: Request, res: Response) {

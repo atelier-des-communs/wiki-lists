@@ -22,6 +22,7 @@ import {toAnnotatedJson} from "../../../serializer";
 import {getDbName} from "../../../utils";
 import {AsyncDataComponent} from "../../async/async-data-component";
 import {Record} from "../../../model/instances";
+import {HttpError} from "../../../../server/exceptions";
 
 type SingleRecordPageProps =
     GlobalContextProps &
@@ -45,6 +46,9 @@ class _SingleRecordPage extends AsyncDataComponent<SingleRecordPageProps, Record
             return nextProps.dataFetcher
                 .getRecord(getDbName(nextProps), params.id)
                 .then((record) => {
+                    if (record == null) {
+                        throw new HttpError(404, `Record not found ${params.id}`);
+                    }
                     nextProps.store.dispatch(createAddItemAction(record));
                     return {record:record, large:true};
                 });

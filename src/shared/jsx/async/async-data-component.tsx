@@ -15,6 +15,8 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps, DataType>
 
     loading:boolean;
 
+    _isMounted : boolean = false;
+
     asyncData : DataType;
 
     constructor(props: T, className:string=null) {
@@ -25,6 +27,10 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps, DataType>
             this.className = (this.constructor as any).name;
         }
         console.debug("Instantiated " + (this.className));
+    }
+
+    componentDidMount() {
+        this._isMounted = true;
     }
 
     /**
@@ -58,9 +64,16 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps, DataType>
                     console.debug("Async Data arrived for", this.className, data);
 
                     // Trigger update
-                    this.setState({});
+                    if (this._isMounted) {
+                        this.setState({});
+                    }
                 }).catch((e) => {
-                    this.setState({loading:false});
+                    this.loading = false;
+                    // Trigger update
+                    if (this._isMounted) {
+                        this.setState({});
+                    }
+                    this.setState({});
                     throw e;
             }));
         } else {
@@ -79,8 +92,8 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps, DataType>
     abstract renderLoaded() : React.ReactNode;
 
     render() {
-        return <div>
-            {this.loading && <div style={{position:'absolute', borderTop:"2px solid red"}}> </div>}
+        return <div style={{position:'relative'}} >
+            {this.loading && <div style={{position:'absolute', width:"100%", height:5, top:0}} className="animatedStripes" />}
             {this.renderLoaded()}
         </div>
     }

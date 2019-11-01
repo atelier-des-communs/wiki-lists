@@ -129,7 +129,16 @@ export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDial
 
         let _ = this.props.messages;
 
-        let fivePerMonth = this.state.count && Math.floor(this.state.count / (24 * 5));
+        let numPerMonth = this.state.count && (this.state.count / 24);
+
+        let messageNums = null;
+        if (numPerMonth < 1/12) {
+            messageNums = `Vous recevrez moins de 1 projet par an, par email.`;
+        } else if (numPerMonth < 1) {
+            messageNums = `Vous recevrez environ un projet tous les ${Math.ceil(1 / numPerMonth)} mois.`;
+        } else {
+            messageNums = `Vous recevrez environ ${Math.ceil(numPerMonth)} projet(s) par mois dans un email mensuel.`;
+        }
 
         return <ErrorsContext.Provider value={{errors:this.state.errors, displayedErrors:[]}}>
 
@@ -141,7 +150,7 @@ export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDial
                 <Header icon='bell' content="S'abonner aux alertes"/>
 
                 <Modal.Content>
-                    <Form >
+                    <Form>
                         <Form.Group >
                             <Form.Field  >
                                 <Header
@@ -171,7 +180,7 @@ export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDial
                                     size="small"
                                     title={_.mandatory_attribute}>
 
-                                    Superficie minimale des locaux
+                                    Superficie des locaux (optionnel)
 
                                 </Header>
 
@@ -245,8 +254,9 @@ export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDial
 
                     { this.state.count != null &&
                     <Message warning >
-                        Vous recevrez un email mensuel avec {fivePerMonth * 5} à {(fivePerMonth + 1) * 5} projets de permis.<br/>
-                        Affinez les filtres pour en recevoir moins.
+                        {messageNums}
+                        <br/>
+                        Affinez les filtres pour en recevoir plus ou moins.
                     </Message>}
 
                 </Modal.Content>

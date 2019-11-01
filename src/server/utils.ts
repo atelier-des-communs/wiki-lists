@@ -23,7 +23,7 @@ export function returnPromise(res: Express.Response, promise: Promise<{}>, code=
 export async function returnPromiseWithCode(res: Express.Response, promise: Promise<ContentWithStatus>) {
     try {
         let result = await promise;
-        console.info("status", result.statusCode, "content", result.content);
+        console.debug("status", result.statusCode, "content", result.content);
         res.status(result.statusCode).send(result.content);
     } catch (error) {
         console.error("Error occured in promise : ", error);

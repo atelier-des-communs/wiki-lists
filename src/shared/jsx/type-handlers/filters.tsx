@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, Checkbox, Divider, Grid, Header, Icon, Input, Popup, Segment, Search, SearchResultProps} from "semantic-ui-react";
+import {Button, Checkbox, Divider, Grid, Header, Icon, Modal, Input, Popup, Segment, Search, SearchResultProps} from "semantic-ui-react";
 import {
     BooleanFilter,
     clearFiltersOrSearch,
@@ -16,7 +16,7 @@ import {
 import {RouteComponentProps, withRouter} from "react-router";
 import {Attribute, StructType, TextType, Types} from "../../model/types";
 import {
-    copyArr,
+    copyArr, empty,
     getDbName,
     goTo,
     goToResettingPage,
@@ -27,7 +27,7 @@ import {
     strToInt
 } from "../../utils";
 import * as debounce from "debounce";
-import {SafePopup} from "../utils/ssr-safe";
+import {ButtonWrapper, SafePopup} from "../utils/ssr-safe";
 import {attrLabel, ellipsis} from "../utils/utils";
 import {ValueHandler} from "./editors";
 import {MessagesProps} from "../../i18n/messages";
@@ -35,14 +35,13 @@ import {ResponsiveButton} from "../components/responsive";
 import {DbPageProps} from "../pages/db/db-page-switch";
 import {Autocomplete} from "../../api";
 import {viewPortToQuery} from "../pages/db/map";
+import {GlobalContextProps} from "../context/global-context";
+import {isEqual} from "lodash";
 
 
 const DEBOUNCE_DELAY= 500;
 const CITY_ZOOM = 14;
 
-interface IFiltersComponentProps extends MessagesProps {
-    schema:StructType;
-}
 
 
 // Main siwtch on attribute type
@@ -141,10 +140,14 @@ export class TextFilterComponent extends AbstractSingleFilter<TextFilter, TextFi
 
     }, DEBOUNCE_DELAY);
 
+    longEnough(value:string) {
+       return !empty(value) && value.length > 2
+    }
+
     // Debounced update
     updateValue(value:string) {
         this.setState({value});
-        if (value && value.length > 2) {
+        if (this.longEnough(value)) {
             this.autocomplete(value);
         }
     }
@@ -175,13 +178,14 @@ export class TextFilterComponent extends AbstractSingleFilter<TextFilter, TextFi
             icon="filter"
             size="mini"
             noResultsMessage={_.no_results}
+            placeholder={attrLabel(this.props.attr, this.props.messages)}
             loading={this.state.loading}
             onResultSelect={(e, data) => {this.selectResult(data.result)}}
             onSearchChange={(e, data) => {this.updateValue(data.value)}}
             onKeyPress = {(e:any) => {if (!this.props.geofilter && e.key == 'Enter') {this.updateFilter(this.state.value)}}}
             results={this.state.results}
             value={this.state.value}
-            showNoResults={this.state.value && !this.state.loading}
+            showNoResults={this.longEnough(this.state.value) && !this.state.loading}
         />
     }
 }
@@ -216,7 +220,7 @@ export class NumberFilterComponent extends AbstractSingleFilter<NumberFilter, Nu
                     size="mini"
                     type="number"
                     label={_.min}
-                    defaultValue={this.props.filter.min}
+                    defaultValue={this.props.filter.min || ""}
                     onChange={(e, value) => this.updateMin(strToInt(value.value))}/>
             </div>}
 
@@ -225,7 +229,7 @@ export class NumberFilterComponent extends AbstractSingleFilter<NumberFilter, Nu
                     size="mini"
                     type="number"
                     label={_.max}
-                    defaultValue={this.props.filter.max}
+                    defaultValue={this.props.filter.max || ""}
                     onChange={(e, value) => this.updateMax(strToInt(value.value))}/>
             </div>}
         </>
@@ -236,55 +240,115 @@ interface EnumFilterExtraProps {
     nbCols ?: number;
 }
 
+
+
+/** Wrap a filter within a component providing ann ""apply button */
+export function withApplyButton<T, U> (
+    WrappedComponent: React.ComponentType<SingleFilterProps<T> & U>,
+): React.ComponentClass<SingleFilterProps<T> & U> {
+
+    return class extends React.Component<SingleFilterProps<T> & U> {
+
+        state : {filter : T };
+
+        constructor(props:SingleFilterProps<T> & U) {
+            super(props);
+            this.state = {filter:this.props.filter}
+        }
+
+
+        updateFilter(filter: T) {
+            this.setState({filter});
+        }
+
+        // Forward filter upstream
+        doUpdateFilter() {
+            this.props.updateFilter(this.state.filter);
+        }
+
+        public render() {
+
+            let updateButton = isEqual(this.props.filter, this.state.filter) ? null :
+                <Button
+                style={{right:"0.5em", top:"0.5em", position: "absolute", zIndex:100}}
+                content="appliquer"
+                color="green"
+                size="small"
+                onClick={() => this.doUpdateFilter()}
+                compact />
+
+            return <div>
+                {updateButton}
+                <WrappedComponent {...this.props} updateFilter={(filter) => this.updateFilter(filter)} />
+            </div>
+        }
+    };
+}
+
 export class EnumFilterComponent extends AbstractSingleFilter<EnumFilter, EnumFilterExtraProps> {
 
+    state : {filter : EnumFilter};
+
+    constructor(props: SingleFilterProps<EnumFilter> & EnumFilterExtraProps) {
+        super(props);
+        this.state = {filter:this.props.filter};
+    }
+
+    updateFilter(filter: EnumFilter) {
+        this.setState({filter});
+        this.props.updateFilter(filter);
+    }
+
     toggleValue(value: string) {
-        let filter = this.props.filter;
-        let newFilter = Object.create(filter);
-        newFilter.showValues = copyArr(filter.showValues);
-        if (isIn(filter.showValues, value)) {
+        let newFilter = Object.create(this.state.filter);
+        newFilter.showValues = copyArr(this.state.filter.showValues);
+        if (isIn(this.state.filter.showValues, value)) {
             remove(newFilter.showValues, value);
         } else {
             newFilter.showValues.push(value);
         }
-        this.props.updateFilter(newFilter);
+
+        this.updateFilter(newFilter);
     }
 
     toggleEmpty() {
-        let filter = this.props.filter;
-        let newFilter = Object.create(filter);
-        newFilter.showEmpty = !filter.showEmpty;
-        this.props.updateFilter(newFilter);
+        let newFilter = Object.create(this.state.filter);
+        newFilter.showEmpty = !this.state.filter.showEmpty;
+        this.updateFilter(newFilter);
     }
 
     render() {
         let _ = this.props.messages;
-        let filter = this.props.filter;
         let nbCols : any = this.props.nbCols || 1;
-        let checkboxes = filter.allValues().map(val => (<Grid.Column style={{padding:"0.2rem"}}>
-            <Checkbox
-                key={val}
-                checked={isIn(filter.showValues, val)}
-                onClick={() => this.toggleValue(val)}/>
-            <ValueHandler
-                {...this.props}
-                value={val}
-                type={this.props.attr.type}
-                editMode={false}
-                onClick={() => this.toggleValue(val)}
-                style={{cursor:"pointer"}} />
+
+        let colWidths = {mobile:12, tablet:12 / nbCols, computer:12 / nbCols} as any;
+        let checkboxes = this.state.filter.allValues().map(val => (
+            <Grid.Column {...colWidths} style={{padding:"0.2rem"}} key={val} >
+                <Checkbox
+                    key={val}
+                    checked={isIn(this.state.filter.showValues, val)}
+                    onClick={() => this.toggleValue(val)}/>
+                <ValueHandler
+                    {...this.props}
+                    value={val}
+                    type={this.props.attr.type}
+                    editMode={false}
+                    onClick={() => this.toggleValue(val)}
+                    style={{cursor:"pointer"}} />
         </Grid.Column>));
 
-        return <Grid fluid stackable columns={nbCols} style={{padding:"1em"}}>
-            <Grid.Column style={{padding:"0.2rem"}}>
+        return <div>
+        <Grid style={{padding:"0.5em"}}>
+            <Grid.Column {...colWidths} style={{padding:"0.2rem"}}>
             <Checkbox
                 key="empty"
                 label={_.empty}
-                checked={filter.showEmpty}
+                checked={this.state.filter.showEmpty}
                 onClick={() => this.toggleEmpty()}/>
             </Grid.Column>
             {checkboxes}
         </Grid>
+        </div>
     }
 }
 
@@ -294,13 +358,11 @@ let ResetButton = (props: DbPageProps & {attr:Attribute}) =>  {
         let queryParams = serializeFilter(attr, null);
         goToResettingPage(props, queryParams);
     };
-    return <p style={{float:"right"}}>
-        <Button
-            circular size="small"
-            icon="delete"
-            title={_.clear_filter}
+    return <Button
+            circular
+            size="small"
+            compact icon="delete" title={_.clear_filter}
             onClick={stopPropag(clearFilter)} />
-    </p>
 };
 
 /* Switch on attribute type : may return null in case filter is not supported */
@@ -328,7 +390,8 @@ let FilterComponent = (props : DbPageProps, attr:Attribute, filter:Filter | null
 
 
         case Types.ENUM :
-            return <EnumFilterComponent
+            let EnumFilterWithApplyButton = withApplyButton(EnumFilterComponent);
+            return <EnumFilterWithApplyButton
                 {...props}
                 attr={attr}
                 updateFilter={updateFilter}
@@ -356,21 +419,26 @@ let FilterComponent = (props : DbPageProps, attr:Attribute, filter:Filter | null
 }
 
 /** Return an array of filter components, for the ones that have filters */
-function getFilters(props: IFiltersComponentProps & DbPageProps) {
+export function getFiltersComp(props: DbPageProps) {
     let queryParams = parseParams(props.location.search);
-    let filters = extractFilters(props.schema, queryParams);
+    let filters = extractFilters(props.db.schema, queryParams);
 
-    return props.schema.attributes
+    return props.db.schema.attributes
         // display only filters that are parts of currently displayed attributes
         .filter(attr => !attr.system && attr.display.summary)
         .map((attr) => ({
                 attr,
-                filter:filters[attr.name]}));
+                filter:filters[attr.name],
+                component: FilterComponent(props, attr, filters[attr.name]),
+                resetButton:filters[attr.name] && <ResetButton {...props} attr={attr} />}))
+        .filter(({component}) => component != null);
 }
 
-export class FilterSidebar extends React.Component<IFiltersComponentProps & DbPageProps> {
 
-    constructor(props:IFiltersComponentProps & DbPageProps) {
+
+export class FilterSidebar extends React.Component<DbPageProps> {
+
+    constructor(props:DbPageProps) {
         super(props);
     }
 
@@ -379,28 +447,26 @@ export class FilterSidebar extends React.Component<IFiltersComponentProps & DbPa
         let _ = props.messages;
 
         return <div>
-            {getFilters(props).map(
-                ({filter, attr}) => {
-                    let filtercomp = FilterComponent(props, attr, filter);
-                    if (!filtercomp) return null;
-                    return <>
+            {getFiltersComp(props).filter(({attr})=> attr.name != "commune").map(
+                ({filter, attr, component, resetButton}) => {
+                    return <div key={attr.name} >
                             <Header  attached="top" as="h5">
                                 {ellipsis(attrLabel(attr, _))}
-                                {filter && <ResetButton {...props} attr={attr} />}
+                                {resetButton}
                             </Header>
                             <Segment attached >
                                 <div key={attr.name} >
-                                    { filtercomp }
+                                    { component }
                                 </div>
                             </Segment>
-                        </>
+                        </div>
                     })}
         </div>
     }
 }
 
 /* Filter popup */
-export const FiltersPopup : React.SFC<IFiltersComponentProps & DbPageProps> = (props) => {
+export const FiltersPopup : React.SFC<DbPageProps> = (props) => {
 
     let _ = props.messages;
 
@@ -411,37 +477,40 @@ export const FiltersPopup : React.SFC<IFiltersComponentProps & DbPageProps> = (p
         maxWidth: "none"
     };
 
-    let hasFilters = hasFiltersOrSearch(props.schema, props);
+    let hasFilters = hasFiltersOrSearch(props.db.schema, props);
 
-    return <Button.Group>
-    <SafePopup position="bottom center" className="big-popup" style={bigPopupStyle} trigger={
-            <ResponsiveButton
+    let FilterModal=(innerProps:{close: ()=> void}) => <Modal
+        open={true}
+        closeIcon={true}
+        onClose={()=> innerProps.close()} >
+
+        <Header icon='filter' content={_.filters}/>
+
+        <Modal.Content>
+            <Grid columns={12}>
+                {getFiltersComp(props).map( ({filter, attr, component, resetButton}) => {
+
+                    return <Grid.Column mobile={12} tablet={6} computer={4}>
+                        <Header as="h4">
+                            {ellipsis(attrLabel(attr, _))}
+                            {resetButton}
+                        </Header>
+                        <Divider/>
+                        <div key={attr.name}>
+                            {component}
+                        </div>
+                    </Grid.Column>
+                })}
+            </Grid>
+        </Modal.Content>
+    </Modal>
+
+    return <Button.Group compact >
+        <ButtonWrapper
                 icon="filter"
                 content={_.filters}
+                render={(close) => <FilterModal close={() => close()} />}
                 {...hasFilters && {attached:"left"}} />
-        }>
-        <Popup.Content>
-            <Header as={"h3"}>{_.filters}</Header>
-        <Grid columns={12}>
-            {getFilters(props).map( ({filter, attr}) => {
-
-                let filtercomp = FilterComponent(props, attr, filter);
-                if (!filtercomp) return null;
-
-                return <Grid.Column mobile={12} tablet={6} computer={4}>
-                    <Header as="h4">
-                        {ellipsis(attrLabel(attr, _))}
-                        {filter && <ResetButton {...props} attr={attr}/>}
-                    </Header>
-                    <Divider/>
-                    <div key={attr.name}>
-                        {filtercomp}
-                    </div>
-                </Grid.Column>
-            })}
-        </Grid>
-        </Popup.Content>
-    </SafePopup>
 
         { hasFilters &&
         <Button
@@ -449,22 +518,21 @@ export const FiltersPopup : React.SFC<IFiltersComponentProps & DbPageProps> = (p
             icon="delete"
             attached="right"
             title={_.clear_filters}
-            onClick={() => clearFiltersOrSearch(props.schema, props) } />}
+            onClick={() => clearFiltersOrSearch(props.db.schema, props) } />}
     </Button.Group>
 };
 
 /* Search component, for all fields */
-type SearchCompoentProps = IFiltersComponentProps & RouteComponentProps<{}>;
-class _SearchComponent extends React.Component<SearchCompoentProps> {
+class _SearchComponent extends React.Component<DbPageProps> {
 
 
     state : {value:string};
 
-    getSearch = (props:SearchCompoentProps) => {
+    getSearch = (props:DbPageProps) => {
         return extractSearch(parseParams(props.location.search))
     };
 
-    constructor(props:SearchCompoentProps) {
+    constructor(props:DbPageProps) {
         super(props);
         this.state = {value : this.getSearch(props)};
     }
@@ -475,7 +543,7 @@ class _SearchComponent extends React.Component<SearchCompoentProps> {
     }
 
     // Reset search value if changed from upstream
-    componentWillReceiveProps(nextProps: Readonly<SearchCompoentProps>, nextContext: any): void {
+    componentWillReceiveProps(nextProps: Readonly<DbPageProps>, nextContext: any): void {
         if (this.getSearch(nextProps) != this.getSearch(this.props)) {
             this.setState({value: this.getSearch(nextProps) || null})
         }
@@ -483,7 +551,7 @@ class _SearchComponent extends React.Component<SearchCompoentProps> {
 
     render() {
         let _ = this.props.messages;
-        let placeholder = this.props.schema.attributes.
+        let placeholder = this.props.db.schema.attributes.
         filter(
             attr => (attr.type.tag == Types.TEXT
                 && ! attr.system
@@ -507,4 +575,4 @@ class _SearchComponent extends React.Component<SearchCompoentProps> {
     }
 }
 
-export const SearchComponent = withRouter<IFiltersComponentProps>(_SearchComponent);
+export const SearchComponent = withRouter<DbPageProps>(_SearchComponent);

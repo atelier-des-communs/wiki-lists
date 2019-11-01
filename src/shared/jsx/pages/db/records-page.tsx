@@ -1,15 +1,15 @@
 /* Main page displaying a single collection, with sorting, filtering, grouping */
 import * as React from 'react';
-import {Button, Dropdown, Header, Responsive, Pagination} from 'semantic-ui-react'
+import {Button, Dropdown, Header, Responsive, Pagination, Grid, Message, Container} from 'semantic-ui-react'
 import {EditDialog} from "../../dialogs/edit-dialog";
 import {attributesMap, Types} from "../../../model/types";
-import {getDbName, goTo, intToStr, mapMap, mapValues, parseParams, strToInt} from "../../../utils";
+import {getDbName, goTo, goToUrl, intToStr, mapMap, mapValues, parseBool, parseParams, strToInt} from "../../../utils";
 import {ButtonWrapper, SafeClickWrapper, SafePopup} from "../../utils/ssr-safe";
 import {DispatchProp} from "react-redux";
 import * as QueryString from "querystring";
 import {RouteComponentProps} from "react-router"
 import {Record} from "../../../model/instances";
-import {FilterSidebar, FiltersPopup, SearchComponent} from "../../type-handlers/filters";
+import {FilterSidebar, FiltersPopup, getFiltersComp, SearchComponent} from "../../type-handlers/filters";
 import {
     clearFiltersOrSearch,
     extractFilters,
@@ -39,7 +39,6 @@ import {
 } from "../../../redux";
 import {connectComponent} from "../../context/redux-helpers";
 import {ResponsiveButton} from "../../components/responsive";
-import {safeStorage} from "../../utils/storage";
 import {toAnnotatedJson} from "../../../serializer";
 import {extractSort} from "../../../views/sort";
 import {RecordsMap} from "./map";
@@ -48,6 +47,7 @@ import stringify from "json-stringify-deterministic";
 import {withAsyncImport} from "../../async/async-import-component";
 import {DbPageProps} from "./db-page-switch";
 import {CloseableDialog} from "../../dialogs/common-dialog";
+import localStorage from "local-storage";
 
 
 type RecordsPageProps =
@@ -64,6 +64,8 @@ interface GroupProps {
     viewType: ViewType,
     groupAttr: string
 }
+
+const HIDE_DESCRIPTION_LS_KEY = (dbname:string) => `${dbname}.hide_desc`;
 
 
 class AsyncSinglePage extends AsyncDataComponent<RecordsPageProps, RecordsProps> {
@@ -262,7 +264,6 @@ export class AsyncPaging extends AsyncDataComponent<RecordsPageProps, CountProps
                         size='small'
                         compact
                         boundaryRange={0}
-                        defaultActivePage={1}
                         firstItem={null}
                         lastItem={null}
                         siblingRange={1}
@@ -304,27 +305,29 @@ function AddItemButton(props: RecordsPageProps) {
                 close={onClose} /> } />
 }
 
-const SIDEBAR_LS_KEY = "filtersSidebar";
+const FILTER_SIDEBAR_LS_KEY = (dbname:string) => `${dbname}.filtersSidebar`;
 
 const AsyncAddAlertDialog= withAsyncImport<DbPageProps & CloseableDialog, {}>(() => import("../../dialogs/alert-dialog").then(module => module.AddAlertDialog));
 
 // Main component
 class _RecordsPage extends React.Component<RecordsPageProps> {
 
-    state : {
-        filtersSidebar : boolean;
-    };
 
     constructor(props:RecordsPageProps) {
         super(props);
         console.debug("Records page created");
-        this.state = {filtersSidebar:safeStorage.getBool(SIDEBAR_LS_KEY, true)};
     }
 
     toggleFilterSidebar() {
-        let newVal = !this.state.filtersSidebar;
-        safeStorage.set(SIDEBAR_LS_KEY, newVal);
-        this.setState({filtersSidebar:newVal});
+        let newVal = !parseBool(localStorage(FILTER_SIDEBAR_LS_KEY(getDbName(this.props))));
+        localStorage(FILTER_SIDEBAR_LS_KEY(getDbName(this.props)), newVal);
+        this.setState({});
+    }
+
+    hideDescription() {
+        localStorage(HIDE_DESCRIPTION_LS_KEY(getDbName(this.props)), true);
+        // Refresh
+        this.setState({});
     }
 
     render() {
@@ -350,6 +353,7 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
 
         let AddAlertButton = () =>
             <ButtonWrapper
+                size="small"
                 color="teal"
                 icon="bell"
                 content="Recevoir des alertes par email"
@@ -357,6 +361,9 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
                     <AsyncAddAlertDialog {...props} close={onClose} />} />;
 
         let SortByDropdown = () => <SortPopup {...props} schema={db.schema} />;
+
+        console.debug("hideSidebar", localStorage(FILTER_SIDEBAR_LS_KEY(dbName)));
+        let showSideBar = !parseBool(localStorage(FILTER_SIDEBAR_LS_KEY(dbName)));
 
         let UpdateSchemaButton = () => {
             if (!hasRight(props, AccessRight.ADMIN)) {
@@ -443,15 +450,43 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
         props.head.setDescription(db.description);
 
         let SideBarButton = (props: {floated : "left" | "right" | null}) => <Button
-            className="large-screen-only"
             compact
             size="mini"
             floated={props.floated}
             onClick={() => this.toggleFilterSidebar()}
             title={_.toggle_filters}
-            icon={this.state.filtersSidebar ? "angle double left" : "angle double right"} />;
+            icon={showSideBar ? "angle double left" : "angle double right"} />;
+
+
+        let communeFilter = getFiltersComp(this.props).filter(({attr}) => attr.name == "commune")[0];
+
+
+        let showDescription = !parseBool(localStorage(HIDE_DESCRIPTION_LS_KEY(dbName)));
 
         return <>
+
+            {/*<p dangerouslySetInnerHTML={{__html:db.instructions}} /> */}
+
+            {showDescription && <Container>
+
+                <Message>
+
+                    <p>
+                        <Button
+                            basic compact size="small"
+                            icon="close" floated="right" title={_.hide}
+                            style={{zIndex:100}}
+                            onClick={() => this.hideDescription() }/>
+
+                        Ce site est une interface ergonomique à la base de
+                        données nationale des permis de construire <a href="https://www.data.gouv.fr/fr/datasets/base-des-permis-de-construire-sitadel/"><b>Sitadel</b></a>.
+                        <br/>
+                        Ce service est une initiative personnelle, visant à faciliter la veille des citoyens sur les projets immobiliers.
+                        <br/>
+                        <Button compact size="mini" content="En savoir plus" onClick={() => goToUrl(props, "/about")} />
+                    </p>
+                </Message>
+            </Container> }
 
             {/** <DownloadButton /> */}
 
@@ -476,24 +511,43 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
             </div>
              **/}
 
-            <FiltersPopup {...props} schema={db.schema}/>
+             <div >
+                 <div style={{display:"inline-block"}} className="small-margin">
+                     <b>Votre commune</b>
+                 </div>
 
-             <AddAlertButton />
+                <div style={{display:"inline-block"}} className="small-margin">
+                    <div style={{display:"flex"}}>
+                        {communeFilter.component}
+                        {communeFilter.resetButton}
+                    </div>
+                </div>
+
+                 <Responsive {...Responsive.onlyMobile}>
+                    <div style={{display:"inline-block"}} className="small-margin" >
+                        <FiltersPopup {...props} />
+                    </div>
+                 </Responsive>
+
+                 <div style={{display:"inline-block"}} className="small-margin" >
+                    <AddAlertButton />
+                 </div>
+             </div>
 
             <div style={{display:"flex"}}>
 
-                {this.state.filtersSidebar &&
-                <div className="no-print large-screen-only" style={{paddingTop: "1em", paddingRight: "1em", maxWidth:"230px"}}>
-                    <SideBarButton floated={"right"} />
-                    <FilterSidebar {...props} schema={db.schema} />
-                </div>}
+                {showSideBar && <Responsive minWidth={Responsive.onlyTablet.minWidth} >
+                    <div className="no-print" style={{paddingTop: "1em", paddingRight: "1em", maxWidth:"230px"}}>
+                        <SideBarButton floated={"right"} />
+                        <FilterSidebar {...props} />
+                    </div>
+                </Responsive>}
 
                 <div style={{flexGrow:1, paddingTop: "1em"}}>
 
                     <div className="no-print" style={{ marginBottom: "0.5em" }} >
-                        {!this.state.filtersSidebar && <SideBarButton floated={null} />}
+                        {!showSideBar && <SideBarButton floated={null} />}
                         <AddItemButton {...this.props} />
-
                     </div>
 
                     <RecordsMap {...props} />
@@ -512,7 +566,7 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
 
                 </div>
             </div>;
-        </>
+       </>
     }
 }
 

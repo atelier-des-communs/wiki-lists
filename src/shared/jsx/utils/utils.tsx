@@ -7,6 +7,7 @@ import {Label, Popup} from "semantic-ui-react";
 import {parseParams} from "../../utils";
 import {Record} from "../../model/instances";
 import {IMessages} from "../../i18n/messages";
+import {FiltersPopup} from "../type-handlers/filters";
 
 export function ellipsis(text:string, maxWidth:number= 15) {
     if (text.length > maxWidth) {
@@ -69,7 +70,7 @@ export const Info : React.SFC<InfoProps> = (props) => {
 };
 
 export function nl2br(text:string) {
-   return text.split('\n').map(part => <>{part}<br/></>);
+   return text.split('\n').map((part, i) => <span key={i}>{part}<br/></span>);
 }
 
 
@@ -82,7 +83,7 @@ function recordNames(schema:StructType, record:Record, str:boolean=false) {
 /** Extract text from attributes marked as name, and render it to spans */
 export function recordName(schema:StructType, record:Record) {
     return recordNames(schema, record)
-        .map(val => <span>{val}&nbsp;</span>);
+        .map((val, i) => <span key={i}>{val}&nbsp;</span>);
 }
 
 /** Extract text from attributes marked as name, and render it to spans */

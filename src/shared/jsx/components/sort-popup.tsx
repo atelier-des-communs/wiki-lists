@@ -55,8 +55,7 @@ export const SortPopup : React.SFC<SortProps> = (props) => {
         trigger={
         <Button
             title={_.sort_by}
-            labelPosition="left"
-            icon="sort amount down" >
+            labelPosition="left" >
             <Icon name="sort amount down" />
             <span>
                 {ellipsis(attrLabel(sortAttr, _))} <Icon name={sort.asc ? "angle up" : "angle down"} />
@@ -74,7 +73,7 @@ export const SortPopup : React.SFC<SortProps> = (props) => {
 
             {props.schema.attributes
                 .filter(attr => attr.system)
-                .map(singleAttrSort)}}
+                .map(singleAttrSort)}
         </div>
 
     </SafePopup>

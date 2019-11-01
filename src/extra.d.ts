@@ -32,7 +32,7 @@ declare module "react-leaflet-control" {
 declare module "redis-lru" {
 
     class Cache  {
-        getOrSet<T>(key:string, func:() => T, maxAge:number) : Promise<T>;
+        getOrSet<T>(key:string, func:() => T | Promise<T>, maxAge:number) : Promise<T>;
         reset() : void;
     }
 

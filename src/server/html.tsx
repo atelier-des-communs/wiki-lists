@@ -94,7 +94,10 @@ function renderHtml(head:SSRHeadSetter, html:string, context:IMarshalledContext=
 				<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 				<meta name="referrer" content="no-referrer">
 				
-				<meta name="og:title" content="${title}" />
+				<meta name="twitter:card" content="summary" />
+				
+				<meta property="og:title" content="${title}" />
+				<meta property="og:description" content="${description}" />
 				<meta property="og:image" content="${config.ROOT_URL}${socialPreview}" />
 				
 				<link rel="shortcut icon" type="image/png" href="/static/img/favicon.png"/>
@@ -215,10 +218,7 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
             statusCode:head.statusCode
         }
     });
-
-
 }
-
 
 export function setUp(server : Express) {
 
@@ -233,6 +233,12 @@ export function setUp(server : Express) {
 
     // Any other request => use React-Routing
     server.get("/*", function(req:Request, res:Response) {
+
+        // Remove fbclid (might mess with the cache)
+        if ("fbclid" in req.query) {
+            delete req.query.fbclid;
+        }
+
         returnPromiseWithCode(res, renderApp(req));
     });
 

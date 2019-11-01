@@ -1,6 +1,6 @@
 import {Attribute, EnumType, StructType, TextType, Types} from "../../shared/model/types";
 import {config} from "../config"
-import {MongoClient, Cursor} from "mongodb";
+import {MongoClient, Cursor, Logger} from "mongodb";
 import {Record, withSystemAttributes} from "../../shared/model/instances";
 import {validateSchemaAttributes} from "../../shared/validators/schema-validators";
 import {dieIfErrors, ValidationException} from "../../shared/validators/validators";
@@ -34,6 +34,7 @@ import {cloneDeep, assign, isEmpty} from "lodash";
 import * as tilebelt from "tilebelt";
 import {ApproxCluster} from "../../shared/model/geo";
 
+
 const SCHEMAS_COLLECTION = "schemas";
 const DB_COLLECTION_TEMPLATE = (name:string) => {return `db.${name}`};
 const ALERTS_COLLECTION = "alerts";
@@ -49,6 +50,7 @@ class  Connection {
     static client : MongoClient;
     static async getDb() {
         if (!this.client) {
+            Logger.setLevel("info");
             this.client = await MongoClient.connect(`mongodb://${config.DB_HOST}:${config.DB_PORT}/`);
         }
         return this.client.db(config.DB_NAME);
@@ -311,13 +313,14 @@ export class DbDataFetcher implements DataFetcher {
         return dbDef;
     }
 
+    @cache
     async getRecord(dbName:string, id:string) : Promise<Record> {
         let col = await Connection.getDbCollection(dbName);
         let dbDef = await getDbDef(dbName);
 
         let record = await col.findOne({_id: id});
 
-        if (!record) throw new Error(`Missing record with id: ${id}`);
+        if (!record) return null;
 
         let attrMap = arrayToMap(dbDef.schema.attributes, attr => attr.name);
 

@@ -31,7 +31,7 @@ export class SingleRecordComponent extends  React.Component<SingleRecordComponen
         return <>
         {props.db.schema.attributes
             .filter(filterAttributeFunc).map((attr : Attribute) =>
-                <div style={{marginBottom: "0.5em"}}>
+                <div key={attr.name} style={{marginBottom: "0.5em"}}>
                     <b>{
                         props.large ?
                             attrLabel(attr, _) :

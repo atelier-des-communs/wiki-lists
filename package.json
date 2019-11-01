@@ -154,6 +154,7 @@
     "json-stringify-deterministic": "^1.0.1",
     "latlon-geohash": "^2.0.0",
     "leaflet": "^1.5.1",
+    "local-storage": "^2.0.0",
     "md5": "^2.2.1",
     "mongodb": "^3.1.1",
     "mongoose": "^5.5.11",

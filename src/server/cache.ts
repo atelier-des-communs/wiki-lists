@@ -3,7 +3,7 @@ import lru from "redis-lru";
 import {toAnnotatedJson, toTypedObjects} from "../shared/serializer";
 import * as md5 from "md5";
 import {config} from "./config";
-import {parseBool} from "../shared/utils";
+import {isPromise, parseBool} from "../shared/utils";
 import stringify from 'json-stringify-deterministic';
 
 const NB_CACHE_ITEMS = config.NB_CACHE_ITEMS;
@@ -17,13 +17,24 @@ const useCache = parseBool(config.CACHE);
 console.log("Caching activated :", useCache);
 
 
-export function getCache<T>(key:string, func:()=>T) : Promise<T> {
+export function getCache<T>(key:string, func:()=>T | Promise<T>) : Promise<T> {
     if (!useCache) {
+        // Synchronous resolution, no cache
         return Promise.resolve(func());
     }
-    return lruCache.getOrSet(key, func, MAX_AGE).catch((err)=> {
+
+    let annotatedFunc = () =>  {
+        let res = func();
+        if (isPromise(res)) {
+            return (res as Promise<T>).then(res => toAnnotatedJson(res))
+        } else {
+            return toAnnotatedJson(res);
+        }
+    };
+
+    return lruCache.getOrSet(key, annotatedFunc, MAX_AGE).catch((err)=> {
         console.error("Error happened while caching", err);
-        return toAnnotatedJson(func());
+        throw err;
     }).then((res) => toTypedObjects(res));
 }
 

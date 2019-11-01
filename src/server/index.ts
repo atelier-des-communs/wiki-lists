@@ -10,10 +10,10 @@ import {setUp as setUpExport} from "./export";
 import {setUp as setUpAuth} from "./rest/auth";
 import {LANGUAGES} from "./i18n/messages";
 import {LANG_COOKIE, COOKIE_DURATION} from "../shared/api";
-import * as mongoose from "mongoose";
 import '../shared/model';
 import {config} from "./config";
 import {parseBool} from "../shared/utils";
+import * as responseTime from "response-time";
 
 const MAX_AGE  = 30 * 24 * 3600 * 1000; // One month
 
@@ -34,6 +34,11 @@ export default function initServer(dist_paths:string[]) : express.Express {
             maxAge: LOGIN_TIME
         }}));
     server.use(language(langSettings));
+
+    // Log every request and time
+    server.use(responseTime((req, res, time) => {
+        console.info("req:", req.url, " status:", res.statusCode, " time:", time);
+    }));
 
     // Pretty print JSON result
     server.set('json spaces', 2);

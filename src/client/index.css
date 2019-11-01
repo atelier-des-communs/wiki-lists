@@ -126,3 +126,58 @@ body {
 table.table tr:hover {
     background-color: lightyellow;
 }
+
+.small-margin {
+    margin:0.5em;
+}
+
+.animatedStripes {
+    background-image: repeating-linear-gradient(
+            45deg, #1678c2,
+            #1678c2 10px,
+            #093657 10px,
+            #093657 20px);
+    -webkit-animation:progress 2s linear infinite;
+    -moz-animation:progress 2s linear infinite;
+    -ms-animation:progress 2s linear infinite;
+    animation:progress 2s linear infinite;
+    background-size: 150% 100%;
+}
+
+@-webkit-keyframes progress{
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: -75px 0px;
+    }
+}
+@-moz-keyframes progress{
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: -75px 0px;
+    }
+}
+@-ms-keyframes progress{
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: -75px 0px;
+    }
+}
+@keyframes progress{
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: -70px 0px;
+    }
+}
+
+/* For search results to be above map buttons */
+.results.transition {
+    z-index: 2000 !important;
+}

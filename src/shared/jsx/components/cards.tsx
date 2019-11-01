@@ -26,10 +26,9 @@ export class CardsComponent extends React.Component<CardsProps> {
             return singleRecordLink(props.config, getDbName(props), id);
         };
 
-        return <Grid fluid stackable >
-
+        return <Grid stackable >
             {props.records.map(record =>
-                <Grid.Column mobile={16} tablet={8} computer={4}>
+                <Grid.Column key={record._id} mobile={16} tablet={8} computer={4}>
                     <Card fluid className="hoverable">
                         <Card.Content  >
                             <Card.Header >

@@ -24,6 +24,9 @@ import {getDbName} from "../../../utils";
 // FIXME: Find a way to only import this when required
 import { SemanticToastContainer } from 'react-semantic-toasts';
 import {Footer} from "../layout/main-layout";
+import {AboutPage} from "../about";
+import {withAsyncImport} from "../../async/async-import-component";
+import localStorage from "local-storage";
 
 export type DbPageProps =
     PageProps<DbPathParams> &
@@ -31,12 +34,12 @@ export type DbPageProps =
     ReduxEventsProps &
     DispatchProp<any>;
 
-const HIDE_LINKS_COOKIE = (db_name:string) => {return `${COOKIE_PREFIX}${db_name}_hide_links`};
+const HIDE_LINKS_LS_KEY = (db_name:string) => {return `${db_name}_hide_links`};
 
 class _DbPageSwitch extends React.Component<DbPageProps>{
 
     hideLinks() {
-        this.props.cookies.set(HIDE_LINKS_COOKIE(this.props.db.name), "true");
+        localStorage(HIDE_LINKS_LS_KEY(this.props.db.name), true);
         // force redraw
         this.setState({});
     }
@@ -64,7 +67,11 @@ class _DbPageSwitch extends React.Component<DbPageProps>{
             RECORDS_PATH(props.config).
                 replace(":db_name", getDbName(props));
 
-        let hideLinks = props.cookies.get(HIDE_LINKS_COOKIE(this.props.db.name));
+        let hideLinks = localStorage(HIDE_LINKS_LS_KEY(this.props.db.name));
+
+        let AsyncAboutPage = withAsyncImport(
+            () => import("../about").then(
+                (module) => module.AboutPage))
 
         return <>
             <Header {...props} >
@@ -112,9 +119,8 @@ class _DbPageSwitch extends React.Component<DbPageProps>{
 
                 </Message>}
 
-                <p dangerouslySetInnerHTML={{__html:db.instructions}} />
-
                 <Switch>
+                    <Route path="/about" render={(props:RouteComponentProps<DbPathParams>) => <AsyncAboutPage />} />
                     <Route path={SINGLE_RECORD_PATH(props.config)} render={(props: RouteComponentProps<SingleRecordPathParams>) => <SingleRecordPage  {...this.props} {...props} />}/>
                     <Route path={RECORDS_PATH(props.config)} render={(props:RouteComponentProps<DbPathParams>) => <RecordsPage {...this.props} {...props}  />}/>
                 </Switch>
