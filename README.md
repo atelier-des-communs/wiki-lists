@@ -1,6 +1,6 @@
-## Wiki list 
+## Wiki lists
 
-**Daadle** is a wep app for collaborative edition of structured data. 
+**Wiki lists** is a wep app for collaborative edition of structured data. 
 
 The goal is to provide non-tech people a simple mean for creating, editing and viewing databases.
 
@@ -16,10 +16,11 @@ This launches the server on [http://localhost:8000](http://localhost:8000)
 
 Go to this URL and create your first collection.
 
-## Variables 
+## Env variables 
 
-The following env vars can be set on command line or via a **.env** file
+The following environnement variable can be set on command line or via a **.env** file
 
+* **SECRET** : **mandatory** secret salt key (any text) used for encryption
 * **PORT** port of the server, 8000 by default
 * **DB_HOST** host of mongo, localhost by default
 * **DB_PORT** port of mongo, 27017 by default 
