@@ -24,5 +24,15 @@ The following environnement variable can be set on command line or via a **.env*
 * **PORT** port of the server, 8000 by default
 * **DB_HOST** host of mongo, localhost by default
 * **DB_PORT** port of mongo, 27017 by default 
-* **DB_NAME** name of the DB, 'daddle' by default
+* **DB_NAME** name of the DB, 'wikilist' by default
+
+
+## Deploy on prod
+
+For deployment on prod you may use a node process manager like [pm2](https://pm2.keymetrics.io/)
+    > pm2 start bin/server
+    
+And then, use your prefered HTTP server as reverse proxy.
+  
+  
 
