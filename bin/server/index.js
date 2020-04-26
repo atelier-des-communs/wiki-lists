@@ -6,7 +6,7 @@ require('dotenv').config();
 var path = require("path");
 var initServer = require("../../dist/server/server.bundle.js").default;
 
-const port = process.env.PORT || 8082;
+const port = process.env.PORT || 8000;
 
 
 let client_path = path.resolve(__dirname, "..", "..", "dist", "client");

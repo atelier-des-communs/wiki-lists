@@ -1,38 +1,27 @@
-# React Typescript Isomorphic Starter Kit
+## Wiki list 
 
-An isomorphic React boilerplate with Typescript, Webpack (SASS/CSS loader, JSX/JS loader, File loader...), React Router, React Hot Loader and ESLint static code verification. <br/>Become more productive and Enable shared javascript that runs on both client and server (client side + server side rendering)). <br/> All necessary tools are set up to start up quickly your React Typescript project !
+**Daadle** is a wep app for collaborative edition of structured data. 
 
-<br/>
-## Getting Started
+The goal is to provide non-tech people a simple mean for creating, editing and viewing databases.
 
-To begin with this starter kit project, simply follow these steps:
+## Setup instructions
 
-- [x] Clone repository: `git clone https://github.com/ayoubdev/reactjs-typescript-isomorphic-starterkit.git`
-- [x] Go to cloned directory and feel free to modify `package.json` information (like project name, description...):
-- [x] Run this cli command: `npm install`
-- [x] Open this URL and enjoy: `http://localhost:8080/`
+    > npm install  
+    
+    > npm run build
+    
+    > npm run server
 
-<br/>
-## Available Commands
+This launches the server on [http://localhost:8000](http://localhost:8000)
 
-#### For server:
+Go to this URL and create your first collection.
 
-> **npm run server** <br/>Launch server (by default, listening to port 8080) <br/>
+## Variables 
 
-#### For development:
+The following env vars can be set on command line or via a **.env** file
 
-> **npm run watch** <br/>Transpile tsx/ts files, Bundle and Track changes in client and server side ressources (via Hot Module Replacement [HMR]) <br/>
+* **PORT** port of the server, 8000 by default
+* **DB_HOST** host of mongo, localhost by default
+* **DB_PORT** port of mongo, 27017 by default 
+* **DB_NAME** name of the DB, 'daddle' by default
 
-#### For production:
-
-> **npm run build** <br/>Transpile tsx/ts files and Bundle static resources to ./dist folder <br/><br/>
-> **npm run deploy** <br/>Build and Launch server <br/>
-
-#### Misc commands:
-
-> **npm run clean** <br/>Delete bundler outputs (./dist folder) <br/>
-
-<br/>
-## License
-
-MIT

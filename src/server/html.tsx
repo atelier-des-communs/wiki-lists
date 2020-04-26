@@ -92,7 +92,8 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
     let state : IState= {
         items: null, // Will be fetched asynchronously
         dbDefinition: null, // Will be fetched asynchronously
-        user: req.user};
+        // user: req.user};
+        user:null};
 
     const store = createStore(
         reducers,
