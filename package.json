@@ -74,7 +74,6 @@
     "concurrently": "^3.5.0",
     "css-hot-loader": "^1.2.0",
     "css-loader": "^0.28.4",
-    "cypress": "^3.3.1",
     "del": "^3.0.0",
     "express-logger": "0.0.3",
     "extract-text-webpack-plugin": "^2.1.2",
