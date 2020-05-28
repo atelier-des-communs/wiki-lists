@@ -1,7 +1,7 @@
 import * as Express from "express";
-import {SECRET_COOKIE, VALIDATION_ERROR_STATUS_CODE} from "../shared/api";
-import {AccessRight} from "../shared/access";
-import {getDbDef} from "./db/db";
+import {VALIDATION_ERROR_STATUS_CODE} from "../shared/api";
+import {AccessRight, hasDbRight, hasRecordRight} from "../shared/access";
+import {DbDataFetcher, getDbDef} from "./db/db";
 import {isIn} from "../shared/utils";
 import {Request} from "express-serve-static-core"
 import {toAnnotatedJson} from "../shared/serializer";
@@ -49,37 +49,24 @@ export class HttpError {
     }
 }
 
-export async function getAccessRights(dbStr: string, pass:string) {
-    let dbDef = await getDbDef(dbStr);
-    if (pass) {
-        if (pass==dbDef.secret) {
-            return [AccessRight.DELETE, AccessRight.EDIT, AccessRight.ADMIN, AccessRight.VIEW];
-        } else {
-            // FIXME: return nice 403, localized page
-            throw new HttpError(403, "Bad password");
-        }
-    } else {
-        // FIXME default rights defined in the DB
-        if (dbDef.anonRights) {
-            return dbDef.anonRights;
-        } else {
-            // Default anonymous user access : wiki
-            return [AccessRight.EDIT, AccessRight.VIEW];
-        }
-    }
-}
-
-export async function requiresRight(req:Request, right : AccessRight) {
-
-    let rights = await getAccessRights(
-        req.params.db_name,
-        req.cookies[SECRET_COOKIE(req.params.db_name)]);
-    if (isIn(rights, right)) {
+export async function requiresRecordRight(req:Request, id: string, right : AccessRight) {
+    let dbDef = await getDbDef(req.params.db_name);
+    let dbDataFetcher = new DbDataFetcher(req);
+    let record = await dbDataFetcher.getRecord(req.params.db_name, id);
+    if (hasRecordRight(dbDef, req.session.user, record, right)) {
         return true;
     } else {
         throw new HttpError(403, "Forbidden");
     }
+}
 
+export async function requiresDbRight(req:Request, right : AccessRight) {
+    let dbDef = await getDbDef(req.params.db_name);
+    if (hasDbRight(dbDef, req.session.user, right)) {
+        return true;
+    } else {
+        throw new HttpError(403, "Forbidden");
+    }
 }
 
 // Resursively applies a function on a JSON tree

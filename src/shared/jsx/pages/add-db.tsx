@@ -20,6 +20,7 @@ import {MainLayout} from "./layout/main-layout";
 import {ErrorPlaceholder} from "../utils/validation-errors";
 import {PageProps} from "../common-props";
 import {toPromiseWithErrors} from "../../../client/rest/common";
+import {AccessRightsKind} from "../../access";
 
 const SLUG_REG = new RegExp(/^[1-9a-zA-Z\-_]*$/);
 
@@ -30,6 +31,7 @@ export class AddDbPageInternal extends React.Component<PageProps<{}>> {
         slug: string,
         description : string,
         schema: StructType,
+        accessRights: AccessRightsKind,
         selectedTemplate: number,
         [index:string]:any};
 
@@ -42,6 +44,7 @@ export class AddDbPageInternal extends React.Component<PageProps<{}>> {
             description:"",
             slug:"",
             name:"",
+            accessRights: AccessRightsKind.WIKI,
             schema : deepClone(this.templates[0].schema),
             selectedTemplate: 0};
     }
@@ -88,6 +91,7 @@ export class AddDbPageInternal extends React.Component<PageProps<{}>> {
                 schema : this.state.schema,
                 name : this.state.slug,
                 label : this.state.name,
+                accessRights : this.state.accessRights,
                 description : this.state.description});
 
             return toPromiseWithErrors(createDb(dbDef));
@@ -169,6 +173,26 @@ export class AddDbPageInternal extends React.Component<PageProps<{}>> {
                             messages={this.props.messages} />
 
                     </WizardStep>
+
+                    <WizardStep title={_.db_access} >
+
+                        <Form.Field>
+                            <label>{_.db_access}</label>
+                            <Form.Dropdown
+                                selection
+                                options={[
+                                    {key: AccessRightsKind.WIKI, text: _.accessType[AccessRightsKind.WIKI], value:AccessRightsKind.WIKI},
+                                    {key: AccessRightsKind.COLLABORATIVE, text: _.accessType[AccessRightsKind.COLLABORATIVE], value:AccessRightsKind.COLLABORATIVE},
+                                    {key: AccessRightsKind.READ_ONLY, text: _.accessType[AccessRightsKind.READ_ONLY], value:AccessRightsKind.READ_ONLY},
+                                ]}
+                                value={this.state.accessRights}
+                                onChange={(event, data) => this.setState({accessRights: data.value})} />
+                        </Form.Field>
+
+                    </WizardStep>
+
+
+
                 </Wizard>
             </Form>
         </Container>

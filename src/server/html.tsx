@@ -10,7 +10,7 @@ import {deepClone, toImmutable} from "../shared/utils";
 import {Express} from "express";
 import {ContentWithStatus, returnPromiseWithCode} from "./utils";
 import {Request, Response} from "express-serve-static-core"
-import {COOKIE_DURATION, IMarshalledContext, RECORDS_ADMIN_PATH, SECRET_COOKIE} from "../shared/api";
+import {COOKIE_DURATION, IMarshalledContext, RECORDS_ADMIN_PATH} from "../shared/api";
 import {GlobalContextProps, HeadSetter, ICookies} from "../shared/jsx/context/global-context";
 import {selectLanguage, supportedLanguages} from "./i18n/messages";
 import * as escapeHtml from "escape-html";
@@ -93,6 +93,7 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
     let state : IState= {
         items: null, // Will be fetched asynchronously
         dbDefinition: null, // Will be fetched asynchronously
+        dbDefinitions:null,
         // user: req.user};
         user:null};
 
@@ -172,14 +173,6 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
 
 
 export function setUp(server : Express) {
-
-    // Admin URL => set cookie and redirect
-    server.get(RECORDS_ADMIN_PATH, function(req:Request, res:Response) {
-        res.cookie(SECRET_COOKIE(req.params.db_name), req.params.db_pass, {
-            maxAge : COOKIE_DURATION
-        });
-        res.redirect(`/db/${req.params.db_name}`);
-    });
 
 
     // Any other request => use React-Routing

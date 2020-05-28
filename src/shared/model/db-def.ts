@@ -1,5 +1,5 @@
 import {StructType} from "./types";
-import {AccessRight} from "../access";
+import {AccessGroup, AccessRight, AccessRightsKind} from "../access";
 import {extend} from "lodash";
 import {classTag} from '../serializer';
 
@@ -19,13 +19,10 @@ export class DbDefinition implements DbSettings {
     /** Shortname of the db */
     name: string;
     schema: StructType;
-    secret?: string;
-    anonRights?: AccessRight[];
+    accessRights ?: AccessRightsKind;
 
-
-    // Decorated by backend : current user rights
-    // Bad design, should be stored in separate structure ?
-    userRights?: AccessRight[];
+    // Admin ids
+    admins?: string[];
 
     constructor(init: DbDefinition) {
         extend(this, init);

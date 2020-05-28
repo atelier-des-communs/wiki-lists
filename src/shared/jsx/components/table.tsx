@@ -14,7 +14,8 @@ import {attrLabel, ellipsis, filterAttribute} from "../utils/utils";
 import {EditButtons} from "./edit-button";
 import {singleRecordLink} from "../../api";
 import {GlobalContextProps, withGlobalContext} from "../context/global-context";
-import {AccessRight, hasRight} from "../../access";
+import {AccessRight, hasDbRight, hasRecordRight} from "../../access";
+import {some} from "lodash";
 
 type TableProps = RecordsProps & ReduxEventsProps & RouteComponentProps<DbPathParams> & GlobalContextProps;
 
@@ -43,8 +44,10 @@ const TableComponent: React.SFC<TableProps> = (props) => {
 
     let filterAttributeFunc = filterAttribute(props, props.db.schema);
 
+    let showEditButtons = some(props.records, record => hasRecordRight(props.db, props.user, record, AccessRight.EDIT));
+
     // First header cell : the menu toolbox
-    let columnsHeader = hasRight(props, AccessRight.EDIT) && <Table.HeaderCell className="no-print" collapsing key="menu" >
+    let columnsHeader = showEditButtons && <Table.HeaderCell className="no-print" collapsing key="menu" >
         <SafePopup position="bottom left" trigger={
             <Button
                 icon="columns"
@@ -87,7 +90,7 @@ const TableComponent: React.SFC<TableProps> = (props) => {
 
         <Table.Row key={record["_id"] as string}>
 
-            {hasRight(props, AccessRight.EDIT) &&
+            { showEditButtons &&
             <Table.Cell collapsing key="actions" className="no-print" >
                 <EditButtons {...props} record={record} />
             </Table.Cell>}

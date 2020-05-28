@@ -25,6 +25,12 @@ The following environnement variable can be set on command line or via a **.env*
 * **DB_HOST** host of mongo, localhost by default
 * **DB_PORT** port of mongo, 27017 by default 
 * **DB_NAME** name of the DB, 'wikilist' by default
+* **BASE_URL** Full base url of the service (for emails) : **https://host/**
+* **SMTP_HOST** SMTP HOST
+* **SMTP_PORT** SMTP port
+* **SMTP_LOGIN** SMTP login
+* **SMTP_PASS** SMTP password
+* **SMTP_FROM** Email in 'from'
 
 
 ## Deploy on prod

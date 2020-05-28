@@ -4,14 +4,16 @@ import {StructType} from "../model/types";
 import * as Immutable from "seamless-immutable";
 import {Record} from "../model/instances";
 import {DbDefinition} from "../model/db-def";
-import {Map} from "../utils";
+import {Map, mapMap, mapValues} from "../utils";
 import {toAnnotatedJson} from "../serializer";
 import {IUser} from "../model/user";
+import {keyBy} from "lodash";
 
 
 export interface IState {
     items : {[key:string] : Record};
     dbDefinition : DbDefinition;
+    dbDefinitions : Map<DbDefinition>;
     user: IUser;
 }
 
@@ -21,7 +23,8 @@ export enum ActionType {
     DELETE_ITEM = "DELETE_ITEM",
     UPDATE_SCHEMA = "UPDATE_SCHEMA",
     UPDATE_DB = "UPDATE_DB",
-    UPDATE_USER = "UPDATE_USER"
+    UPDATE_DBS = "UPDATE_DBS",
+    UPDATE_USER = "UPDATE_USER",
 }
 
 interface ActionWithRecord extends Action {
@@ -48,6 +51,11 @@ export class UpdateSchemaAction implements Action {
     public schema: StructType;
 }
 
+export class UpdateDBsAction implements Action {
+    public type = ActionType.UPDATE_DBS;
+    public dbDefs: DbDefinition[];
+}
+
 export class UpdateDbAction implements Action {
     public type = ActionType.UPDATE_DB;
     public dbDef: DbDefinition;
@@ -70,6 +78,9 @@ export function createDeleteAction(id: string) : DeleteItemAction {
 export function createUpdateSchema(schema:StructType) : UpdateSchemaAction {
     return {type:ActionType.UPDATE_SCHEMA, schema:toImmutableJson(schema)};
 }
+export function createUpdateDbsAction(dbDefs:DbDefinition[]) : UpdateDBsAction {
+    return {type:ActionType.UPDATE_DBS, dbDefs:toImmutableJson(dbDefs)};
+}
 export function createUpdateDbAction(dbDef:DbDefinition) : UpdateDbAction {
     return {type:ActionType.UPDATE_DB, dbDef:toImmutableJson(dbDef)};
 }
@@ -80,6 +91,7 @@ export function createUpdateUserAction(user:IUser) : UpdateUserAction {
 export type TAction  =
     UpdateSchemaAction |
     UpdateDbAction |
+    UpdateDBsAction |
     UpdateItemAction |
     AddItemAction |
     DeleteItemAction |
@@ -112,6 +124,15 @@ function dbDefReducer(dbDef:Immutable.ImmutableObject<DbDefinition> = null, acti
     return dbDef;
 }
 
+function dbDefsReducer(dbDefs:Immutable.ImmutableObject<Map<DbDefinition>> = null, action:TAction) {
+    switch (action.type) {
+        case ActionType.UPDATE_DBS:
+            let dbDefs = (action as UpdateDBsAction).dbDefs;
+            return keyBy(dbDefs, db => db.name);
+    }
+    return dbDefs;
+}
+
 function userReducer(user: Immutable.ImmutableObject<IUser> = null, action : TAction) {
     if (action.type == ActionType.UPDATE_USER) {
         return (action as UpdateUserAction).user;
@@ -124,6 +145,7 @@ function userReducer(user: Immutable.ImmutableObject<IUser> = null, action : TAc
 export let reducers : Reducer<IState> = combineReducers ({
     items: itemsReducer,
     dbDefinition: dbDefReducer,
+    dbDefinitions: dbDefsReducer,
     user:userReducer
 });
 

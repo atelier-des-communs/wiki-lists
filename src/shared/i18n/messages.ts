@@ -1,7 +1,7 @@
 import {FlagNameValues} from "semantic-ui-react/dist/commonjs/elements/Flag/Flag";
+import {AccessRightsKind} from "../access";
 
 export interface IMessages {
-
 
     auth: {
         logout: string;
@@ -115,9 +115,11 @@ export interface IMessages {
     not_found : string;
     download : string;
     create_db : string;
+    connect_to_create_db: string;
     creating_db : string;
     db_name : string;
     db_description : string;
+    db_access: string;
     fields : string;
     name : string;
     description : string ;
@@ -144,6 +146,12 @@ export interface IMessages {
     back_to_list : string;
 
     email: string;
+
+    accessType : {
+        [AccessRightsKind.WIKI] : string;
+        [AccessRightsKind.READ_ONLY] : string;
+        [AccessRightsKind.COLLABORATIVE] : string;
+    }
 
 }
 

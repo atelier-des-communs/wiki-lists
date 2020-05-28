@@ -24,7 +24,7 @@ import {CardsComponent} from "../../components/cards";
 import {ValueHandler} from "../../type-handlers/editors";
 import {AttributeDisplayComponent} from "../../components/attribute-display";
 import {GlobalContextProps} from "../../context/global-context";
-import {AccessRight, hasRight} from "../../../access";
+import {AccessRight, hasDbRight} from "../../../access";
 import {attrLabel} from "../../utils/utils";
 import {createAddItemAction, IState} from "../../../redux";
 import {connectComponent} from "../../context/redux-helpers";
@@ -114,7 +114,7 @@ function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: Vie
 
 function addItemButton(props: RecordsPageProps) {
     let _ = props.messages;
-    return hasRight(props, AccessRight.EDIT) && <SafeClickWrapper  trigger={
+    return hasDbRight(props.db, props.user, AccessRight.ADD) && <SafeClickWrapper  trigger={
         <Button primary style={{marginBottom:"1em"}} icon="plus" content={_.add_item} />
     }>
         <EditDialog
@@ -200,7 +200,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
 
         let sortByDropdown = <SortPopup {...props} schema={db.schema} />
 
-        let updateSchemaButton = hasRight(props, AccessRight.ADMIN) &&
+        let updateSchemaButton = hasDbRight(props.db, props.user, AccessRight.ADMIN) &&
             <SafeClickWrapper trigger={
             <ResponsiveButton icon="configure"
                     color="teal"

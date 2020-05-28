@@ -5,11 +5,11 @@ import {Record} from "../../shared/model/instances";
 import {validateSchemaAttributes} from "../../shared/validators/schema-validators";
 import {dieIfErrors} from "../../shared/validators/validators";
 import {validateRecord} from "../../shared/validators/record-validator";
-import {DataFetcher, SECRET_COOKIE} from "../../shared/api";
+import {DataFetcher} from "../../shared/api";
 import {isIn} from "../../shared/utils";
 import {IMessages} from "../../shared/i18n/messages";
 import {AccessRight} from "../../shared/access";
-import {getAccessRights, HttpError} from "../utils";
+import {HttpError} from "../utils";
 import {Request} from "express-serve-static-core"
 import * as shortid from "shortid";
 import {DbDefinition} from "../../shared/model/db-def";
@@ -80,9 +80,6 @@ export async function createDb(def: DbDefinition, _:IMessages) : Promise<DbDefin
 
     // UID
     (def as any)._id = shortid.generate();
-
-    // FIXME add server side validators of name, label etc
-    def.secret = shortid.generate();
 
     let result = await col.insertOne(def);
     if (result.insertedCount != 1) {
@@ -178,18 +175,15 @@ export class DbDataFetcher implements DataFetcher {
 
     async getDbDefinition(dbName: string) : Promise<DbDefinition> {
         let dbDef = await getDbDef(dbName);
-
-        // Decorate Db with user rights
-        let pass = this.request.cookies[SECRET_COOKIE(dbName)];
-        dbDef.userRights = await getAccessRights(dbName, pass);
-
-        // Remove secret for non admins
-        // TODO : FIXME dangerous ...
-        if (!isIn(dbDef.userRights, AccessRight.ADMIN)) {
-            delete dbDef.secret;
-        }
-
         return dbDef;
+    }
+
+    async listDbDefinitions() : Promise<DbDefinition[]> {
+        let db = await Connection.getDb();
+        let col = db.collection<DbDefinition>(DATABASES_COL);
+        let res = await col.find({}).toArray();
+        console.log("Found dbDefs", res.length)
+        return res;
     }
 
     async getRecord(dbName:string, id:string) : Promise<Record> {

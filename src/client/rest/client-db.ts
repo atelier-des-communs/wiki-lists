@@ -11,7 +11,7 @@ import {
     GET_ITEMS_URL,
     UPDATE_ITEM_URL,
     UPDATE_SCHEMA_URL,
-    SEND_CONNECT_LINK
+    SEND_CONNECT_LINK, LIST_DEFINITIONS_URL
 } from "../../shared/api";
 import * as QueryString from "querystring";
 import {StructType} from "../../shared/model/types";
@@ -71,6 +71,10 @@ export let restDataFetcher : DataFetcher = {
                     .replace(":db_name", dbName));
     },
 
+    async listDbDefinitions() : Promise<DbDefinition[]> {
+        return await get<DbDefinition[]>(LIST_DEFINITIONS_URL);
+    },
+
     async getRecord(dbName:string, id:string) : Promise<Record> {
         return await get(GET_ITEM_URL
                 .replace(":db_name", dbName)
@@ -81,6 +85,8 @@ export let restDataFetcher : DataFetcher = {
         return await get<Record[]>(GET_ITEMS_URL
                 .replace(":db_name", dbName));
     }
+
+
 };
 
 

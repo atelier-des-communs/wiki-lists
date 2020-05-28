@@ -3,7 +3,7 @@ import {Button} from "semantic-ui-react"
 import {SafeClickWrapper} from "../utils/ssr-safe";
 import * as React from "react";
 import {EditDialog} from "../dialogs/edit-dialog";
-import {AccessRight, hasRight} from "../../access";
+import {AccessRight, hasRecordRight} from "../../access";
 import {goToUrl} from "../../utils";
 import {singleRecordLink} from "../../api";
 
@@ -14,6 +14,9 @@ interface EditButtonsProps extends PageProps<DbPathParams>, SingleRecordProps, R
 
 export const EditButtons: React.SFC<EditButtonsProps> = (props) => {
     let _ = props.messages;
+    let db = props.db;
+    let user= props.user;
+    let record = props.record;
 
     return <Button.Group basic>
 
@@ -28,7 +31,7 @@ export const EditButtons: React.SFC<EditButtonsProps> = (props) => {
                     props.match.params.db_name,
                     props.record._id))}}/>}
 
-        {hasRight(props, AccessRight.EDIT) &&
+        {hasRecordRight(db, user, record, AccessRight.EDIT) &&
         <SafeClickWrapper trigger={
             <Button
                 className="shy"
@@ -44,7 +47,7 @@ export const EditButtons: React.SFC<EditButtonsProps> = (props) => {
                 onUpdate={props.onUpdate}/>
         </SafeClickWrapper>}
 
-        {hasRight(props, AccessRight.DELETE) &&
+        {hasRecordRight(db, user, record, AccessRight.DELETE) &&
         <Button
             icon="delete"
             className="shy" size="mini"

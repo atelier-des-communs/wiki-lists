@@ -4,6 +4,7 @@ import {Record} from "./model/instances";
 import {DbDefinition} from "./model/db-def";
 import {Language} from "./i18n/messages";
 import {IUser} from "./model/user";
+import {get} from "../client/rest/common";
 
 
 // HTML
@@ -20,7 +21,6 @@ export const COOKIE_DURATION = 31 * 24 * 3600 * 1000 // one month;
 
 export const COOKIE_PREFIX = "wl_";
 export const LANG_COOKIE = COOKIE_PREFIX + "lang";
-export const SECRET_COOKIE = (dbName:string) => {return COOKIE_PREFIX + `secret_${dbName}`};
 
 export function recordsLink(dbName: string) {
     return RECORDS_PATH.replace(':db_name', dbName);
@@ -41,7 +41,7 @@ export const DELETE_ITEM_URL = "/api/:db_name/delete/:id";
 export const GET_ITEM_URL = "/api/:db_name/item/:id";
 export const GET_ITEMS_URL = "/api/:db_name/items/";
 export const GET_DB_DEFINITION_URL = "/api/:db_name/definition";
-
+export const LIST_DEFINITIONS_URL = "/api/list-dbs";
 
 // Auth
 export const LOGIN_URL = "/auth/login/:token";
@@ -78,4 +78,5 @@ export interface DataFetcher {
     getRecord(dbName: string, id : string) : Promise<Record>;
     getRecords(dbName: string) : Promise<Record[]>;
     getDbDefinition(dbName:string) : Promise<DbDefinition>;
+    listDbDefinitions() : Promise<DbDefinition[]>;
 }

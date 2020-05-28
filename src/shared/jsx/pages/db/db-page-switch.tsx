@@ -16,7 +16,7 @@ import {Header} from "../layout/header";
 import {Link} from 'react-router-dom';
 import "../../../img/logo.png";
 import {Button, Message} from "semantic-ui-react";
-import {AccessRight, hasRight} from "../../../access";
+import {AccessRight, hasDbRight} from "../../../access";
 import {toTypedObjects} from "../../../serializer";
 
 type DbPageProps =
@@ -47,11 +47,6 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
 
         let base_url = location.protocol + '//' + location.host;
 
-        let private_link = base_url +
-            RECORDS_ADMIN_PATH.
-                replace(":db_name", props.match.params.db_name).
-                replace(":db_pass", db.secret)
-
         let public_link = base_url +
             RECORDS_PATH.
                 replace(":db_name", props.match.params.db_name);
@@ -80,7 +75,7 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
             <div style={{margin: "1em"}}>
 
 
-                {hasRight(props, AccessRight.ADMIN) && !hideLinks &&
+                {hasDbRight(props.db, props.user, AccessRight.ADMIN) && !hideLinks &&
                 <Message info>
                     <Button
                         basic compact size="small"
@@ -89,13 +84,6 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
                     <Message.Header>
                         {_.db_created}
                     </Message.Header>
-
-                    <Message error>
-                        <Message.Header>
-                            {_.private_link}
-                        </Message.Header>
-                        <a href={private_link}>{private_link}</a>
-                    </Message>
 
                     <Message positive>
                         <Message.Header>

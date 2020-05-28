@@ -93,13 +93,17 @@ export let messages : IMessages = {
     update_time_attr : "Update time",
     pos_attr : "Position",
     id_attr : "Unique ID",
+    user_attr: "Auteur",
+
     system_attributes : "System attributes",
     not_found : "Nothing found here",
     download : "Download data",
     create_db : "Create new collection",
+    connect_to_create_db : "Login before creating a new collection",
     creating_db : "New collection",
     db_name : "Name of the collection",
     db_description : "Description",
+    db_access :  "Access rights",
     fields : "Attributes",
     name : "Name",
     description : "Description" ,
@@ -136,7 +140,12 @@ export let messages : IMessages = {
         connection_link_sent : "A connection link has just been sent to %EMAIL%. Please check your emails (including spams)",
         logout : "Logout",
         profile : "Compte"
-    }
+    },
+
+    accessType: {
+        "collaborative" :  "Collaborative",
+        "wiki" :  "Wiki",
+        "read_only" :  "Read only"}
 
 
 };
