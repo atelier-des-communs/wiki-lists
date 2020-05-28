@@ -35,6 +35,10 @@ import * as mung from "express-mung";
 async function addItemAsync(req:Request) : Promise<Record> {
     let record = req.body as Record;
     await requiresRight(req, AccessRight.EDIT);
+
+    // Add user id
+    record._user = req.session.user ? req.session.user._id : null;
+
     return createRecordDb(
         req.params.db_name,
         record,

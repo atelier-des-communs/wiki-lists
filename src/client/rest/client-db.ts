@@ -11,8 +11,9 @@ import {
     GET_ITEMS_URL,
     UPDATE_ITEM_URL,
     UPDATE_SCHEMA_URL,
-    VALIDATION_ERROR_STATUS_CODE
+    SEND_CONNECT_LINK
 } from "../../shared/api";
+import * as QueryString from "querystring";
 import {StructType} from "../../shared/model/types";
 import {ValidationErrors} from "../../shared/validators/validators";
 import {DbDefinition} from "../../shared/model/db-def";
@@ -24,6 +25,10 @@ export async function createItem(dbName: string, item : Record) : Promise<Record
     return await post(
         ADD_ITEM_URL.replace(":db_name", dbName),
         item);
+}
+
+export async function sendConnectionLink(email:string) : Promise<{}> {
+    return await post(SEND_CONNECT_LINK + "?" + QueryString.stringify({email}));
 }
 
 /** Return the image of the update item, as saved in DB */

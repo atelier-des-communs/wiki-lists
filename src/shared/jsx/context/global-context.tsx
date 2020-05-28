@@ -1,8 +1,9 @@
 import * as React from "react";
 import {Store} from "react-redux";
 import {IState} from "../../redux";
-import {DataFetcher} from "../../api";
+import {DataFetcher, SharedConfig} from "../../api";
 import {IMessages, Language} from "../../i18n/messages";
+import {IUser} from "../../model/user";
 
 
 // Generic definition of hanlder to set title and metas
@@ -16,8 +17,6 @@ export interface ICookies {
     get(name:string) : string;
     set(name:string, value:string) : void;
 }
-
-
 
 // Global props, passed down to all pages & components, via React "context" mecanism
 export interface GlobalContextProps  {
@@ -45,6 +44,10 @@ export interface GlobalContextProps  {
 
     /** List of supported languages */
     supportedLanguages: Language[];
+
+    user:IUser;
+
+    config: SharedConfig;
 }
 
 const GlobalContext: React.Context<GlobalContextProps> = React.createContext(null);

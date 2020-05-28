@@ -17,6 +17,9 @@
 	"typings" : [
 		"./src/rte.d.ts"
 	],
+	"exclude": [
+		"node_modules"
+	],
 	"files": [
 		"./src/extra.d.ts",
 		"./src/server/index.ts",

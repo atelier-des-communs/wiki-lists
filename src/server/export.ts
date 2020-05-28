@@ -21,7 +21,6 @@ const EXTENSION = {
     [ExportType.JSON] : "json",
     [ExportType.EXCEL] : "xlsx"};
 
-
 async function getAllWithFilters(req:Request, db_name:string, query:Map<string>) : Promise<Record[]> {
     let dbDataFetcher = new DbDataFetcher(req);
     let schema = (await dbDataFetcher.getDbDefinition(db_name)).schema;

@@ -1,18 +1,20 @@
 import * as React from "react";
 import {withGlobalContext} from "../context/global-context";
-import {Button, Container, Form, Input} from "semantic-ui-react";
+import {Button, Container, Form, Input, Message} from "semantic-ui-react";
 import {MainLayout} from "./layout/main-layout";
 import {Map} from "../../utils";
 import {PageComponent, PageProps} from "../common-props";
 import {ErrorLabel} from "../utils/validation-errors";
 import {ValidationErrors} from "../../validators/validators";
+import {sendConnectionLink} from "../../../client/rest/client-db";
 
 class _LoginPage extends PageComponent<{}> {
 
     state: {
         email: string,
-        password: string
-        errors: ValidationErrors
+        password: string,
+        errors: ValidationErrors,
+        linkSent:boolean,
     };
 
     constructor(props: PageProps<{}>) {
@@ -20,20 +22,21 @@ class _LoginPage extends PageComponent<{}> {
         this.state = {
             email: null,
             password: null,
-            errors: {}
+            errors: {},
+            linkSent : false
         };
     }
 
 
-    submitForm() {
+    async submitForm() {
         let errors: Map<string> = {};
         if (!this.state.email) {
             errors.email = this.props.messages.should_not_be_empty;
+            this.setState({errors});
+        } else {
+            await sendConnectionLink(this.state.email);
+            this.setState({linkSent:true});
         }
-        if (!this.state.password) {
-            errors.password = this.props.messages.should_not_be_empty;
-        }
-        this.setState({errors});
     }
 
     render() {
@@ -43,34 +46,38 @@ class _LoginPage extends PageComponent<{}> {
         return <MainLayout {...this.props} >
             <Container>
                 <Form>
-                    <Form.Field width={6}>
-                        <label>{_.email}</label>
-                        <Input
-                            name="email"
-                            placeholder={_.email}
-                            value={this.state.email}
-                            onChange={(e, data) => this.setState({email: data.value})}
-                        />
 
-                        <ErrorLabel errors={this.state.errors.email}/>
 
-                    </Form.Field>
-                    <Form.Field width={6}>
-                        <label>{_.auth.password}</label>
-                        <Input
-                            name="password"
-                            type="password"
-                            value={this.state.password}
-                            onChange={(e, data) => this.setState({password: data.value})}
-                        />
+                    {this.state.linkSent ?
+                        <Message info>
+                            <p>{_.auth.connection_link_sent.replace("%EMAIL%", this.state.email)}</p>
+                        </Message>
 
-                        <ErrorLabel errors={this.state.errors.password}/>
+                        :
 
-                    </Form.Field>
-                    <Button type='submit' onClick={() => this.submitForm()}>{_.auth.login}</Button>
+                        <>
+                            <Form.Field width={6}>
+                                <label>{_.email}</label>
+                                <Input
+                                    name="email"
+                                    placeholder={_.email}
+                                    value={this.state.email}
+                                    onChange={(e, data) => this.setState({email: data.value})}
+                                />
+
+                                <ErrorLabel errors={this.state.errors.email}/>
+
+                            </Form.Field>
+                            <Button type='submit' positive onClick={() => this.submitForm()}>
+                                {_.auth.send_connection_link}
+                            </Button>
+                        </>
+                    }
+
+
                 </Form>
             </Container>
-        </MainLayout>
+        </MainLayout>;
     }
 
 

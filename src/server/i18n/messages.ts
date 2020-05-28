@@ -13,6 +13,6 @@ export const supportedLanguages : LanguageWithMessages[] = [
 
 
 export function selectLanguage(req: Request) : LanguageWithMessages {
-    let key = (req as any).language
+    let key = (req as any).language;
     return supportedLanguages.filter(lang => lang.key == key)[0];
 }

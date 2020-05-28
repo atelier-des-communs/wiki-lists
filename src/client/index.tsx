@@ -60,8 +60,10 @@ let context : GlobalContextProps = {
     lang: marshalledContext.lang,
     messages:(window as any).__MESSAGES__, // Set by lang-xx.js imported in html HEAD
     supportedLanguages:marshalledContext.supportedLanguages,
+    user:marshalledContext.user,
     promises:[],
     cookies : clientCookies,
+    config:marshalledContext.config,
     dataFetcher:restDataFetcher};
 
 let app = <BrowserRouter>

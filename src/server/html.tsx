@@ -15,6 +15,7 @@ import {GlobalContextProps, HeadSetter, ICookies} from "../shared/jsx/context/gl
 import {selectLanguage, supportedLanguages} from "./i18n/messages";
 import * as escapeHtml from "escape-html";
 import {toAnnotatedJson} from "../shared/serializer";
+import Config from "./config";
 
 const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '/static' : 'http://localhost:8081/static';
 
@@ -125,6 +126,8 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
             cookies:serverCookies,
             promises: [],
             head,
+            user:req.session.user,
+            config: {site_name : Config.SITE_NAME},
             supportedLanguages:supportedLang
         };
 
@@ -151,8 +154,10 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
     // Object serialized and embedded into final HTML, for passing to client
     let context : IMarshalledContext = {
         state : store.getState(),
+        config : {site_name : Config.SITE_NAME},
         env: process.env.NODE_ENV,
         lang:lang.key,
+        user: req.session.user,
         supportedLanguages:supportedLang};
 
     let html = renderHtml(

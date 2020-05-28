@@ -3,7 +3,6 @@ import {IMessages} from "../../shared/i18n/messages";
 export let messages : IMessages = {
     email: "Email",
 
-    site_name : "Wiki-list",
     site_title : "Structured data, for human beings.",
 
     filters : "Filters",
@@ -131,6 +130,12 @@ export let messages : IMessages = {
         login: "Login",
         userNotFound : "User not found",
         wrongPassword : "Wrong password",
+        expired : "Connexion link has expired",
+        bad_login_url : "Connexion link is invalid",
+        send_connection_link : "Send me a connection link",
+        connection_link_sent : "A connection link has just been sent to %EMAIL%. Please check your emails (including spams)",
+        logout : "Logout",
+        profile : "Compte"
     }
 
 

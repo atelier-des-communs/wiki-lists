@@ -1,6 +1,15 @@
 
 export default {
+    SITE_NAME :  getEnv("SITE_NAME","Wiki-list"),
+    BASE_URL : getEnv("BASE_URL"),
     SECRET : getEnv("SECRET"),
+
+    SMTP_HOST : getEnv("SMTP_HOST"),
+    SMTP_PORT : parseInt(getEnv("SMTP_PORT")),
+    SMTP_LOGIN : getEnv("SMTP_LOGIN"),
+    SMTP_PASS : getEnv("SMTP_PASS"),
+    SMTP_FROM : getEnv("SMTP_FROM"),
+
     DB_HOST : getEnv("DB_HOST", "localhost"),
     DB_NAME : getEnv("DB_NAME", "wikilist"),
     DB_PORT : getEnv("DB_PORT", "27017")

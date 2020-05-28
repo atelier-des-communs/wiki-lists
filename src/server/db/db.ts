@@ -100,7 +100,12 @@ export async function updateRecordDb(dbName: string, record : Record, _:IMessage
     dieIfErrors(validateRecord(record, dbDef.schema, _, false));
 
     let id = record._id;
+
+    // Readonly attributes : no update
     delete record._id;
+    delete record._user;
+    delete record._creationTime;
+    delete record._pos;
 
     // Update time
     record._updateTime = new Date();

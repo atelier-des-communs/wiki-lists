@@ -1,145 +1,79 @@
-import {Express, Request} from "express";
-import * as passport from "passport";
-import {Strategy as LocalStrategy} from "passport-local";
-import {IUser} from "../../shared/model/user";
-import * as bcrypt from "bcrypt-nodejs";
-import {User} from "../../shared/model/user";
+import {Express} from "express";
+
 import {selectLanguage} from "../i18n/messages";
-import {LOGIN_URL, REGISTER_URL, VALIDATION_ERROR_STATUS_CODE} from "../../shared/api";
-import {ValidationErrors} from "../../shared/validators/validators";
+import {LOGIN_PAGE_PATH, LOGIN_URL, LOGOUT_URL, SEND_CONNECT_LINK} from "../../shared/api";
+import Config from "../config";
+import {sendMail} from "../email/email";
+import {Token, User} from "../db/mongoose";
+import {emailTemplates} from "../email/templates";
+
+// Expiration of link in minutes
+const LINK_EXPIRATION = 30
 
 export function setUp(app:Express) {
 
-    app.use(passport.initialize());
-    app.use(passport.session());
 
-    passport.use("local", localStrategy);
-
-    passport.serializeUser((user:IUser, done: Function) => {
-        if (user == null) {
-            return done("Null user to serialize", false);
-        }
-        done(null, user._id);
-    });
-
-    passport.deserializeUser((id:String, done: Function) => {
-        User.findOne({_id:id}).exec()
-            .then((user:IUser) => {
-                delete user.passwordHash;
-                done(null, user)
-            })
-            .catch((err) => {done(err)})
-    });
-
-
-    app.post(LOGIN_URL, function (req, res, next) {
+    app.get(LOGIN_URL, async function (req, res) {
 
         // i18n
         let _ = selectLanguage(req).messages;
 
-        passport.authenticate("local", function(err, user, info) {
+        let tokenStr = req.params.token;
 
+        // Get it
+        let token = await Token.findOne({_id:tokenStr});
+
+        if (token == null) {
+            req.flash("error", _.auth.expired);
+            console.error("bad link");
+            res.redirect(403, LOGIN_PAGE_PATH);
+        }
+
+        // Get or create user
+        let user = await User.findOne({email: token.email});
+        if (user == null) {
+            user = await User.create({email: token.email});
+        }
+
+        console.log("Logged ! ", user);
+
+        // Save user to session
+        req.session.user = user;
+        res.redirect("/");
+
+    });
+
+    app.get(LOGOUT_URL, function (req, res, next) {
+
+        req.session.destroy(function (err) {
             if (err) {
-                let errors : ValidationErrors = {};
-
-                if (err == AuthError.USER_NOT_FOUND) {
-                    errors.email = _.auth.userNotFound;
-                } else if (err == AuthError.BAD_PASSWORD) {
-                    errors.password = _.auth.wrongPassword;
-                } else {
-                    return res.status(500).send(`Unkwown error :${err}`)
-                }
-                return res.status(VALIDATION_ERROR_STATUS_CODE).json(errors);
+                return next(err);
             } else {
-                return req.logIn(user, function (err) {
-                    if (err) { return res.status(500).send(`Internal error :${err}`)}
-                    return res.json(user);
-                });
+                return res.redirect("/");
             }
-        })(req, res, next);
-    });
-
-    app.post(REGISTER_URL, async (req, res) => {
-
-        let userProps : IUser = req.body;
-
-        // Hash password
-        if ((userProps as any).password) {
-            userProps.passwordHash = await hash(req.body.password);
-        }
-
-        let user =  User.create(userProps)
-            .then((user) => {res.json(user)})
-            .catch((err) => {res.json(err)});
-    });
-}
-
-export interface LoginProps {
-    email:string,
-    password:string
-}
-
-enum AuthError {
-    USER_NOT_FOUND = 1,
-    BAD_PASSWORD = 2
-}
-
-
-function doLogin(req:Request, email:string, password:string, done:Function) {
-
-    User.findOne({email:email}).exec()
-        .then((user:IUser) => {
-            if (!user) {
-               return done(AuthError.USER_NOT_FOUND, false);
-            }
-
-            let passwordHash = user.passwordHash;
-            delete user.passwordHash;
-
-            comparePasswords(passwordHash, password, (error:Error, isMatch:boolean) => {
-                if (error) {
-                    return done(error, null)
-                } else {
-                    if (isMatch) {
-                        return done(null, user)
-                    } else {
-                        return done(AuthError.BAD_PASSWORD, null)
-                    }
-                }
-            });
-        })
-        .catch((err) => {return done(err)})
-}
-
-
-let localStrategy = new LocalStrategy({
-        usernameField: 'email',
-        passwordField: 'password',
-        passReqToCallback: true},
-    doLogin);
-
-function comparePasswords(passwordHash:string, passw:string, cb:Function) {
-    bcrypt.compare(passw, passwordHash, function (err:Error, isMatch:boolean) {
-        if (err) {
-            return cb(err);
-        }
-        return cb(null, isMatch);
-    });
-}
-
-/** Promisify the salt algorithm */
-function hash(password:string) : Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-        bcrypt.genSalt(10, function (err:Error, salt:string) {
-            if (err) {
-                return reject(err);
-            }
-            bcrypt.hash(password, salt, null, function (err:Error, hash:string) {
-                if (err) {
-                    return reject(err);
-                }
-                resolve(hash);
-            });
         });
+
+    });
+
+    app.post(SEND_CONNECT_LINK, async function (req, res, next) {
+
+        let email = req.query.email;
+
+        let token = await Token.create({email});
+
+        let base_url = Config.BASE_URL.replace(/\/$/, "")
+        let link = `${base_url}${LOGIN_URL.replace(":token", token._id)}`;
+
+        let emailContent = emailTemplates[req.language].loginEmail(link);
+
+        sendMail(email, emailContent).then(() => {
+            res.send("OK");
+        }).catch(reason => {
+            next(reason);
+        });
+
     });
 }
+
+
+

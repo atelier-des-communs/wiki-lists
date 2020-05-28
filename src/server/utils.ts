@@ -11,6 +11,8 @@ export interface ContentWithStatus {
     content:any
 }
 
+
+
 // Same as #returnPromiseWithCode, code being known in advance
 export function returnPromise(res: Express.Response, promise: Promise<{}>, code=200) {
     returnPromiseWithCode(res, promise.then(content => ({content, statusCode:code})));

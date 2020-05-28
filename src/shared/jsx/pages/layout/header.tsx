@@ -1,7 +1,7 @@
 import * as React from "react";
 import "../../../img/logo.png";
 import {Button, Flag} from "semantic-ui-react";
-import {LANG_COOKIE, LOGIN_PAGE_PATH} from "../../../api";
+import {LANG_COOKIE, LOGIN_PAGE_PATH, PROFILE_PAGE_PATH} from "../../../api";
 import {GlobalContextProps} from "../../context/global-context";
 import {Link} from "react-router-dom";
 
@@ -30,14 +30,26 @@ export const Header : React.SFC<GlobalContextProps> = (props) => {
         )}
     </Button.Group >;
 
+    let ConnectOrPprfileButton = () => { return props.user ?
+        <Button as={Link}
+                to={PROFILE_PAGE_PATH}
+                icon="user"
+                floated="right" style={{margin:"5px"}}
+                key="user"
+                compact primary size="small"
+                content={_.auth.profile} />
+
+        : <Button as={Link}
+                  to={LOGIN_PAGE_PATH}
+                  floated="right" style={{margin:"5px"}}
+                  key="user"
+                  compact primary size="small"
+                  content={_.auth.login} />
+    }
+
     return <>
 
-        <Button as={Link}
-                to={LOGIN_PAGE_PATH}
-            floated="right" style={{margin:"5px"}}
-            key="user"
-            compact primary size="small"
-            content={_.auth.login} />
+        <ConnectOrPprfileButton />
 
         {langSelector}
 

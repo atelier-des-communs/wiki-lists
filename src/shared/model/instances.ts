@@ -10,6 +10,7 @@ export class Record {
     _creationTime?: Date;
     _updateTime?: Date;
     _pos?: number;
+    _user?: string;
 
     // Other fields, defined by the schema of the table
     [x:string]: any;
@@ -46,6 +47,15 @@ export function systemType(_: IMessages) {
         type: new NumberType(),
         label: _.pos_attr
     });
+
+    res.attributes.push({
+        name: "_user",
+        system: true,
+        hidden: true,
+        type: new TextType(),
+        label: _.user_attr
+    });
+
     return res;
 }
 
