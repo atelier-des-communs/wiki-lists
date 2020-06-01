@@ -1,6 +1,6 @@
 import * as React from "react";
 import {withGlobalContext} from "../context/global-context";
-import {Button, Container, Form, Input, TextArea} from "semantic-ui-react";
+import {Button, Container, Form, Header, Icon, Input, SemanticICONS, TextArea} from "semantic-ui-react";
 import {BASE_DB_PATH, RECORDS_PATH} from "../../api";
 import {deepClone, slug} from "../../utils";
 import {Attribute, StructType, TextType} from "../../model/types";
@@ -97,6 +97,21 @@ export class AddDbPageInternal extends React.Component<PageProps<{}>> {
             return toPromiseWithErrors(createDb(dbDef));
         };
 
+        let accessTypeIcons : {[k in AccessRightsKind] : SemanticICONS} = {
+            [AccessRightsKind.COLLABORATIVE] : "add",
+            [AccessRightsKind.WIKI] : "globe",
+            [AccessRightsKind.READ_ONLY] : "eye"
+        }
+
+        let accessTypeOptions =  Object.keys(AccessRightsKind).map((key) => {
+            let kind : AccessRightsKind = AccessRightsKind[key as any] as AccessRightsKind;
+            return {
+                key: kind,
+                text: _.accessType[kind],
+                value:kind,
+                content: (<Header icon={accessTypeIcons[kind]} content={_.accessType[kind]} subheader={_.accessTypeExplanation[kind]} />) }
+        });
+
         return <MainLayout {...props} >
 
         <Container>
@@ -150,18 +165,11 @@ export class AddDbPageInternal extends React.Component<PageProps<{}>> {
 
                     </WizardStep>
 
-                    <WizardStep title={_.fields} validator={addDbValidator}>
+                    <WizardStep title={_.fields} >
                         <div>
                             {_.schema_templates} :
                         </div>
-                        {this.templates.map((template, index) =>
-                            <Button
-                                key={index}
-                                content={template.label}
-                                basic
-                                active={index == this.state.selectedTemplate}
-                                onClick = {() => {this.selectTemplate(index)}}
-                            /> )}
+
 
                         <AttributeList
                             addButtonPosition={AddButtonPosition.BOTTOM}
@@ -174,17 +182,13 @@ export class AddDbPageInternal extends React.Component<PageProps<{}>> {
 
                     </WizardStep>
 
-                    <WizardStep title={_.db_access} >
+                    <WizardStep title={_.db_access} validator={addDbValidator} >
 
                         <Form.Field>
                             <label>{_.db_access}</label>
                             <Form.Dropdown
                                 selection
-                                options={[
-                                    {key: AccessRightsKind.WIKI, text: _.accessType[AccessRightsKind.WIKI], value:AccessRightsKind.WIKI},
-                                    {key: AccessRightsKind.COLLABORATIVE, text: _.accessType[AccessRightsKind.COLLABORATIVE], value:AccessRightsKind.COLLABORATIVE},
-                                    {key: AccessRightsKind.READ_ONLY, text: _.accessType[AccessRightsKind.READ_ONLY], value:AccessRightsKind.READ_ONLY},
-                                ]}
+                                options={accessTypeOptions}
                                 value={this.state.accessRights}
                                 onChange={(event, data) => this.setState({accessRights: data.value})} />
                         </Form.Field>

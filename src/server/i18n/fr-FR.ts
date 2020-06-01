@@ -151,7 +151,14 @@ export let messages : IMessages = {
     accessType: {
         "collaborative" :  "Collaboratif",
         "wiki" :  "Wiki",
-        "read_only" :  "Lecture seule"}
+        "read_only" :  "Lecture seule"},
+
+    accessTypeExplanation : {
+        "collaborative" : "Les utilisateurs connectés peuvent ajouter du contenu et éditer leurs propres ajouts",
+        "wiki" : "Tout le monde peut consulter ajouter et éditer tout contenu",
+        "read_only" : "Seuls les administrateurs peuvent ajouter et éditer du contenu"
+    }
+
 
 };
 

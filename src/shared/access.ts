@@ -12,6 +12,7 @@ export enum AccessRight {
 
 export enum AccessGroup {
     ANY="any",
+    CONNECTED="connected",
     AUTHOR="author",
     ADMIN="admin",
 }
@@ -37,7 +38,7 @@ export let ACCESS_RIGHTS : Map<AccessRights> = {
     },
     [AccessRightsKind.COLLABORATIVE] : {
         [AccessRight.VIEW]: [AccessGroup.ANY],
-        [AccessRight.ADD] : [AccessGroup.ANY],
+        [AccessRight.ADD] : [AccessGroup.CONNECTED],
         [AccessRight.EDIT] : [AccessGroup.AUTHOR],
         [AccessRight.DELETE] : [AccessGroup.AUTHOR],
     }
@@ -49,11 +50,15 @@ export function hasDbRight(dbDef: DbDefinition, user: IUser, right:AccessRight) 
     }
     let kind = dbDef.accessRights || AccessRightsKind.WIKI;
     let accessRights : AccessRights = ACCESS_RIGHTS[kind];
-    let groups = accessRights[right];
-    if (!groups) {
+    let authorizedGroups = accessRights[right];
+    if (!authorizedGroups) {
         return false;
     }
-    return isIn(groups, AccessGroup.ANY);
+    let groups = [AccessGroup.ANY];
+    if (user) {
+        groups.push(AccessGroup.CONNECTED);
+    }
+    return groups.some(group => isIn(authorizedGroups, group))
 }
 
 export function hasRecordRight(dbDef: DbDefinition, user:IUser, record:Record, right:AccessRight) {
@@ -68,8 +73,11 @@ export function hasRecordRight(dbDef: DbDefinition, user:IUser, record:Record, r
     }
 
     let actualGroups = [AccessGroup.ANY]
-    if (user && user._id == record._user) {
-        actualGroups.push(AccessGroup.AUTHOR);
+    if (user) {
+        actualGroups.push(AccessGroup.CONNECTED);
+        if (user._id == record._user) {
+            actualGroups.push(AccessGroup.AUTHOR);
+        }
     }
 
     for (let group of actualGroups) {

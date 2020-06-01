@@ -148,9 +148,11 @@ export interface IMessages {
     email: string;
 
     accessType : {
-        [AccessRightsKind.WIKI] : string;
-        [AccessRightsKind.READ_ONLY] : string;
-        [AccessRightsKind.COLLABORATIVE] : string;
+        [K in AccessRightsKind] : string;
+    }
+
+    accessTypeExplanation : {
+        [K in AccessRightsKind] : string;
     }
 
 }

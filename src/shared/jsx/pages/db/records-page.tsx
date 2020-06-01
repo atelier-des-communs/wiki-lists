@@ -31,6 +31,7 @@ import {connectComponent} from "../../context/redux-helpers";
 import {ResponsiveButton} from "../../components/responsive";
 import {safeStorage} from "../../utils/storage";
 import {toAnnotatedJson} from "../../../serializer";
+import {fromPairs} from "lodash";
 
 
 type RecordsPageProps =
@@ -114,12 +115,14 @@ function groupedRecords(groupAttr: string, props:RecordsPageProps, viewType: Vie
 
 function addItemButton(props: RecordsPageProps) {
     let _ = props.messages;
+    let fields = props.db.schema.attributes.filter(attr => !attr.system).map(attr => ([attr.name, null]));
+    let newRecord = fromPairs(fields);
     return hasDbRight(props.db, props.user, AccessRight.ADD) && <SafeClickWrapper  trigger={
         <Button primary style={{marginBottom:"1em"}} icon="plus" content={_.add_item} />
     }>
         <EditDialog
             {...props}
-            record={{}}
+            record={newRecord}
             schema={props.db.schema}
             create={true}
             onUpdate={props.onCreate}  />
