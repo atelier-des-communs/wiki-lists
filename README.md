@@ -31,6 +31,7 @@ The following environnement variable can be set on command line or via a **.env*
 * **SMTP_LOGIN** SMTP login
 * **SMTP_PASS** SMTP password
 * **SMTP_FROM** Email in 'from'
+* **SMTP_SECURE** Use TLS : false by default
 
 
 ## Deploy on prod

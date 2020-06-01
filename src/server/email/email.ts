@@ -4,14 +4,20 @@ import {Email} from "./templates/definitions";
 import {renderToString} from "react-dom/server";
 import * as HtmlToText from "html-to-text";
 
-let transport = nodemailer.createTransport({
+
+let emailConfig = {
     host: Config.SMTP_HOST,
     port: Config.SMTP_PORT,
+    secure : Config.SMTP_SECURE,
     auth : {
         user: Config.SMTP_LOGIN,
         pass: Config.SMTP_PASS,
     }
-})
+};
+
+console.log("Email config", emailConfig);
+
+let transport = nodemailer.createTransport(emailConfig);
 
 export function sendMail(email:string, content:Email) {
 

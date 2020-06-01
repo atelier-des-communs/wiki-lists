@@ -1,3 +1,4 @@
+import {parseBool} from "../shared/utils";
 
 export default {
     SITE_NAME :  getEnv("SITE_NAME","Wiki-list"),
@@ -6,6 +7,7 @@ export default {
 
     SMTP_HOST : getEnv("SMTP_HOST"),
     SMTP_PORT : parseInt(getEnv("SMTP_PORT")),
+    SMTP_SECURE : parseBool(getEnv("SMTP_SECURE", "false")),
     SMTP_LOGIN : getEnv("SMTP_LOGIN"),
     SMTP_PASS : getEnv("SMTP_PASS"),
     SMTP_FROM : getEnv("SMTP_FROM"),
