@@ -151,3 +151,4 @@ registerClass(Date, "date", {
         return json.value ? new Date(Date.parse(json.value)) : null;
     }
 });
+

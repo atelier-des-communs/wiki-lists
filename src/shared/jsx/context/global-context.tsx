@@ -3,6 +3,7 @@ import {Store} from "react-redux";
 import {IState} from "../../redux";
 import {DataFetcher, SharedConfig} from "../../api";
 import {IMessages, Language} from "../../i18n/messages";
+import {UpdateActions} from "../common-props";
 
 
 // Generic definition of hanlder to set title and metas
@@ -26,7 +27,6 @@ export interface GlobalContextProps  {
 
     /** Simple interface for setting title and meta HTML tags */
     head: HeadSetter,
-
 
     /** Direct access to redux store */
     store: Store<IState>;
@@ -78,4 +78,5 @@ export function withGlobalContext<P> (
         }
     };
 }
+
 

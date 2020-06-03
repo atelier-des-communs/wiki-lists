@@ -13,7 +13,6 @@ let languages : LanguageWithMessages[] = [
     {key: "fr-FR", flag: "france", messages:frMessages}];
 
 if (config.LANGS) {
-
     let langs = config.LANGS.split(",");
     languages = languages.filter(lang => langs.indexOf(lang.key) > -1);
     console.info("LANGS", langs, "filtered :", languages.length)

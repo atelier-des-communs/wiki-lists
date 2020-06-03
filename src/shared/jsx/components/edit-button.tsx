@@ -1,4 +1,4 @@
-import {DbPathParams, PageProps, ReduxEventsProps, SingleRecordProps} from "../common-props";
+import {DbPathParams, PageProps, UpdateActions, SingleRecordProps} from "../common-props";
 import {HashLink} from "react-router-hash-link"
 import {Button} from "semantic-ui-react"
 import {ButtonWrapper, SafeClickWrapper} from "../utils/ssr-safe";
@@ -12,7 +12,7 @@ import {viewPortToQuery} from "../pages/db/map";
 import {ICoord} from "../../model/geo";
 
 
-interface EditButtonsProps extends PageProps<DbPathParams>, SingleRecordProps, ReduxEventsProps {
+interface EditButtonsProps extends PageProps<DbPathParams>, SingleRecordProps, UpdateActions {
     hideViewButton?:boolean;
 }
 

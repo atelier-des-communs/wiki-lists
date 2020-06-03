@@ -7,7 +7,7 @@ import {
     DELETE_ITEM_URL,
     GET_DB_DEFINITION_URL,
     GET_ITEM_URL, GET_ITEMS_GEO_URL,
-    GET_ITEMS_URL, INIT_INDEXES_URL,
+    GET_ITEMS_URL, GET_SUBSCRIPTION, INIT_INDEXES_URL,
     SECRET_COOKIE,
     UPDATE_ITEM_URL,
     UPDATE_SCHEMA_URL
@@ -16,10 +16,9 @@ import {
     addAlertDb,
     checkAvailability,
     createDb,
-    createRecordsDb,
+    createOrUpdateRecordsDb,
     DbDataFetcher,
     deleteRecordDb, getDbDef, setUpIndexesDb,
-    updateRecordDb,
     updateSchemaDb
 } from "../db/db";
 import {Record} from "../../shared/model/instances";
@@ -35,14 +34,16 @@ import {DbDefinition} from "../../shared/model/db-def";
 import * as mung from "express-mung";
 import {extractSort} from "../../shared/views/sort";
 import {empty, Map, oneToArray, parseBool, slug, sortBy, strToInt} from "../../shared/utils";
-import {extractFilters, extractSearch, Filter} from "../../shared/views/filters";
+import {extractFilters, extractSearch, Filter, TextFilter} from "../../shared/views/filters";
 
 import {unwrapAxiosResponse} from "../../client/rest/common";
 import {config} from "../config";
-import {BadRequestException, HttpError} from "../exceptions";
+import {BadRequestException, ForbiddenException, HttpError} from "../exceptions";
 import * as request from "request-promise";
 import {clearCache} from "../cache";
 import {NotFoundPage} from "../../shared/jsx/pages/not-found";
+import {sendMail} from "../notifications/mailer";
+import {sendNewAlertEmail} from "../notifications/templates/new-alert-template";
 
 
 const CAPTCHA_CHECK_URL="https://www.google.com/recaptcha/api/siteverify"
@@ -51,17 +52,23 @@ async function addItemsAsync(req:Request) : Promise<Record[] | Record> {
     let records = req.body as Record | Record[];
     await requiresRight(req, AccessRight.EDIT);
 
+    let createOnly = parseBool(req.query.createOnly);
+    let noNotif = parseBool(req.query.noNotif);
+
     if (records instanceof Array) {
-        return createRecordsDb(
+        return createOrUpdateRecordsDb(
             dbNameSSR(req),
             records,
-            selectLanguage(req).messages);
+            selectLanguage(req).messages,
+            createOnly, noNotif);
     } else {
         // Single one ?
-        return createRecordsDb(
+        return createOrUpdateRecordsDb(
             dbNameSSR(req),
             oneToArray(records),
-            selectLanguage(req).messages).then(records => records[0]);
+            selectLanguage(req).messages,
+            createOnly, noNotif)
+            .then(records => records[0]);
     }
 }
 
@@ -80,10 +87,12 @@ async function resetCache(req:Request) : Promise<boolean> {
 async function updateItemAsync(req:Request) : Promise<Record>{
     let record = req.body as Record;
     await requiresRight(req, AccessRight.EDIT);
-    return updateRecordDb(
+    let noNotif = parseBool(req.query.noNotif);
+    return createOrUpdateRecordsDb(
         dbNameSSR(req),
-        record,
-        selectLanguage(req).messages);
+        [record],
+        selectLanguage(req).messages,
+        false, noNotif);
 }
 
 async function deleteItemAsync(req:Request) : Promise<boolean>{
@@ -117,9 +126,10 @@ async function addAlertAsync(req:Request, res:Response) : Promise<boolean> {
 
     let filters = req.body.filters as Map<string>;
     let email = req.body.email as string;
+    let schema = await getDbDef("vigibati");
 
     if (empty(req.body.captcha)) {
-        throw new BadRequestException("Captcha is required");
+        throw new ForbiddenException("Captcha is required");
     }
 
     let captchares : any = await request({
@@ -138,7 +148,16 @@ async function addAlertAsync(req:Request, res:Response) : Promise<boolean> {
         throw new BadRequestException("Invalid captcha");
     }
 
-    return await addAlertDb(dbNameSSR(req), email, filters);
+    await addAlertDb(dbNameSSR(req), email, filters);
+
+    let filtersObjs = extractFilters(schema.schema, filters);
+
+    let city = filtersObjs['commune'] as TextFilter
+
+    // Send email : don't wait for it
+    sendNewAlertEmail(email, city.search)
+
+    return true;
 }
 
 function sanitizeJson(input:any) {
@@ -280,6 +299,10 @@ export function setUp(server:Express) {
             .then((count) => {return "" + count}));
     });
 
+    server.get(GET_SUBSCRIPTION, async function (req: Request, res: Response) {
+        let fetcher = new DbDataFetcher(req);
+        returnPromise(res, fetcher.getSubscription(req.query.email));
+    });
 
     server.get(GET_DB_DEFINITION_URL, function (req: Request, res: Response) {
         returnPromise(res, new DbDataFetcher(req).getDbDefinition(dbNameSSR(req)));

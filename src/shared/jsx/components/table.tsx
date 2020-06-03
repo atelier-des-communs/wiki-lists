@@ -3,7 +3,7 @@ import {extractSort, ISort, serializeSort} from "../../views/sort";
 import {getDbName, goTo, goToResettingPage, parseParams} from "../../utils";
 import {Link} from 'react-router-dom'
 import {RouteComponentProps, withRouter} from "react-router"
-import {DbPathParams, DbProps, RecordsProps, ReduxEventsProps} from "../common-props";
+import {DbPathParams, DbProps, RecordsProps, UpdateActions} from "../common-props";
 import * as React from "react";
 import {Button, Table} from 'semantic-ui-react'
 import {SafePopup} from "../utils/ssr-safe";
@@ -16,7 +16,7 @@ import {singleRecordLink} from "../../api";
 import {GlobalContextProps, withGlobalContext} from "../context/global-context";
 import {AccessRight, hasRight} from "../../access";
 
-type TableProps = RecordsProps & DbProps & ReduxEventsProps & RouteComponentProps<DbPathParams> & GlobalContextProps;
+type TableProps = RecordsProps & DbProps & UpdateActions & RouteComponentProps<DbPathParams> & GlobalContextProps;
 
 
 class _TableComponent extends React.Component<TableProps> {

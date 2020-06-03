@@ -452,7 +452,7 @@ export class FilterSidebar extends React.Component<DbPageProps> {
                     return <div key={attr.name} >
                             <Header  attached="top" as="h5">
                                 {ellipsis(attrLabel(attr, _))}
-                                {resetButton}
+                                <p style={{float:"right"}}>{resetButton}</p>
                             </Header>
                             <Segment attached >
                                 <div key={attr.name} >
@@ -493,7 +493,7 @@ export const FiltersPopup : React.SFC<DbPageProps> = (props) => {
                     return <Grid.Column mobile={12} tablet={6} computer={4}>
                         <Header as="h4">
                             {ellipsis(attrLabel(attr, _))}
-                            {resetButton}
+                            <p style={{float:"right"}}>{resetButton}</p>
                         </Header>
                         <Divider/>
                         <div key={attr.name}>

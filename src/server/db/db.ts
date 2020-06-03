@@ -1,21 +1,20 @@
 import {Attribute, EnumType, StructType, TextType, Types} from "../../shared/model/types";
 import {config} from "../config"
-import {MongoClient, Cursor, Logger} from "mongodb";
+import {Logger, MongoClient, Collection, ObjectId} from "mongodb";
 import {Record, withSystemAttributes} from "../../shared/model/instances";
 import {validateSchemaAttributes} from "../../shared/validators/schema-validators";
-import {dieIfErrors, ValidationException} from "../../shared/validators/validators";
+import {dieIfErrors} from "../../shared/validators/validators";
 import {validateRecord} from "../../shared/validators/record-validator";
-import {Autocomplete, AUTOCOMPLETE_URL, DataFetcher, Marker, SECRET_COOKIE} from "../../shared/api";
+import {Autocomplete, DataFetcher, Marker, SECRET_COOKIE} from "../../shared/api";
 import {
     arrayToMap,
-    buildMap,
-    debug, empty, emptyList,
+    debug,
     filterSingle,
     isIn,
     Map,
-    mapMap,
+    mapFromKeys,
+    mapFromValues,
     mapValues,
-    oneToArray,
     slug
 } from "../../shared/utils";
 import {IMessages} from "../../shared/i18n/messages";
@@ -26,20 +25,25 @@ import * as shortid from "shortid";
 import {DbDefinition} from "../../shared/model/db-def";
 import {Filter, LocationFilter} from "../../shared/views/filters";
 import {ISort} from "../../shared/views/sort";
-import {toTypedObjects} from "../../shared/serializer";
+import {registerClass, toTypedObjects} from "../../shared/serializer";
 import {BadRequestException, HttpError} from "../exceptions";
-import {flatMap} from "lodash";
 import {cache} from "../cache";
-import {cloneDeep, assign, isEmpty} from "lodash";
+import {assign, cloneDeep, flatMap, includes, isEmpty, has} from "lodash";
 import * as tilebelt from "tilebelt";
 import {ApproxCluster} from "../../shared/model/geo";
+import {Subscription} from "../../shared/model/notifications";
+import {sendDataEvent} from "../notifications/alerts";
+import {DataEventType} from "../notifications/events";
 
 
 const SCHEMAS_COLLECTION = "schemas";
 const DB_COLLECTION_TEMPLATE = (name:string) => {return `db.${name}`};
-const ALERTS_COLLECTION = "alerts";
 
-const MARKERS_PER_CLUSTER = 20;
+// TODO rename to "subscriptions"
+const SUBSCRIPTIONS_COLLECTION = "alerts";
+const NOTIFICATIONS_COLLECTION = "notifications";
+
+const MARKERS_PER_CLUSTER = 50;
 const AUTOCOMPLETE_NUM = 10;
 
 // Min zoom from which to separate approximate locations
@@ -56,10 +60,14 @@ class  Connection {
         return this.client.db(config.DB_NAME);
     }
 
-    // Retuens mongo collection for the given Db name
-    static async getDbCollection(dbName : string) {
+    static async getCollection(colName : string) {
         let db = await Connection.getDb();
-        return db.collection(DB_COLLECTION_TEMPLATE(dbName));
+        return db.collection(colName);
+    }
+
+    // Returns mongo collection for the given Db name
+    static async getDbCollection(dbName : string) {
+        return Connection.getCollection(DB_COLLECTION_TEMPLATE(dbName));
     }
 }
 
@@ -175,56 +183,77 @@ export async function setUpIndexesDb(dbName: string) {
     }
 }
 
-export async function updateRecordDb(dbName: string, record : Record, _:IMessages) : Promise<Record> {
+
+export async function createOrUpdateRecordsDb(dbName: string, records : Record[], _:IMessages, createOnly:boolean=false, noNotif:boolean=false) : Promise<Record[]> {
     let col = await Connection.getDbCollection(dbName);
     let dbDef = await getDbDef(dbName);
+    let attrMap = arrayToMap(dbDef.schema.attributes, attr => attr.name);
 
-    // Validate record
-    dieIfErrors(validateRecord(record, dbDef.schema, _, false));
-
-    let id = record._id;
-    delete record._id;
-
-    // Update time
-    record._updateTime = new Date();
-
-    let res = await col.updateOne({_id: id}, { $set : record});
-    if (res.matchedCount != 1) {
-        throw Error(`No item matched for id : ${id}`);
-    }
-    return await col.findOne({_id: id});
-}
-
-
-
-export async function createRecordsDb(dbName: string, records : Record[], _:IMessages) : Promise<Record[]> {
-    let col = await Connection.getDbCollection(dbName);
-    let dbDef = await getDbDef(dbName);
-
+    // Validate input
     for (let record of records) {
-
         // Validate record
         dieIfErrors(validateRecord(record, dbDef.schema, _, true));
-
-        if (!record._id) {
-            record._id = shortid.generate();
-        }
         record._updateTime = new Date();
     }
 
-    let attrMap = arrayToMap(dbDef.schema.attributes, attr => attr.name);
+    // Enrich / prepare for insertion in DB
     records = records.map(record => toMongo(record, attrMap));
+    let recordsById = mapFromValues(records, record => record._id);
 
-    var bulk = col.initializeUnorderedBulkOp();
-    for (let record of records) {
-        bulk
-            .find({_id: record._id})
-            .upsert().update(
-                {
-                    $set: record,
-                    $setOnInsert: {_creationTime: new Date()}});
+    // Find existing records : only required for sending DataEvents
+    let inputIds = records.map(_ => _._id).filter(id => id !== undefined);
+    let existingRecords = await col.find({_id : {$in : inputIds}}).toArray();
+    let existingRecordsById = mapFromValues(existingRecords, record => record._id);
+
+    console.debug(`Existing records ${existingRecords.length}`);
+
+    // Bulk update existing records
+    if (!isEmpty(existingRecordsById) && !createOnly) {
+        var bulk = col.initializeUnorderedBulkOp();
+        for (let existingId in existingRecordsById) {
+            let previousState = existingRecordsById[existingId];
+            let nextState = recordsById[existingId];
+            bulk
+                .find({_id: existingId})
+                .update({$set: nextState});
+
+            // Send DataUpdate event
+            if (!noNotif) {
+                sendDataEvent({
+                    type:DataEventType.UPDATE,
+                    previousState : fromMongo(previousState, attrMap),
+                    state: fromMongo(nextState, attrMap)
+                })
+            }
+        }
+        await bulk.execute();
     }
-    await bulk.execute();
+
+    // Generate _id for missing ones
+    for (let record of records) {
+        // Find existing records
+        if (!record._id) {
+            record._id = shortid.generate();
+        }
+    }
+
+    let newRecords = records.filter(record => !has(existingRecordsById, record._id));
+    console.debug(`New records ${newRecords.length}`);
+
+    if (newRecords.length > 0) {
+        var bulk = col.initializeUnorderedBulkOp();
+        for (let record of newRecords) {
+            bulk.insert(record);
+            if (!noNotif) {
+                sendDataEvent({
+                    type: DataEventType.CREATE,
+                    state: fromMongo(record, attrMap)
+                })
+            }
+        }
+        await bulk.execute();
+    }
+
     if (records.length == 1) {
         return records.map(record => fromMongo(record, attrMap));
     } else {
@@ -241,13 +270,35 @@ export async function deleteRecordDb(dbName: string, id : string) : Promise<bool
     return true;
 }
 
+// Add or update definition of an alert
 export async function addAlertDb(dbName: string, email:string, filters:Map<string>) : Promise<boolean> {
     let db = await Connection.getDb();
-    let alertsCol = db.collection(ALERTS_COLLECTION);
+    let alertsCol = db.collection(SUBSCRIPTIONS_COLLECTION);
+    let alert : Subscription = {email, filters};
     await alertsCol.findOneAndUpdate({email},
-        {$set : {email, filters}},
+        {$set : alert},
         {upsert:true});
     return true;
+}
+
+
+// Add notification to the "queue" of emails to be sent later
+export async function addNotificationDb(email:string, item:any) : Promise<boolean> {
+    let db = await Connection.getDb();
+    let alertsCol = db.collection(NOTIFICATIONS_COLLECTION);
+    await alertsCol.findOneAndUpdate({email},
+        {
+            $setOnInsert : {email},
+            $addToSet : {items:item}},
+        {upsert:true});
+    return true;
+}
+
+export async function getSubscriptionsDb() : Promise<Subscription[]> {
+    let db = await Connection.getDb();
+    let subscriptionsDb = db.collection(SUBSCRIPTIONS_COLLECTION);
+    // Find all
+    return await subscriptionsDb.find<Subscription>().toArray();
 }
 
 export async function checkAvailability(dbName:string) : Promise<boolean> {
@@ -287,6 +338,21 @@ export async function getDbDef(dbName: string) : Promise<DbDefinition> {
 
 const APPROX_HASH = "approx";
 
+/**
+ * List all fields to be fetched from mongo
+ * @param attributes Attributes to fetch : all by default
+ */
+function projectFields(schema: StructType, attributes: string[] = null) {
+    let attrs = schema.attributes;
+    if (attributes != null) {
+        attrs = attrs.filter(attr =>  includes(attributes, attr.name));
+    }
+    let cols = flatMap(attrs, attr => attr.type.selectColumns(attr.name));
+
+    // {fieldName1: true, fieldName2: true, etc}
+    return mapFromKeys(cols, col => true);
+}
+
 // DataFetcher for SSR : direct access to DB
 export class DbDataFetcher implements DataFetcher {
 
@@ -317,8 +383,9 @@ export class DbDataFetcher implements DataFetcher {
     async getRecord(dbName:string, id:string) : Promise<Record> {
         let col = await Connection.getDbCollection(dbName);
         let dbDef = await getDbDef(dbName);
+        let project = projectFields(dbDef.schema);
 
-        let record = await col.findOne({_id: id});
+        let record = await col.findOne({_id: id}, {projection:project});
 
         if (!record) return null;
 
@@ -327,8 +394,8 @@ export class DbDataFetcher implements DataFetcher {
         return fromMongo(record, attrMap);
     }
 
-    baseQuery(dbName: string, filters: Map<Filter> = {}, search:string=null) : {} {
 
+    baseQuery(dbName: string, filters: Map<Filter> = {}, search:string=null) : {} {
 
         console.debug("Input filters", JSON.stringify(filters))
 
@@ -365,7 +432,9 @@ export class DbDataFetcher implements DataFetcher {
         let dbDef = await this.getDbDefinition(dbName);
         let query = this.baseQuery(dbName, filters, search);
 
-        let cursor = col.find(query);
+        let project = projectFields(dbDef.schema);
+
+        let cursor = col.find(query, {projection: project});
 
         // Sort
         if (sort) {
@@ -379,13 +448,11 @@ export class DbDataFetcher implements DataFetcher {
         if (limit != null) {
             cursor = cursor.limit(limit);
         }
-        let records = await cursor.toArray();
         let attrMap = arrayToMap(dbDef.schema.attributes, attr => attr.name);
+        let records = await cursor.toArray();
 
         return records.map(record => fromMongo(record, attrMap))
     };
-
-
 
 
     @cache
@@ -435,7 +502,8 @@ export class DbDataFetcher implements DataFetcher {
         };
 
         // FIXME security issue : filter fields upon user rights
-        for (let field of extraFields) {
+        let fields  = projectFields(dbDef.schema, extraFields);
+        for (let field in fields) {
             project["record." + field] = "$" + field;
         }
 
@@ -504,12 +572,21 @@ export class DbDataFetcher implements DataFetcher {
         return res;
     }
 
+
     @cache
     async countRecords(dbName: string, filters: Map<Filter> = {}, search:string=null) : Promise<number> {
         let col = await Connection.getDbCollection(dbName);
         let query = this.baseQuery(dbName, filters);
         let cursor = col.find(query);
         return cursor.count();
+    }
+
+
+    async getSubscription(email: string): Promise<Subscription> {
+        let col : Collection<Subscription> = await Connection.getCollection(SUBSCRIPTIONS_COLLECTION);
+        let res = await col.findOne({email:email});
+        delete (res as any)._id;
+        return res;
     }
 
     @cache
@@ -552,13 +629,13 @@ export class DbDataFetcher implements DataFetcher {
                 [attrName + "$"]: {$first: "$" + attrName + "$"}
             };
 
-            if (geo) {
-                // FIXME : location attr name hardcoded
-                groupInstruction["minlon"] = {$min: {$arrayElemAt: ["$location.coordinates", 0]}};
-                groupInstruction["maxlon"] = {$max: {$arrayElemAt: ["$location.coordinates", 0]}};
-                groupInstruction["minlat"] = {$min: {$arrayElemAt: ["$location.coordinates", 1]}};
-                groupInstruction["maxlat"] = {$max: {$arrayElemAt: ["$location.coordinates", 1]}};
-            }
+            // FIXME : We force computation of geo info in order to have it in cache
+            // FIXME : location attr name hardcoded
+            groupInstruction["minlon"] = {$min: {$arrayElemAt: ["$location.coordinates", 0]}};
+            groupInstruction["maxlon"] = {$max: {$arrayElemAt: ["$location.coordinates", 0]}};
+            groupInstruction["minlat"] = {$min: {$arrayElemAt: ["$location.coordinates", 1]}};
+            groupInstruction["maxlat"] = {$max: {$arrayElemAt: ["$location.coordinates", 1]}};
+
 
             await col.aggregate([
                 {$group: groupInstruction},
@@ -588,3 +665,4 @@ export class DbDataFetcher implements DataFetcher {
         });
     }
 }
+

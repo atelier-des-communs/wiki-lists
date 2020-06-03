@@ -3,22 +3,17 @@ import {RouteComponentProps} from "react-router";
 import {Link} from "react-router-dom";
 import {
     DbProps,
-    ReduxEventsProps,
+    UpdateActions,
     SingleRecordPathParams,
-    SingleRecordProps,
-    SingleRecordPropsOnly
 } from "../../common-props";
 import {SingleRecordComponent} from "../../components/single-record-component";
 import {DispatchProp} from "react-redux";
-import {IState} from "../../../redux";
 import {Container, Header, Segment} from "semantic-ui-react";
 import {recordName, recordNameStr} from "../../utils/utils";
 import {EditButtons} from "../../components/edit-button";
 import {GlobalContextProps, withGlobalContext} from "../../context/global-context";
-import {connectComponent} from "../../context/redux-helpers";
 import {createAddItemAction} from "../../../redux";
 import {recordsLink} from "../../../api";
-import {toAnnotatedJson} from "../../../serializer";
 import {getDbName} from "../../../utils";
 import {AsyncDataComponent} from "../../async/async-data-component";
 import {Record} from "../../../model/instances";
@@ -27,9 +22,8 @@ import {HttpError} from "../../../../server/exceptions";
 type SingleRecordPageProps =
     GlobalContextProps &
     DbProps &
-    ReduxEventsProps &
-    RouteComponentProps<SingleRecordPathParams> &
-    DispatchProp<any>;
+    UpdateActions &
+    RouteComponentProps<SingleRecordPathParams>;
 
 class _SingleRecordPage extends AsyncDataComponent<SingleRecordPageProps, Record> {
 

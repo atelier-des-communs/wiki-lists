@@ -2,7 +2,7 @@
 import {RouteComponentProps} from "react-router"
 import {Link} from 'react-router-dom'
 import {Card, Grid} from "semantic-ui-react";
-import {DbPathParams, DbProps, RecordsProps, ReduxEventsProps} from "../common-props";
+import {DbPathParams, DbProps, RecordsProps, UpdateActions} from "../common-props";
 import * as React from "react";
 import {EditButtons} from "./edit-button";
 import {SingleRecordComponent} from "./single-record-component";
@@ -11,7 +11,7 @@ import {GlobalContextProps} from "../context/global-context";
 import {recordName} from "../utils/utils";
 import {getDbName} from "../../utils";
 
-type CardsProps = RecordsProps & DbProps & ReduxEventsProps & RouteComponentProps<DbPathParams> & GlobalContextProps;
+type CardsProps = RecordsProps & DbProps & UpdateActions & RouteComponentProps<DbPathParams> & GlobalContextProps;
 
 export class CardsComponent extends React.Component<CardsProps> {
 

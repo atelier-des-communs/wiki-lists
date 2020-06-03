@@ -5,9 +5,6 @@ import {EditDialog} from "../../dialogs/edit-dialog";
 import {attributesMap, Types} from "../../../model/types";
 import {getDbName, goTo, goToUrl, intToStr, mapMap, mapValues, parseBool, parseParams, strToInt} from "../../../utils";
 import {ButtonWrapper, SafeClickWrapper, SafePopup} from "../../utils/ssr-safe";
-import {DispatchProp} from "react-redux";
-import * as QueryString from "querystring";
-import {RouteComponentProps} from "react-router"
 import {Record} from "../../../model/instances";
 import {FilterSidebar, FiltersPopup, getFiltersComp, SearchComponent} from "../../type-handlers/filters";
 import {
@@ -16,7 +13,7 @@ import {
     extractSearch,
     hasFiltersOrSearch, serializeSortAndFilters
 } from "../../../views/filters";
-import {DbPathParams, DbProps, PageProps, RecordsProps, ReduxEventsProps} from "../../common-props";
+import {DbPathParams, DbProps, PageProps, RecordsProps, UpdateActions} from "../../common-props";
 import {TableComponent} from "../../components/table";
 import {extractGroupBy, groupBy, updatedGroupBy} from "../../../views/group";
 import {Collapsible} from "../../utils/collapsible";
@@ -34,12 +31,9 @@ import {attrLabel} from "../../utils/utils";
 import {
     createAddItemsAction,
     createUpdateCountAction,
-    createUpdatePageAction,
-    IState
+    createUpdatePageAction
 } from "../../../redux";
-import {connectComponent} from "../../context/redux-helpers";
 import {ResponsiveButton} from "../../components/responsive";
-import {toAnnotatedJson} from "../../../serializer";
 import {extractSort} from "../../../views/sort";
 import {RecordsMap} from "./map";
 import {AsyncDataComponent} from "../../async/async-data-component";
@@ -49,13 +43,10 @@ import {DbPageProps} from "./db-page-switch";
 import {CloseableDialog} from "../../dialogs/common-dialog";
 import localStorage from "local-storage";
 
-
 type RecordsPageProps =
     PageProps<DbPathParams> &
     DbProps &
-    ReduxEventsProps &
-    DispatchProp<any>;
-
+    UpdateActions;
 
 // TODO : make it a setting
 let ITEMS_PER_PAGE = 20;
@@ -67,11 +58,9 @@ interface GroupProps {
 
 const HIDE_DESCRIPTION_LS_KEY = (dbname:string) => `${dbname}.hide_desc`;
 
-
 class AsyncSinglePage extends AsyncDataComponent<RecordsPageProps, RecordsProps> {
 
     fetchData(nextProps: RecordsPageProps, nextState: {}): Promise<RecordsProps> | RecordsProps {
-
 
         let state = nextProps.store.getState();
         let query = parseParams(nextProps.location.search);
@@ -94,7 +83,7 @@ class AsyncSinglePage extends AsyncDataComponent<RecordsPageProps, RecordsProps>
 
         } else {
 
-            // We need to fetch it !
+            // We need to fetch it yet !
             return nextProps.dataFetcher.getRecords(
                 getDbName(nextProps),
                 filters, search, sort,

@@ -35,8 +35,8 @@ export function  mapValues<T>(map: {[key:string] : T}) : Array<T> {
 }
 
 /** One line for creating maps from arrays */
-export function  buildMap<T>(list: T[], func: (item:T) => [string, any] ) : Map<any> {
-    let res : Map<any> = {};
+function buildMap<T, U>(list: T[], func: (item:T) => [string, U] ) : Map<U> {
+    let res : Map<U> = {};
     for (let item of list) {
         let [k, val] = func(item);
         res[k] = val;
@@ -44,7 +44,13 @@ export function  buildMap<T>(list: T[], func: (item:T) => [string, any] ) : Map<
     return res;
 }
 
+export function mapFromKeys<T>(keys: string[], func: (key:string) => T ) : Map<T> {
+    return buildMap(keys, (key)=> [key, func(key)] )
+}
 
+export function mapFromValues<T>(values: T[], func: (value:T) => string) : Map<T> {
+    return buildMap(values, (value)=> [func(value), value]);
+}
 
 
 export type OneOrMany<T> = T | T[];

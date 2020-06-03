@@ -20,6 +20,11 @@ export abstract class Type<T> {
         return {[attrname]: value};
     }
 
+    /** Should return the list of columns to be selected */
+    selectColumns(attrName:string) : string[] {
+        return [attrName];
+    }
+
     // @value the value of the field [attrname] in the mongo record
     fromMongo(value : any) : T {
         return value;
@@ -109,6 +114,11 @@ export class LocationType extends Type<ICoord> {
         }
     }
 
+    // Only select data (not index) columns
+    selectColumns(attrName: string): string[] {
+        return [`${attrName}.coordinates`];
+    }
+
     fromMongo(value : any) : ICoord {
         if (value == null) {
             return null;
@@ -145,6 +155,7 @@ export class TextType extends Type<string> {
         return (value === null || typeof(value) === "string");
     }
 
+    // Adds full text search
     toMongo(attrname: string, value: string): any {
         let res = super.toMongo(attrname, value);
 

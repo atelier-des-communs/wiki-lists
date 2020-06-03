@@ -31,7 +31,6 @@ export function setUp(app:Express) {
             .catch((err) => {done(err)})
     });
 
-
     app.post(LOGIN_URL, function (req, res, next) {
 
         // i18n

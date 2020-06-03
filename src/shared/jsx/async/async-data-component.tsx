@@ -9,7 +9,7 @@ import {Loader, Dimmer} from "semantic-ui-react";
 import {isPromise} from "../../utils";
 
 /** Asynchronous component handling correctly promises for SSR. */
-export abstract class AsyncDataComponent<T extends GlobalContextProps, DataType> extends React.Component<T> {
+export abstract class AsyncDataComponent<T extends GlobalContextProps, AsyncDataType> extends React.Component<T> {
 
     className : string;
 
@@ -17,7 +17,8 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps, DataType>
 
     _isMounted : boolean = false;
 
-    asyncData : DataType;
+    // Data that will be fetched on mounting
+    asyncData : AsyncDataType;
 
     constructor(props: T, className:string=null) {
         super(props);
@@ -40,9 +41,10 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps, DataType>
      *  on SSR for full render.
      *  In case of "infinite" loop, the SSR will still stop after a few fetch process (5 or so) and return an incomplete page
      */
-    abstract fetchData(nextProps: T, nextState:{}) :  Promise<DataType> | DataType;
+    abstract fetchData(nextProps: T, nextState:{}) :  Promise<AsyncDataType> | AsyncDataType;
 
     doFetch(props:T, state:{}): void {
+
         // Don't fetch data twice
         if (this.loading) {
             return;
@@ -53,7 +55,8 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps, DataType>
         console.debug("Async Fetched data for", this.className, res);
 
         if (isPromise(res)) {
-            let promise = res as Promise<DataType>;
+
+            let promise = res as Promise<AsyncDataType>;
             this.loading = true;
 
             this.props.promises.push(
@@ -74,10 +77,9 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps, DataType>
                         this.setState({});
                     }
                     this.setState({});
-                    throw e;
             }));
         } else {
-            this.asyncData=res as DataType;
+            this.asyncData=res as AsyncDataType;
         }
     }
 
@@ -94,38 +96,9 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps, DataType>
     render() {
         return <div style={{position:'relative'}} >
             {this.loading && <div style={{position:'absolute', width:"100%", height:5, top:0}} className="animatedStripes" />}
-            {this.renderLoaded()}
+            {this.asyncData ? this.renderLoaded() : null}
         </div>
     }
 
 
-}
-
-
-// Higher order function wrapping a component with async data fetching
-// FIXME: remove this, too much complex
-export function withAsyncData<OwnProps,AsyncProps>(
-    fetchData:(props: Readonly<OwnProps & GlobalContextProps>) => AsyncProps | Promise<AsyncProps>)
-{
-    return (WrappedComponent: React.ComponentType<AsyncProps & OwnProps>, name:string=null): React.ComponentClass<OwnProps> => {
-
-        class WithAsyncData extends AsyncDataComponent<OwnProps & GlobalContextProps, AsyncProps> {
-
-
-            constructor(props: OwnProps & GlobalContextProps) {
-                super(props, name || (WrappedComponent as any).name + "#async");
-            }
-
-
-            fetchData(props:OwnProps & GlobalContextProps) {
-                return fetchData(props);
-            }
-
-            public renderLoaded() {
-                return <WrappedComponent {...this.props} {...this.asyncData} />;
-            }
-        }
-
-        return withGlobalContext(WithAsyncData);
-    }
 }

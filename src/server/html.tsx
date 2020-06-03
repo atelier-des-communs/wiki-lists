@@ -145,12 +145,11 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
             counts : {},
             geoMarkers : {},
             dbDefinition: null, // Will be fetched asynchronously
-            user: req.user as IUser};
+            subscriptions: {}};
 
         const store = createStore(
             reducers,
             toImmutable(initialState));
-
 
         let serverCookies : ICookies = {
             get : (name:string) => {
@@ -171,7 +170,7 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
         do {
             let globalContext: GlobalContextProps = {
                 store,
-                dataFetcher: new DbDataFetcher(req),
+                dataFetcher: new DbDataFetcher(req), // Direct access to DB
                 lang:lang.key,
                 messages:lang.messages,
                 cookies:serverCookies,

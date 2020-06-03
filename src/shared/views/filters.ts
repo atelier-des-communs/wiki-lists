@@ -147,7 +147,11 @@ export class TextFilter implements IFilter<string> {
             value = "";
         }
         let normVal = normalize(value);
-        return normVal.indexOf(this.searchNorm) > -1;
+        if (this.exact) {
+            return normVal == this.searchNorm
+        } else {
+            return normVal.indexOf(this.searchNorm) > -1;
+        }
     }
 
     mongoFilter(): any {
@@ -534,16 +538,14 @@ export function serializeSearch(search:string) {
 }
 
 
-export function applyFilters(records: Record[], filters : Map<IFilter<any>>) : Record[] {
-    return records.filter((record) => {
-        for (let name in filters) {
-            let filter = filters[name];
-            if (!filter.filter(record[name])) {
-                return false;
-            }
+export function applyFilters(record: Record, filters : Map<IFilter<any>>) : boolean {
+    for (let name in filters) {
+        let filter = filters[name];
+        if (!filter.filter(record[name])) {
+            return false;
         }
-        return true;
-    });
+    }
+    return true;
 }
 
 export function applySearchAndFilters(records: Record[], params:Map<string>, schema:StructType) {

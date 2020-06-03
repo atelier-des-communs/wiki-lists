@@ -36,7 +36,7 @@ import stringify from "json-stringify-deterministic";
 import {RecordPopup} from "../../components/record-popup";
 import * as tilebelt from "tilebelt";
 
-type MapProps = GlobalContextProps & DbProps & PageProps<DbPathParams> & DispatchProp<{}>;
+type MapProps = GlobalContextProps & DbProps & PageProps<DbPathParams>;
 
 const DEFAULT_VIEWPORT : Viewport = {
     center : [46, 2],

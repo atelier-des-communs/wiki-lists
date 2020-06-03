@@ -45,7 +45,10 @@ export function attrLabel(attr:Attribute, _:IMessages) : string {
     if (attr == null) {
         return null;
     }
+
+    // No i18n ? Use attribute technical name
     let res = (_ === null) ? attr.name : attr.label || attr.name;
+
     if (res[0] == "@") {
         let key = res.substr(1);
         return (_ as any)[key];

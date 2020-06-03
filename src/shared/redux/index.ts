@@ -9,13 +9,14 @@ import {toAnnotatedJson} from "../serializer";
 import {IUser} from "../model/user";
 import {Cluster} from "../model/geo";
 import {Marker} from "../api";
+import {Subscription} from "../model/notifications";
 
 
 export type Pages = Map<string[]>;
 
 export interface IState {
     /** id => Rescord */
-    items : {[key:string] : Record};
+    items : Map<Record>;
 
     // Indexed by filters
     geoMarkers : Map<Marker[]>;
@@ -28,8 +29,11 @@ export interface IState {
 
     // Definition of DB
     dbDefinition : DbDefinition;
-    user: IUser;
+
+    // Subscriptions
+    subscriptions : Map<Subscription>;
 }
+
 
 export enum ActionType {
     ADD_ITEM = "ADD_ITEM",
@@ -38,10 +42,10 @@ export enum ActionType {
     DELETE_ITEM = "DELETE_ITEM",
     UPDATE_SCHEMA = "UPDATE_SCHEMA",
     UPDATE_DB = "UPDATE_DB",
-    UPDATE_USER = "UPDATE_USER",
     UPDATE_COUNT = "UPDATE_COUNT",
     UPDATE_PAGE = "UPDATE_PAGE",
-    UPDATE_MARKERS = "UPDATE_MARKERS"
+    UPDATE_MARKERS = "UPDATE_MARKERS",
+    UPDATE_SUBSCRIPTION = "UPDATE_SUBSCRIPTION"
 }
 
 interface ActionWithRecord extends Action {
@@ -80,10 +84,6 @@ export class UpdateDbAction implements Action {
     public dbDef: DbDefinition;
 }
 
-export class UpdateUserAction implements Action {
-    public type = ActionType.UPDATE_USER;
-    public user: IUser;
-}
 
 // SortedPages actions
 export class UpdateCountAction {
@@ -104,6 +104,10 @@ export class UpdateMarkersAction {
     public markersByKey : Map<(Cluster | Record)[]>;
 }
 
+export class UpdateSubscriptionAction {
+    public type = ActionType.UPDATE_SUBSCRIPTION;
+    public subscription : Subscription;
+}
 
 
 export function createAddItemAction(record: Record) : AddItemAction {
@@ -125,8 +129,9 @@ export function createUpdateSchema(schema:StructType) : UpdateSchemaAction {
 export function createUpdateDbAction(dbDef:DbDefinition) : UpdateDbAction {
     return {type:ActionType.UPDATE_DB, dbDef:toImmutableJson(dbDef)};
 }
-export function createUpdateUserAction(user:IUser) : UpdateUserAction {
-    return {type:ActionType.UPDATE_USER, user:toImmutableJson(user)};
+
+export function createUpdateSubscriptionAction(subscription: Subscription) : UpdateSubscriptionAction {
+    return {type:ActionType.UPDATE_SUBSCRIPTION, subscription:toImmutableJson(subscription)};
 }
 export function createUpdateCountAction(queryKey: string, count:number) : UpdateCountAction {
     return {type:ActionType.UPDATE_COUNT, queryKey, count}
@@ -145,9 +150,9 @@ export type TAction  =
     AddItemAction |
     AddItemsAction |
     DeleteItemAction |
-    UpdateUserAction |
     UpdateCountAction |
     UpdatePageAction |
+    UpdateSubscriptionAction |
     UpdateMarkersAction;
 
 
@@ -188,13 +193,6 @@ function dbDefReducer(dbDef:Immutable.ImmutableObject<DbDefinition> = null, acti
     return dbDef;
 }
 
-function userReducer(user: Immutable.ImmutableObject<IUser> = null, action : TAction) {
-    if (action.type == ActionType.UPDATE_USER) {
-        return (action as UpdateUserAction).user;
-    } else {
-        return user;
-    }
-}
 
 function pagesReducer(state: Immutable.ImmutableObject<Map<Pages>> = null, action : TAction) {
     if (action.type == ActionType.UPDATE_PAGE) {
@@ -228,6 +226,15 @@ function markersReducer(state: Immutable.ImmutableObject<Map<Marker[]>> = null, 
     }
 }
 
+function subscriptionReducer(state: Immutable.ImmutableObject<Map<Subscription>> = null, action : TAction) {
+    if (action.type == ActionType.UPDATE_SUBSCRIPTION) {
+        let subscription = (action as UpdateSubscriptionAction).subscription;
+        return state.set(subscription.email, subscription);
+    } else {
+        return state;
+    }
+}
+
 /** Combine reducers */
 export let reducers : Reducer<IState> = combineReducers ({
     items: itemsReducer,
@@ -235,7 +242,7 @@ export let reducers : Reducer<IState> = combineReducers ({
     pages : pagesReducer,
     counts : countReducer,
     geoMarkers : markersReducer,
-    user:userReducer
+    subscriptions:subscriptionReducer
 });
 
 /** Transform live object into immutable JSON with @class attributes to be put in store :

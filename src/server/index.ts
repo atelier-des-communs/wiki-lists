@@ -14,6 +14,7 @@ import '../shared/model';
 import {config} from "./config";
 import {parseBool} from "../shared/utils";
 import * as responseTime from "response-time";
+import {setupAlertHandler} from "./notifications/alerts";
 
 const MAX_AGE  = 30 * 24 * 3600 * 1000; // One month
 
@@ -57,7 +58,13 @@ export default function initServer(dist_paths:string[]) : express.Express {
     // Should be last, as it contains 404 page
     setUpHtml(server);
 
+    setupJobs();
+
     return server;
+}
+
+function setupJobs() {
+    setupAlertHandler();
 }
 
 let langSettings =  {

@@ -2,14 +2,24 @@
 // Displays a common header (title and description) and handle route switching to other pages
 
 import * as React from 'react';
-import {DbPathParams, DbProps, PageProps, ReduxEventsProps, SingleRecordPathParams} from "../../common-props";
-import {GlobalContextProps} from "../../context/global-context";
+import {
+    DbPathParams,
+    DbProps,
+    PageProps,
+    UpdateActions,
+    SingleRecordPathParams,
+    UpdateActionsImpl
+} from "../../common-props";
+import {GlobalContextProps, withGlobalContext} from "../../context/global-context";
 import {Route, RouteComponentProps, Switch} from "react-router"
 import {createUpdateDbAction, IState} from "../../../redux";
-import {withSystemAttributes} from "../../../model/instances";
-import {connectComponent} from "../../context/redux-helpers";
-import {DispatchProp} from "react-redux";
-import {COOKIE_PREFIX, RECORDS_ADMIN_PATH, RECORDS_PATH, recordsLink, SINGLE_RECORD_PATH} from "../../../api";
+import {
+    RECORDS_ADMIN_PATH,
+    RECORDS_PATH,
+    recordsLink,
+    SINGLE_RECORD_PATH,
+    SUBSCRIPTION_PATH
+} from "../../../api";
 import {RecordsPage} from "./records-page";
 import {SingleRecordPage} from "./single-record-page";
 import {Header} from "../layout/header";
@@ -17,9 +27,10 @@ import {Link} from 'react-router-dom';
 import back from "../../../img/back.png";
 import {Button, Message} from "semantic-ui-react";
 import {AccessRight, hasRight} from "../../../access";
-import {toTypedObjects} from "../../../serializer";
 import {nl2br} from "../../utils/utils";
 import {getDbName} from "../../../utils";
+
+
 
 // FIXME: Find a way to only import this when required
 import { SemanticToastContainer } from 'react-semantic-toasts';
@@ -27,34 +38,43 @@ import {Footer} from "../layout/main-layout";
 import {AboutPage} from "../about";
 import {withAsyncImport} from "../../async/async-import-component";
 import localStorage from "local-storage";
+import {AsyncDataComponent} from "../../async/async-data-component";
+import {SubscriptionComponent} from "./subscription";
 
-export type DbPageProps =
-    PageProps<DbPathParams> &
-    DbProps & // mapped from redux react
-    ReduxEventsProps &
-    DispatchProp<any>;
+export type LightDbPageProps = PageProps<DbPathParams> & DbProps;
+export type DbPageProps = LightDbPageProps & UpdateActions;
 
 const HIDE_LINKS_LS_KEY = (db_name:string) => {return `${db_name}_hide_links`};
 
-class _DbPageSwitch extends React.Component<DbPageProps>{
+class _DbPageSwitch extends AsyncDataComponent<PageProps<DbPathParams> & UpdateActions, DbProps>{
 
     hideLinks() {
-        localStorage(HIDE_LINKS_LS_KEY(this.props.db.name), true);
+        localStorage(HIDE_LINKS_LS_KEY(this.asyncData.db.name), true);
         // force redraw
         this.setState({});
     }
 
-    render() {
-        let props = this.props;
-        let _ = props.messages;
-        let db = props.db;
-
-        console.debug("Rendering db page switch with props : ", props);
-
-        if (!db) {
-            console.debug("Waiting fetch of schema ...");
-            return null;
+    fetchData(nextProps: DbPageProps, nextState: {}): Promise<DbProps> | DbProps {
+        let state = this.props.store.getState();
+        if (!state.dbDefinition) {
+            // FIXME : caching should be done in dataFEtcher
+            return this.props.dataFetcher
+                .getDbDefinition(getDbName(this.props))
+                .then((dbDef) => {
+                    this.props.store.dispatch(createUpdateDbAction(dbDef));
+                    return {db:dbDef};
+                });
+        } else {
+            return {db:state.dbDefinition};
         }
+    }
+
+    renderLoaded() {
+
+        let props = {...this.props, db: this.asyncData.db};
+        let updateActions = new UpdateActionsImpl(props);
+        let _ = props.messages;
+        let db = this.asyncData.db;
 
         let base_url = location.protocol + '//' + location.host;
 
@@ -67,7 +87,7 @@ class _DbPageSwitch extends React.Component<DbPageProps>{
             RECORDS_PATH(props.config).
                 replace(":db_name", getDbName(props));
 
-        let hideLinks = localStorage(HIDE_LINKS_LS_KEY(this.props.db.name));
+        let hideLinks = localStorage(HIDE_LINKS_LS_KEY(props.db.name));
 
         let AsyncAboutPage = withAsyncImport(
             () => import("../about").then(
@@ -121,8 +141,16 @@ class _DbPageSwitch extends React.Component<DbPageProps>{
 
                 <Switch>
                     <Route path="/about" render={(props:RouteComponentProps<DbPathParams>) => <AsyncAboutPage />} />
-                    <Route path={SINGLE_RECORD_PATH(props.config)} render={(props: RouteComponentProps<SingleRecordPathParams>) => <SingleRecordPage  {...this.props} {...props} />}/>
-                    <Route path={RECORDS_PATH(props.config)} render={(props:RouteComponentProps<DbPathParams>) => <RecordsPage {...this.props} {...props}  />}/>
+
+                    <Route path={SUBSCRIPTION_PATH(props.config)} render={(routepprops:RouteComponentProps<DbPathParams>) =>
+                        <SubscriptionComponent {...props} {...routepprops} {...updateActions} />}/>
+
+                    <Route path={SINGLE_RECORD_PATH(props.config)} render={(routepprops: RouteComponentProps<SingleRecordPathParams>) =>
+                        <SingleRecordPage  {...props} {...routepprops} {...updateActions} />}/>
+
+                    <Route path={RECORDS_PATH(props.config)} render={(routepprops:RouteComponentProps<DbPathParams>) =>
+                        <RecordsPage {...props} {...routepprops} {...updateActions} />}/>
+
                 </Switch>
             </div>
 
@@ -134,38 +162,5 @@ class _DbPageSwitch extends React.Component<DbPageProps>{
 }
 
 
-// Filter data from Redux store and map it to props
-// FIXME : quite useless => async data is enough
-const mapStateToProps = (state : IState, props?: RouteComponentProps<{}> & GlobalContextProps) : DbProps => {
-
-    if (!state.dbDefinition) {
-        return {db:null}
-    }
-
-    // Transform immutable object into "live" one.
-    let db = toTypedObjects(state.dbDefinition);
-
-    // FIXME : Might not be the right place to add system properties to schema
-    db.schema = withSystemAttributes(db.schema);
-    return {db}
-};
-
-// Async fetch of dbDefinition
-function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>) : Promise<DbProps> | DbProps {
-    let state = props.store.getState();
-    if (!state.dbDefinition) {
-        return props.dataFetcher
-            .getDbDefinition(getDbName(props))
-            .then((dbDef) => {
-                props.store.dispatch(createUpdateDbAction(dbDef));
-                return {db:dbDef};
-            });
-    } else {
-        return {db:state.dbDefinition};
-    }
-}
-
 // Connect to Redux
-export let DbPageSwitch = connectComponent(
-    mapStateToProps,
-    fetchData)(_DbPageSwitch);
+export const DbPageSwitch = withGlobalContext(_DbPageSwitch);
