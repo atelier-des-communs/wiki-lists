@@ -288,3 +288,11 @@ export function debug(...args: any[]) {
 export function closeTo(a:number, b:number, epsilon:number=0.0000001) {
     return Math.abs(a - b) < epsilon;
 }
+
+export function humanReadableCount(count:number) : string {
+    if (count < 1000) {
+        return intToStr(count);
+    } else {
+        return intToStr(Math.round(count / 1000)) + " k";
+    }
+}

@@ -4,7 +4,7 @@ import * as request from "supertest";
 import {messages as _} from "../../../server/i18n/en-GB";
 dotenv.config({path:"test.env"});
 
-import config from "../../../server/config";
+import {config} from "../../../server/config";
 import * as path from "path";
 import * as core from "express-serve-static-core";
 import * as morgan from "morgan";

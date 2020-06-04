@@ -16,7 +16,6 @@ import {selectLanguage, LANGUAGES} from "./i18n/messages";
 import * as escapeHtml from "escape-html";
 import {toAnnotatedJson} from "../shared/serializer";
 import {cloneDeep} from "lodash";
-import {IUser} from "../shared/model/user";
 import {cache, getCache} from "./cache";
 import * as md5 from "md5";
 import stringify from "json-stringify-deterministic";

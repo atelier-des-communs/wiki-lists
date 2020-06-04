@@ -12,7 +12,7 @@ import {
     closeTo,
     getDbName,
     goTo,
-    goToResettingPage,
+    goToResettingPage, humanReadableCount,
     Map,
     parseBool,
     parseParams
@@ -408,7 +408,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
                     fillOpacity={0.8}
                     onClick={() => this.zoomOn(cluster)} >
                     <Tooltip permanent direction="center" className="count-tooltip" >
-                        {cluster.count}
+                        {humanReadableCount(cluster.count)}
                     </Tooltip>
                 </CircleMarker>
             }

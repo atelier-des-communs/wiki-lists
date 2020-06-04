@@ -3,7 +3,18 @@ import * as React from 'react';
 import {Button, Dropdown, Header, Responsive, Pagination, Grid, Message, Container} from 'semantic-ui-react'
 import {EditDialog} from "../../dialogs/edit-dialog";
 import {attributesMap, Types} from "../../../model/types";
-import {getDbName, goTo, goToUrl, intToStr, mapMap, mapValues, parseBool, parseParams, strToInt} from "../../../utils";
+import {
+    getDbName,
+    goTo,
+    goToUrl,
+    humanReadableCount,
+    intToStr,
+    mapMap,
+    mapValues,
+    parseBool,
+    parseParams,
+    strToInt
+} from "../../../utils";
 import {ButtonWrapper, SafeClickWrapper, SafePopup} from "../../utils/ssr-safe";
 import {Record} from "../../../model/instances";
 import {FilterSidebar, FiltersPopup, getFiltersComp, SearchComponent} from "../../type-handlers/filters";
@@ -261,7 +272,7 @@ export class AsyncPaging extends AsyncDataComponent<RecordsPageProps, CountProps
                         onPageChange={(e, {activePage}) => {this.goToPage(activePage)}} />
 
                 <span style={{color:"gray"}}>
-                    &nbsp;{this.asyncData.count} {_.elements}
+                    &nbsp;{humanReadableCount(this.asyncData.count)} {_.elements}
                 </span>
             </div>;
 
