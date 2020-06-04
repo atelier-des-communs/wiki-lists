@@ -5,6 +5,7 @@ import {DbDefinition} from "./model/db-def";
 import {Language} from "./i18n/messages";
 import {IUser} from "./model/user";
 import {get} from "../client/rest/common";
+import {Controller, Get, PathParams, QueryParams} from "@tsed/common";
 
 
 // HTML
@@ -79,4 +80,14 @@ export interface DataFetcher {
     getRecords(dbName: string) : Promise<Record[]>;
     getDbDefinition(dbName:string) : Promise<DbDefinition>;
     listDbDefinitions() : Promise<DbDefinition[]>;
+}
+
+@Controller('/rest')
+export abstract class HelloWorldController {
+
+    @Get('/helloworld/:name')
+    async helloWorld(@PathParams({expression:"name", required:true}) name: string) : Promise<string> {
+        throw Error("Not implemented");
+    }
+
 }

@@ -16,6 +16,7 @@ import {selectLanguage, supportedLanguages} from "./i18n/messages";
 import * as escapeHtml from "escape-html";
 import {toAnnotatedJson} from "../shared/serializer";
 import Config from "./config";
+import {Router} from "express";
 
 const BUNDLE_ROOT = (process.env.NODE_ENV === "production") ?  '/static' : 'http://localhost:8081/static';
 
@@ -171,13 +172,11 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
     }
 }
 
+let router = Router();
+router.get("/*", function(req:Request, res:Response) {
+    returnPromiseWithCode(res, renderApp(req));
+});
 
-export function setUp(server : Express) {
+export default router;
 
 
-    // Any other request => use React-Routing
-    server.get("/*", function(req:Request, res:Response) {
-        returnPromiseWithCode(res, renderApp(req));
-    });
-
-}

@@ -8,6 +8,7 @@ import {deepClone, Map} from "../shared/utils";
 import {Workbook} from "exceljs";
 import {Request, Response} from "express-serve-static-core"
 import {attrLabel} from "../shared/jsx/utils/utils";
+import {Router} from "express";
 
 enum ExportType {
     JSON = "json",
@@ -69,12 +70,15 @@ async function exportAs(db_name:string, req:Request, res:Response, exportType: E
     }
 }
 
-export function setUp(server : Express) {
-    server.get(DOWNLOAD_JSON_URL, function(req:Request, res:Response) {
-        exportAs(req.params.db_name, req, res, ExportType.JSON);
-    });
+let router = Router();
 
-    server.get(DOWNLOAD_XLS_URL, function(req:Request, res:Response) {
-        exportAs(req.params.db_name, req, res, ExportType.EXCEL);
-    });
-}
+router.get(DOWNLOAD_JSON_URL, function(req:Request, res:Response) {
+    exportAs(req.params.db_name, req, res, ExportType.JSON);
+});
+
+router.get(DOWNLOAD_XLS_URL, function(req:Request, res:Response) {
+    exportAs(req.params.db_name, req, res, ExportType.EXCEL);
+});
+
+export default router;
+

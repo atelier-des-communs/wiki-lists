@@ -65,6 +65,16 @@ client_loaders.ts = {
         {loader:"ts-loader"}]
 };
 
+server_loaders.ts = {
+    test: /\.tsx?$/,
+    use: [{
+        loader: "ts-loader",
+        options : {
+            configFile: "tsconfig.server.json"
+        }
+    }],
+}
+
 // For SSR we need different CSS loader
 server_loaders["css"] = {
     test: /\.css$/,

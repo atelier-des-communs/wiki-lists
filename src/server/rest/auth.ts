@@ -6,14 +6,16 @@ import Config from "../config";
 import {sendMail} from "../email/email";
 import {Token, User} from "../db/mongoose";
 import {emailTemplates} from "../email/templates";
+import {Router} from "express";
 
 // Expiration of link in minutes
 const LINK_EXPIRATION = 30
 
-export function setUp(app:Express) {
 
 
-    app.get(LOGIN_URL, async function (req, res) {
+let router = Router();
+
+router.get(LOGIN_URL, async function (req, res) {
 
         // i18n
         let _ = selectLanguage(req).messages;
@@ -43,7 +45,7 @@ export function setUp(app:Express) {
 
     });
 
-    app.get(LOGOUT_URL, function (req, res, next) {
+router.get(LOGOUT_URL, function (req, res, next) {
 
         req.session.destroy(function (err) {
             if (err) {
@@ -55,7 +57,7 @@ export function setUp(app:Express) {
 
     });
 
-    app.post(SEND_CONNECT_LINK, async function (req, res, next) {
+router.post(SEND_CONNECT_LINK, async function (req, res, next) {
 
         let email = req.query.email;
 
@@ -73,7 +75,8 @@ export function setUp(app:Express) {
         });
 
     });
-}
+
+export default router;
 
 
 

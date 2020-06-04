@@ -30,6 +30,7 @@ import {selectLanguage} from "../i18n/messages";
 import {toAnnotatedJson, toTypedObjects} from "../../shared/serializer";
 import {DbDefinition} from "../../shared/model/db-def";
 import * as mung from "express-mung";
+import {Router} from "express";
 
 async function addItemAsync(req:Request) : Promise<Record> {
     let record = req.body as Record;
@@ -102,56 +103,58 @@ let decorateOutput: mung.Transform = (body, req, res) => {
 };
 
 
-export function setUp(server:Express) {
+let router = Router(); 
+
 
 
     // Add middleware in input / output to transform into json with type information
-    server.use(API_BASE_URL, safeInput);
-    server.use(API_BASE_URL, mung.json(decorateOutput));
+router.use(API_BASE_URL, safeInput);
+router.use(API_BASE_URL, mung.json(decorateOutput));
 
-    // Routes
+// Routes
+router.post(ADD_ITEM_URL, function (req: Request, res: Response) {
+    returnPromise(res, addItemAsync(req));
+});
 
-    server.post(ADD_ITEM_URL, function (req: Request, res: Response) {
-        returnPromise(res, addItemAsync(req));
-    });
+router.post(UPDATE_ITEM_URL, function (req: Request, res: Response) {
+    returnPromise(res, updateItemAsync(req));
+});
 
-    server.post(UPDATE_ITEM_URL, function (req: Request, res: Response) {
-        returnPromise(res, updateItemAsync(req));
-    });
+router.delete(DELETE_ITEM_URL, function (req: Request, res: Response) {
+    returnPromise(res, deleteItemAsync(req));
+});
 
-    server.delete(DELETE_ITEM_URL, function (req: Request, res: Response) {
-        returnPromise(res, deleteItemAsync(req));
-    });
+router.post(UPDATE_SCHEMA_URL, function (req: Request, res: Response) {
+    returnPromise(res, updateSchemaAsync(req));
+});
 
-    server.post(UPDATE_SCHEMA_URL, function (req: Request, res: Response) {
-        returnPromise(res, updateSchemaAsync(req));
-    });
+router.post(CREATE_DB_URL, function (req: Request, res: Response) {
+    returnPromise(res, createDbAsync(req, res));
+});
 
-    server.post(CREATE_DB_URL, function (req: Request, res: Response) {
-        returnPromise(res, createDbAsync(req, res));
-    });
+router.get(CHECK_DB_NAME, function (req: Request, res: Response) {
+    returnPromise(res, checkAvailability(req.params.db_name));
+});
 
-    server.get(CHECK_DB_NAME, function (req: Request, res: Response) {
-        returnPromise(res, checkAvailability(req.params.db_name));
-    });
+router.get(GET_ITEM_URL, function (req: Request, res: Response) {
+    returnPromise(res, new DbDataFetcher(req).getRecord(req.params.db_name, req.params.id));
+});
 
-    server.get(GET_ITEM_URL, function (req: Request, res: Response) {
-        returnPromise(res, new DbDataFetcher(req).getRecord(req.params.db_name, req.params.id));
-    });
+router.get(GET_ITEMS_URL, function (req: Request, res: Response) {
+    returnPromise(res, new DbDataFetcher(req).getRecords(req.params.db_name));
+});
 
-    server.get(GET_ITEMS_URL, function (req: Request, res: Response) {
-        returnPromise(res, new DbDataFetcher(req).getRecords(req.params.db_name));
-    });
+router.get(LIST_DEFINITIONS_URL, function (req: Request, res: Response) {
+    returnPromise(res, new DbDataFetcher(req).listDbDefinitions());
+});
 
-    server.get(LIST_DEFINITIONS_URL, function (req: Request, res: Response) {
-        returnPromise(res, new DbDataFetcher(req).listDbDefinitions());
-    });
+router.get(GET_DB_DEFINITION_URL, function (req: Request, res: Response) {
+    returnPromise(res, new DbDataFetcher(req).getDbDefinition(req.params.db_name));
+});
 
-    server.get(GET_DB_DEFINITION_URL, function (req: Request, res: Response) {
-        returnPromise(res, new DbDataFetcher(req).getDbDefinition(req.params.db_name));
-    });
+export default router;
 
-}
+
 
 
 
