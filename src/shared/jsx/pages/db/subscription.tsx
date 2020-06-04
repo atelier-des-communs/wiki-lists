@@ -4,7 +4,6 @@ import {AsyncDataComponent} from "../../async/async-data-component";
 import {Subscription} from "../../../model/notifications";
 import {createUpdateSubscriptionAction} from "../../../redux";
 import {AlertForm} from "../../components/alert-form";
-import {parseParams} from "../../../utils";
 import {extractFilters} from "../../../views/filters";
 import {Container} from "semantic-ui-react";
 

@@ -1,5 +1,16 @@
 import * as React from "react";
-import {Button, Checkbox, Divider, Grid, Header, Icon, Modal, Input, Popup, Segment, Search, SearchResultProps} from "semantic-ui-react";
+import {
+    Button,
+    Checkbox,
+    Divider,
+    Grid,
+    Header,
+    Input,
+    Modal,
+    Search,
+    SearchResultProps,
+    Segment
+} from "semantic-ui-react";
 import {
     BooleanFilter,
     clearFiltersOrSearch,
@@ -13,29 +24,27 @@ import {
     serializeSearch,
     TextFilter
 } from "../../views/filters";
-import {RouteComponentProps, withRouter} from "react-router";
-import {Attribute, StructType, TextType, Types} from "../../model/types";
+import {withRouter} from "react-router";
+import {Attribute, TextType, Types} from "../../model/types";
 import {
-    copyArr, empty,
+    copyArr,
+    empty,
     getDbName,
-    goTo,
     goToResettingPage,
-    isIn, Map,
+    isIn,
+    Map,
     parseParams,
     remove,
     stopPropag,
     strToInt
 } from "../../utils";
 import * as debounce from "debounce";
-import {ButtonWrapper, SafePopup} from "../utils/ssr-safe";
+import {ButtonWrapper} from "../utils/ssr-safe";
 import {attrLabel, ellipsis} from "../utils/utils";
 import {ValueHandler} from "./editors";
-import {MessagesProps} from "../../i18n/messages";
-import {ResponsiveButton} from "../components/responsive";
 import {DbPageProps} from "../pages/db/db-page-switch";
 import {Autocomplete} from "../../api";
 import {viewPortToQuery} from "../pages/db/map";
-import {GlobalContextProps} from "../context/global-context";
 import {isEqual} from "lodash";
 
 

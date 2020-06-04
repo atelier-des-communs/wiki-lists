@@ -1,6 +1,5 @@
-import {Attribute, attributesMap, StructType} from "../model/types";
+import {attributesMap, StructType} from "../model/types";
 import {Map, parseBool} from "../utils";
-
 
 
 function attrNameToQueryParam(attrName: string) {

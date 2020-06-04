@@ -1,7 +1,5 @@
-
-import {Record} from "../../shared/model/instances";
 import {Rule, RuleEngine} from "./rules/rule-engine";
-import {addNotificationDb, getSubscriptionsDb, getDbDef} from "../db/db";
+import {addNotificationDb, getDbDef, getSubscriptionsDb} from "../db/db";
 import {config} from "../config";
 import {extractFilters} from "../../shared/views/filters";
 import {DataEvent} from "./events";

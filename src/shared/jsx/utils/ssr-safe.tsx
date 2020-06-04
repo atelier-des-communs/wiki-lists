@@ -1,6 +1,5 @@
-import {Popup, PopupProps, Button, ButtonProps} from "semantic-ui-react";
+import {Button, ButtonProps, Popup, PopupProps} from "semantic-ui-react";
 import * as React from "react";
-import {RecordPopup} from "../components/record-popup";
 
 type NoSSRProps = {
     onSSR: React.ReactNode,

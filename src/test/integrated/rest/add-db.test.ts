@@ -2,8 +2,6 @@ import MongoMemoryServer from 'mongodb-memory-server';
 import *  as dotenv from "dotenv";
 import * as request from "supertest";
 import {messages as _} from "../../../server/i18n/en-GB";
-dotenv.config({path:"test.env"});
-
 import {config} from "../../../server/config";
 import * as path from "path";
 import * as core from "express-serve-static-core";
@@ -11,6 +9,8 @@ import * as morgan from "morgan";
 import * as fs from "fs";
 import * as serverModule from "../../../../dist/server/server.bundle";
 import {LOGIN_URL, VALIDATION_ERROR_STATUS_CODE} from "../../../shared/api";
+
+dotenv.config({path:"test.env"});
 
 const DB_PORT = 4444;
 const SERVER_PORT = 8083;

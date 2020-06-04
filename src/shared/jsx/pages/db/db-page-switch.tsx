@@ -6,20 +6,14 @@ import {
     DbPathParams,
     DbProps,
     PageProps,
-    UpdateActions,
     SingleRecordPathParams,
+    UpdateActions,
     UpdateActionsImpl
 } from "../../common-props";
-import {GlobalContextProps, withGlobalContext} from "../../context/global-context";
+import {withGlobalContext} from "../../context/global-context";
 import {Route, RouteComponentProps, Switch} from "react-router"
-import {createUpdateDbAction, IState} from "../../../redux";
-import {
-    RECORDS_ADMIN_PATH,
-    RECORDS_PATH,
-    recordsLink,
-    SINGLE_RECORD_PATH,
-    SUBSCRIPTION_PATH
-} from "../../../api";
+import {createUpdateDbAction} from "../../../redux";
+import {RECORDS_ADMIN_PATH, RECORDS_PATH, recordsLink, SINGLE_RECORD_PATH, SUBSCRIPTION_PATH} from "../../../api";
 import {RecordsPage} from "./records-page";
 import {SingleRecordPage} from "./single-record-page";
 import {Header} from "../layout/header";
@@ -29,13 +23,9 @@ import {Button, Message} from "semantic-ui-react";
 import {AccessRight, hasRight} from "../../../access";
 import {nl2br} from "../../utils/utils";
 import {getDbName} from "../../../utils";
-
-
-
 // FIXME: Find a way to only import this when required
-import { SemanticToastContainer } from 'react-semantic-toasts';
+import {SemanticToastContainer} from 'react-semantic-toasts';
 import {Footer} from "../layout/main-layout";
-import {AboutPage} from "../about";
 import {withAsyncImport} from "../../async/async-import-component";
 import localStorage from "local-storage";
 import {AsyncDataComponent} from "../../async/async-data-component";

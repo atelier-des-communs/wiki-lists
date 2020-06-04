@@ -1,6 +1,6 @@
 import {Attribute, EnumType, StructType, TextType, Types} from "../../shared/model/types";
 import {config} from "../config"
-import {Logger, MongoClient, Collection, ObjectId} from "mongodb";
+import {Collection, Logger, MongoClient} from "mongodb";
 import {Record, withSystemAttributes} from "../../shared/model/instances";
 import {validateSchemaAttributes} from "../../shared/validators/schema-validators";
 import {dieIfErrors} from "../../shared/validators/validators";
@@ -25,10 +25,10 @@ import * as shortid from "shortid";
 import {DbDefinition} from "../../shared/model/db-def";
 import {Filter, LocationFilter} from "../../shared/views/filters";
 import {ISort} from "../../shared/views/sort";
-import {registerClass, toTypedObjects} from "../../shared/serializer";
+import {toTypedObjects} from "../../shared/serializer";
 import {BadRequestException, HttpError} from "../exceptions";
 import {cache} from "../cache";
-import {assign, cloneDeep, flatMap, includes, isEmpty, has} from "lodash";
+import {assign, cloneDeep, flatMap, has, includes, isEmpty} from "lodash";
 import * as tilebelt from "tilebelt";
 import {ApproxCluster} from "../../shared/model/geo";
 import {Subscription} from "../../shared/model/notifications";

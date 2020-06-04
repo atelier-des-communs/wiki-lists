@@ -1,25 +1,14 @@
 import * as React from "react";
 import {CloseableDialog, ValidatingDialog} from "./common-dialog";
 import {Button, Header, Icon, Modal} from "semantic-ui-react";
-import {ErrorsContext} from "../utils/validation-errors";
 import {DbPageProps} from "../pages/db/db-page-switch";
-import {EnumFilter, extractFilters, NumberFilter, serializeFilters, TextFilter} from "../../views/filters";
-import {
-    debug,
-    filterSingle,
-    getDbName,
-    Map,
-    mapValues,
-    parseParams
-} from "../../utils";
-import {Attribute} from "../../model/types";
+import {extractFilters, serializeFilters} from "../../views/filters";
+import {debug, getDbName, mapValues, parseParams} from "../../utils";
 
 import {addAlert} from "../../../client/rest/client-db";
-import { toast } from 'react-semantic-toasts';
+import {toast} from 'react-semantic-toasts';
 
-import {AlertForm, AREA_ATTR, CITY_ATTR, TYPE_ATTR} from "../components/alert-form";
-import {ValidatingForm} from "../components/validating-form";
-
+import {AlertForm} from "../components/alert-form";
 
 
 export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDialog> {

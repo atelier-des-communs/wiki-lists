@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Card, Container, Icon, SemanticICONS, Header, Image} from "semantic-ui-react";
+import {Card, Container, Header, Icon, Image, SemanticICONS} from "semantic-ui-react";
 import logoAtelierDesCommuns from "../../img/atelier-des-communs.png";
 
 

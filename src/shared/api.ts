@@ -1,4 +1,3 @@
-
 import {IState} from "./redux/index";
 import {Record} from "./model/instances";
 import {DbDefinition} from "./model/db-def";

@@ -1,13 +1,20 @@
 import {
     ADD_ALERT_URL,
-    ADD_ITEM_URL, API_BASE_URL, AUTOCOMPLETE_URL,
-    CHECK_DB_NAME, CLEAR_CACHE,
-    COOKIE_DURATION, COUNT_ITEMS_URL,
+    ADD_ITEM_URL,
+    API_BASE_URL,
+    AUTOCOMPLETE_URL,
+    CHECK_DB_NAME,
+    CLEAR_CACHE,
+    COOKIE_DURATION,
+    COUNT_ITEMS_URL,
     CREATE_DB_URL,
     DELETE_ITEM_URL,
     GET_DB_DEFINITION_URL,
-    GET_ITEM_URL, GET_ITEMS_GEO_URL,
-    GET_ITEMS_URL, GET_SUBSCRIPTION, INIT_INDEXES_URL,
+    GET_ITEM_URL,
+    GET_ITEMS_GEO_URL,
+    GET_ITEMS_URL,
+    GET_SUBSCRIPTION,
+    INIT_INDEXES_URL,
     SECRET_COOKIE,
     UPDATE_ITEM_URL,
     UPDATE_SCHEMA_URL
@@ -18,14 +25,16 @@ import {
     createDb,
     createOrUpdateRecordsDb,
     DbDataFetcher,
-    deleteRecordDb, getDbDef, setUpIndexesDb,
+    deleteRecordDb,
+    getDbDef,
+    setUpIndexesDb,
     updateSchemaDb
 } from "../db/db";
 import {Record} from "../../shared/model/instances";
 import {dbNameSSR, requiresRight, returnPromise, traverse} from "../utils";
 import {Express} from "express";
 import {StructType} from "../../shared/model/types";
-import {Request, Response, RequestHandler} from "express-serve-static-core"
+import {Request, RequestHandler, Response} from "express-serve-static-core"
 import {AccessRight} from "../../shared/access";
 import * as xss from "xss";
 import {selectLanguage} from "../i18n/messages";
@@ -33,16 +42,12 @@ import {toAnnotatedJson, toTypedObjects} from "../../shared/serializer";
 import {DbDefinition} from "../../shared/model/db-def";
 import * as mung from "express-mung";
 import {extractSort} from "../../shared/views/sort";
-import {empty, Map, oneToArray, parseBool, slug, sortBy, strToInt} from "../../shared/utils";
-import {extractFilters, extractSearch, Filter, TextFilter} from "../../shared/views/filters";
-
-import {unwrapAxiosResponse} from "../../client/rest/common";
+import {empty, Map, oneToArray, parseBool, strToInt} from "../../shared/utils";
+import {extractFilters, extractSearch, TextFilter} from "../../shared/views/filters";
 import {config} from "../config";
 import {BadRequestException, ForbiddenException, HttpError} from "../exceptions";
 import * as request from "request-promise";
 import {clearCache} from "../cache";
-import {NotFoundPage} from "../../shared/jsx/pages/not-found";
-import {sendMail} from "../notifications/mailer";
 import {sendNewAlertEmail} from "../notifications/templates/new-alert-template";
 
 

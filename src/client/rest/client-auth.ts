@@ -1,6 +1,5 @@
-import {DbDefinition} from "../../shared/model/db-def";
 import {post} from "./common";
-import {CREATE_DB_URL, LOGIN_URL} from "../../shared/api";
+import {LOGIN_URL} from "../../shared/api";
 import {LoginProps} from "../../server/rest/auth";
 import {IUser} from "../../shared/model/user";
 

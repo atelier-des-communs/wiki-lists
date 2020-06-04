@@ -1,13 +1,13 @@
-import {DbPathParams, PageProps, UpdateActions, SingleRecordProps} from "../common-props";
+import {DbPathParams, PageProps, SingleRecordProps, UpdateActions} from "../common-props";
 import {HashLink} from "react-router-hash-link"
 import {Button} from "semantic-ui-react"
-import {ButtonWrapper, SafeClickWrapper} from "../utils/ssr-safe";
+import {ButtonWrapper} from "../utils/ssr-safe";
 import * as React from "react";
 import {EditDialog} from "../dialogs/edit-dialog";
 import {AccessRight, hasRight} from "../../access";
-import {filterSingle, goTo, goToUrl, updatedQuery} from "../../utils";
+import {filterSingle, updatedQuery} from "../../utils";
 import {RecordPopup} from "./record-popup";
-import {LocationType, Types} from "../../model/types";
+import {Types} from "../../model/types";
 import {viewPortToQuery} from "../pages/db/map";
 import {ICoord} from "../../model/geo";
 

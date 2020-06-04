@@ -1,5 +1,4 @@
 import * as kue from "kue";
-import {config} from "../config";
 
 
 var queue = kue.createQueue();

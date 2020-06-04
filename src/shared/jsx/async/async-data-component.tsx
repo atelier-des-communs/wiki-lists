@@ -4,8 +4,7 @@
  * all of them to resolve and re-rendering.
  */
 import * as React from "react";
-import {GlobalContextProps, withGlobalContext} from "../context/global-context";
-import {Loader, Dimmer} from "semantic-ui-react";
+import {GlobalContextProps} from "../context/global-context";
 import {isPromise} from "../../utils";
 
 /** Asynchronous component handling correctly promises for SSR. */

@@ -1,12 +1,12 @@
 import * as React from "react";
 import {Attribute, StructType} from "../../model/types";
-import {Button, Form, Header, Icon, Message, Modal,} from "semantic-ui-react";
+import {Button, Form, Header, Icon, Modal,} from "semantic-ui-react";
 import {ValidationErrors} from "../../validators/validators";
 import {CloseableDialog, ValidatingDialog} from "./common-dialog";
 import {nonSystemAttributes} from "../../model/instances";
 import {IMessages} from "../../i18n/messages";
 import {AddButtonPosition, AttributeList} from "./parts/attribute-list";
-import {RemainingErrorsPlaceholder, ErrorsContext} from "../utils/validation-errors";
+import {ErrorsContext, RemainingErrorsPlaceholder} from "../utils/validation-errors";
 import {cloneDeep} from "lodash";
 
 interface SchemaDialogProps extends CloseableDialog {

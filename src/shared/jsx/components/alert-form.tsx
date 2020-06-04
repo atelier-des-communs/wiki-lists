@@ -1,16 +1,15 @@
 import * as React from "react";
-import {EnumFilter, Filter, NumberFilter, serializeFilters, TextFilter} from "../../views/filters";
+import {EnumFilter, Filter, NumberFilter, TextFilter} from "../../views/filters";
 import {ValidationErrors, ValidationException} from "../../validators/validators";
 import {DbPageProps} from "../pages/db/db-page-switch";
 import {CloseableDialog} from "../dialogs/common-dialog";
 import {isEqual} from "lodash";
 import {ErrorPlaceholder, ErrorsContext, RemainingErrorsPlaceholder} from "../utils/validation-errors";
 import {EnumFilterComponent, NumberFilterComponent, TextFilterComponent} from "../type-handlers/filters";
-import {Button, Form, Grid, Header, Icon, Label, Message, Modal, Input} from "semantic-ui-react";
+import {Form, Header, Input, Label, Message} from "semantic-ui-react";
 import ReCAPTCHA from "react-google-recaptcha";
-import {empty, emptyMap, filterSingle, getDbName, Map, mapValues} from "../../utils";
+import {empty, emptyMap, filterSingle, Map} from "../../utils";
 import {Attribute} from "../../model/types";
-import {addAlert} from "../../../client/rest/client-db";
 import {ValidatingForm} from "./validating-form";
 
 export const CITY_ATTR = "commune";

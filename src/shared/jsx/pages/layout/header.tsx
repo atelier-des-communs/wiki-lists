@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Button, Flag} from "semantic-ui-react";
-import {LANG_COOKIE, LOGIN_PAGE_PATH} from "../../../api";
+import {LANG_COOKIE} from "../../../api";
 import {GlobalContextProps} from "../../context/global-context";
 
 /** Common header : showing language switch and login */

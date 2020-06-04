@@ -1,7 +1,7 @@
 import * as React from "react";
 import {withGlobalContext} from "../context/global-context";
 import {Button, Container, Form, Input, TextArea} from "semantic-ui-react";
-import {RECORDS_PATH, recordsLink} from "../../api";
+import {recordsLink} from "../../api";
 import {slug} from "../../utils";
 import {Attribute, StructType, TextType} from "../../model/types";
 import {IMessages} from "../../i18n/messages";

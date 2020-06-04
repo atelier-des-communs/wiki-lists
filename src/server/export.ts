@@ -2,15 +2,14 @@ import {DOWNLOAD_JSON_URL, DOWNLOAD_XLS_URL} from "../shared/api";
 import {Express} from "express";
 import {extractDisplays} from "../shared/views/display";
 import {Record} from "../shared/model/instances";
-import {applySearchAndFilters, extractFilters, extractSearch} from "../shared/views/filters";
+import {extractFilters, extractSearch} from "../shared/views/filters";
 import {DbDataFetcher} from "./db/db";
-import {Map, sortBy} from "../shared/utils";
+import {Map} from "../shared/utils";
 import {Workbook} from "exceljs";
 import {Request, Response} from "express-serve-static-core"
 import {attrLabel} from "../shared/jsx/utils/utils";
 import {extractSort} from "../shared/views/sort";
 import {cloneDeep} from "lodash";
-import {AttributeDisplay} from "../shared/model/types";
 import {dbNameSSR} from "./utils";
 
 enum ExportType {

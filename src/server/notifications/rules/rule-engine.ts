@@ -1,5 +1,5 @@
-import {applyFilters, extractFilters, IFilter} from "../../../shared/views/filters";
-import {DataEventType, DataEvent} from "../events";
+import {applyFilters, IFilter} from "../../../shared/views/filters";
+import {DataEvent, DataEventType} from "../events";
 import {Map} from "../../../shared/utils";
 import {Record} from "../../../shared/model/instances";
 

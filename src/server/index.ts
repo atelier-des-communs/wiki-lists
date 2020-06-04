@@ -8,7 +8,7 @@ import {setUp as setUpRest} from "./rest/db";
 import {setUp as setUpHtml} from "./html";
 import {setUp as setUpExport} from "./export";
 import {LANGUAGES} from "./i18n/messages";
-import {LANG_COOKIE, COOKIE_DURATION} from "../shared/api";
+import {LANG_COOKIE} from "../shared/api";
 import '../shared/model';
 import {config} from "./config";
 import {parseBool} from "../shared/utils";

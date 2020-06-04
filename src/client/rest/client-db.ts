@@ -1,28 +1,30 @@
-import Axios, {AxiosPromise} from "axios";
 import {Record} from "../../shared/model/instances";
 import {
     ADD_ALERT_URL,
-    ADD_ITEM_URL, Autocomplete, AUTOCOMPLETE_URL,
-    CHECK_DB_NAME, COUNT_ITEMS_URL,
+    ADD_ITEM_URL,
+    Autocomplete,
+    AUTOCOMPLETE_URL,
+    CHECK_DB_NAME,
+    COUNT_ITEMS_URL,
     CREATE_DB_URL,
     DataFetcher,
     DELETE_ITEM_URL,
     GET_DB_DEFINITION_URL,
-    GET_ITEM_URL, GET_ITEMS_GEO_URL,
-    GET_ITEMS_URL, GET_SUBSCRIPTION, Marker,
+    GET_ITEM_URL,
+    GET_ITEMS_GEO_URL,
+    GET_ITEMS_URL,
+    GET_SUBSCRIPTION,
+    Marker,
     UPDATE_ITEM_URL,
-    UPDATE_SCHEMA_URL,
-    VALIDATION_ERROR_STATUS_CODE
+    UPDATE_SCHEMA_URL
 } from "../../shared/api";
 import {StructType} from "../../shared/model/types";
-import {ValidationErrors} from "../../shared/validators/validators";
 import {DbDefinition} from "../../shared/model/db-def";
 import {empty, Map, mapValues} from "../../shared/utils";
-import {post, get, del} from "./common";
+import {del, get, post} from "./common";
 import {Filter, serializeFilters, serializeSearch, serializeSortAndFilters} from "../../shared/views/filters";
 import {ISort} from "../../shared/views/sort";
 import * as QueryString from "querystring";
-import {Cluster} from "../../shared/model/geo";
 import {Subscription} from "../../shared/model/notifications";
 
 /** Return the full item with new _id */

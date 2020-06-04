@@ -3,7 +3,7 @@ import {Button, Header, Icon} from "semantic-ui-react";
 import * as React from "react";
 import {RouteComponentProps} from "react-router";
 import {Attribute, attributesMap, StructType} from "../../model/types";
-import {goTo, goToResettingPage, parseParams} from "../../utils";
+import {goToResettingPage, parseParams} from "../../utils";
 import {extractSort, ISort, serializeSort} from "../../views/sort";
 import {SafePopup} from "../utils/ssr-safe";
 import {attrLabel, ellipsis} from "../utils/utils";

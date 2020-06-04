@@ -1,5 +1,5 @@
 import * as React from "react";
-import {GlobalContextProps, withGlobalContext} from "../context/global-context";
+import {withGlobalContext} from "../context/global-context";
 import {Button, Container} from "semantic-ui-react";
 import {Link} from "react-router-dom";
 import {CREATE_DB_PATH} from "../../api";
