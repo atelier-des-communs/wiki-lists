@@ -57,10 +57,13 @@ let cdnPaths : string[] = [];
 const MANIFEST_FILE = process.cwd() + '/dist/client/manifest.json';
 if (fs.existsSync(MANIFEST_FILE)) {
     const manifest = JSON.parse(fs.readFileSync('./dist/client/manifest.json', 'utf8'));
+
     console.debug("manifest :", manifest);
+
     for (let key in manifest) {
         let url = manifest[key];
         if (endsWith(key, '.js') && url.indexOf("https") > -1) {
+            // FIXME : /static/ is prepended to paths : don't know why
             cdnPaths.push(url.replace("/static/", ""));
         }
     }
