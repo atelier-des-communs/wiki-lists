@@ -414,7 +414,7 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
                     title={`${_.view_type} : ${_.table_view}`}
                     active={viewType == ViewType.TABLE}
                     onClick={() => setViewType(ViewType.TABLE)} />
-            <Button icon="grid layout"
+            <Button icon="th large"
                     title={`${_.view_type} : ${_.card_view}`}
                     active={viewType == ViewType.CARDS}
                     onClick={() => setViewType(ViewType.CARDS)}/>

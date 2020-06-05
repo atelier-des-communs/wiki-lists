@@ -39,8 +39,6 @@ export class SingleRecordComponent extends  React.Component<SingleRecordComponen
 
                     &nbsp;
 
-                    {props.large && <br/>}
-
                     <ValueHandler
                         {...props}
                         editMode={false}

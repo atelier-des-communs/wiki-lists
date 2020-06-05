@@ -5,7 +5,7 @@ import {createStore} from "redux";
 import {App} from "../shared/app";
 import "../shared/favicon.png";
 import {IState, reducers} from "../shared/redux";
-import {DbDataFetcher} from "./db/db";
+import {SSRDataFetcher} from "./db/db";
 import {toImmutable} from "../shared/utils";
 import {Express} from "express";
 import {ContentWithStatus, dbNameSSR, returnPromiseWithCode} from "./utils";
@@ -171,7 +171,7 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
         do {
             let globalContext: GlobalContextProps = {
                 store,
-                dataFetcher: new DbDataFetcher(req), // Direct access to DB
+                dataFetcher: new SSRDataFetcher(req), // Direct access to DB
                 lang:lang.key,
                 messages:lang.messages,
                 cookies:serverCookies,

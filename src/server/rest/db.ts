@@ -1,5 +1,5 @@
 import {
-    ADD_ALERT_URL,
+    ADD_SUBSCRIPTION_URL,
     ADD_ITEM_URL,
     API_BASE_URL,
     AUTOCOMPLETE_URL,
@@ -17,18 +17,18 @@ import {
     INIT_INDEXES_URL,
     SECRET_COOKIE,
     UPDATE_ITEM_URL,
-    UPDATE_SCHEMA_URL
+    UPDATE_SCHEMA_URL, VALIDATION_ERROR_STATUS_CODE, UPDATE_SUBSCRIPTION_URL
 } from "../../shared/api";
 import {
-    addAlertDb,
+    setSubscriptionDb,
     checkAvailability,
     createDb,
     createOrUpdateRecordsDb,
-    DbDataFetcher,
+    SSRDataFetcher,
     deleteRecordDb,
     getDbDef,
     setUpIndexesDb,
-    updateSchemaDb
+    updateSchemaDb, updateSubscriptionDb
 } from "../db/db";
 import {Record} from "../../shared/model/instances";
 import {dbNameSSR, requiresRight, returnPromise, traverse} from "../utils";
@@ -49,6 +49,12 @@ import {BadRequestException, ForbiddenException, HttpError} from "../exceptions"
 import * as request from "request-promise";
 import {clearCache} from "../cache";
 import {sendNewAlertEmail} from "../notifications/templates/new-alert-template";
+import * as crypto from "crypto";
+import {Subscription} from "../../shared/model/notifications";
+import * as HttpStatus from "http-status-codes";
+import {updateSubscription} from "../../client/rest/client-db";
+
+
 
 
 const CAPTCHA_CHECK_URL="https://www.google.com/recaptcha/api/siteverify"
@@ -127,7 +133,7 @@ async function createDbAsync(req:Request, res:Response) : Promise<boolean>{
     return true;
 }
 
-async function addAlertAsync(req:Request, res:Response) : Promise<boolean> {
+async function addSubscriptionAsync(req:Request) : Promise<boolean> {
 
     let filters = req.body.filters as Map<string>;
     let email = req.body.email as string;
@@ -153,7 +159,7 @@ async function addAlertAsync(req:Request, res:Response) : Promise<boolean> {
         throw new BadRequestException("Invalid captcha");
     }
 
-    await addAlertDb(dbNameSSR(req), email, filters);
+    await setSubscriptionDb(dbNameSSR(req), {email, filters});
 
     let filtersObjs = extractFilters(schema.schema, filters);
 
@@ -164,6 +170,8 @@ async function addAlertAsync(req:Request, res:Response) : Promise<boolean> {
 
     return true;
 }
+
+
 
 function sanitizeJson(input:any) {
     let xssFunc = (obj: any, prop: string, value: any) : any => {
@@ -222,8 +230,15 @@ export function setUp(server:Express) {
         returnPromise(res, createDbAsync(req, res));
     });
 
-    server.post(ADD_ALERT_URL, function (req: Request, res: Response) {
-        returnPromise(res, addAlertAsync(req, res));
+    server.post(ADD_SUBSCRIPTION_URL, function (req: Request, res: Response) {
+        returnPromise(res, addSubscriptionAsync(req));
+    });
+
+    server.post(UPDATE_SUBSCRIPTION_URL, function (req: Request, res: Response) {
+        returnPromise(res, updateSubscriptionDb(
+            dbNameSSR(req),
+            req.body,
+            req.query.secret));
     });
 
     server.get(CHECK_DB_NAME, function (req: Request, res: Response) {
@@ -231,16 +246,16 @@ export function setUp(server:Express) {
     });
 
     server.get(GET_ITEM_URL, function (req: Request, res: Response) {
-        returnPromise(res, new DbDataFetcher(req).getRecord(dbNameSSR(req), req.params.id).then(
+        returnPromise(res, new SSRDataFetcher(req).getRecord(dbNameSSR(req), req.params.id).then(
             record => {
-                if (record == null) throw new HttpError(404, "Record not found");
+                if (record == null) throw new HttpError(HttpStatus.NOT_FOUND, "Record not found");
                 return record;
             }));
     });
 
     server.get(AUTOCOMPLETE_URL, function (req: Request, res: Response) {
 
-        returnPromise(res, new DbDataFetcher(req).autocomplete(
+        returnPromise(res, new SSRDataFetcher(req).autocomplete(
             dbNameSSR(req),
             req.params.attr,
             req.query.q,
@@ -249,7 +264,7 @@ export function setUp(server:Express) {
 
     server.get(GET_ITEMS_URL, async function (req: Request, res: Response) {
 
-        let fetcher = new DbDataFetcher(req);
+        let fetcher = new SSRDataFetcher(req);
         let schema = await fetcher.getDbDefinition(dbNameSSR(req));
 
         // Extract filters
@@ -270,7 +285,7 @@ export function setUp(server:Express) {
 
     server.get(GET_ITEMS_GEO_URL, async function (req: Request, res: Response) {
 
-        let fetcher = new DbDataFetcher(req);
+        let fetcher = new SSRDataFetcher(req);
         let schema = await fetcher.getDbDefinition(dbNameSSR(req));
 
         // Extract filters
@@ -290,7 +305,7 @@ export function setUp(server:Express) {
 
     server.get(COUNT_ITEMS_URL, async function (req: Request, res: Response) {
 
-        let fetcher = new DbDataFetcher(req);
+        let fetcher = new SSRDataFetcher(req);
         let schema = await fetcher.getDbDefinition(dbNameSSR(req));
 
         // Search & filter
@@ -305,15 +320,19 @@ export function setUp(server:Express) {
     });
 
     server.get(GET_SUBSCRIPTION, async function (req: Request, res: Response) {
-        let fetcher = new DbDataFetcher(req);
-        returnPromise(res, fetcher.getSubscription(req.query.email));
+        let fetcher = new SSRDataFetcher(req);
+        returnPromise(res,
+            fetcher.getSubscription(
+                req.query.email,
+                req.query.secret));
     });
 
     server.get(GET_DB_DEFINITION_URL, function (req: Request, res: Response) {
-        returnPromise(res, new DbDataFetcher(req).getDbDefinition(dbNameSSR(req)));
+        returnPromise(res, new SSRDataFetcher(req).getDbDefinition(dbNameSSR(req)));
     });
 
 }
+
 
 
 

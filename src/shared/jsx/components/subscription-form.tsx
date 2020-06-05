@@ -16,9 +16,10 @@ export const CITY_ATTR = "commune";
 export const TYPE_ATTR = "type";
 export const AREA_ATTR = "superficie_locaux";
 
-interface AlertFormProps {
+interface SubscriptionFormProps {
     filters : Map<Filter>,
     email:string
+    update?:boolean
 }
 
 
@@ -34,10 +35,10 @@ interface IState  {
     loading:boolean;
 }
 
-type Props = AlertFormProps & DbPageProps
+type Props = SubscriptionFormProps & DbPageProps
 
 
-export class AlertForm extends ValidatingForm<Props> {
+export class SubscriptionForm extends ValidatingForm<Props> {
 
     state : IState;
     attrs : Map<Attribute> = {};
@@ -102,7 +103,7 @@ export class AlertForm extends ValidatingForm<Props> {
             errors["email"] = "Email invalide"
         }
 
-        if (empty(this.state.captcha)) {
+        if (!this.props.update && empty(this.state.captcha)) {
             errors["captcha"] = "Veuillez cocher le captcha";
         }
 
@@ -140,28 +141,34 @@ export class AlertForm extends ValidatingForm<Props> {
                                     <Label circular color="red" size="tiny" empty />
                                 </Header>
 
-                                <p>Votre email ne sera ni diffusé ni utilisé autrement que pour ces alertes.</p>
+                                {
+                                    this.props.update ? null :
+                                    <p>Votre email ne sera ni diffusé ni utilisé autrement que pour ces alertes.</p>
+                                }
 
-                                <Input size="small" type="email" value={this.state.email} onChange={(e, data) => {
+                                <Input disabled={this.props.update} size="small" type="email" value={this.state.email} onChange={(e, data) => {
                                     this.setState({email: data.value});
                                 }} />
                                 <ErrorPlaceholder attributeKey="email" />
 
                             </Form.Field>
-                            <Form.Field >
-                                <Header
-                                    title={_.mandatory_attribute}>
-                                    Captcha
-                                    <Label circular color="red" size="tiny" empty />
-                                </Header>
 
-                                <ReCAPTCHA
-                                    sitekey={this.props.config.captcha_key}
-                                    onChange={(token) => this.setState({captcha:token})}
-                                />
-                                <ErrorPlaceholder attributeKey="captcha" />
+                            {this.props.update ? null : <>
+                                <Form.Field >
+                                    <Header
+                                        title={_.mandatory_attribute}>
+                                        Captcha
+                                        <Label circular color="red" size="tiny" empty />
+                                    </Header>
 
-                            </Form.Field>
+
+                                        <ReCAPTCHA
+                                            sitekey={this.props.config.captcha_key}
+                                            onChange={(token) => this.setState({captcha: token})}
+                                        />
+                                        <ErrorPlaceholder attributeKey="captcha" />
+                                </Form.Field>
+                            </>}
                         </Form.Group>
 
 

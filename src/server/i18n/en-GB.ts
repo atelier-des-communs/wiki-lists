@@ -139,8 +139,13 @@ export let messages : IMessages = {
 
     update_list_from_map : "Filter list for this area",
     search : "search",
-    no_results: "pas de résultat"
+    no_results: "no result",
 
+    error_occured : "an error happened",
+
+    you_are_unuscribed: "you have been unsuscribed",
+    you_are_unuscribed_long: "you have been unsuscribed and won't receive emails anymore",
+    subscribe_again : "subscribe again"
 };
 
 // Make messages globally available (this file is imported directly)

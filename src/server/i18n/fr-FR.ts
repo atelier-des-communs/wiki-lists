@@ -147,8 +147,13 @@ export let messages : IMessages = {
     update_list_from_map : "Filtrer la liste dans cette zone",
 
     search : "recherche",
-    no_results: "no result"
+    no_results: "pas de résultat",
 
+    error_occured : "une erreur est survenue",
+
+    you_are_unuscribed: "vous êtes désinscrit",
+    you_are_unuscribed_long: "vous avez été désincrit de cette liste et ne recevrez plus d'email.",
+    subscribe_again : "réinscrivez vous"
 };
 
 // Make messages globally available (this file is imported directly)

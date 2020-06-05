@@ -5,10 +5,10 @@ import {DbPageProps} from "../pages/db/db-page-switch";
 import {extractFilters, serializeFilters} from "../../views/filters";
 import {debug, getDbName, mapValues, parseParams} from "../../utils";
 
-import {addAlert} from "../../../client/rest/client-db";
+import {addSubscription} from "../../../client/rest/client-db";
 import {toast} from 'react-semantic-toasts';
 
-import {AlertForm} from "../components/alert-form";
+import {SubscriptionForm} from "../components/subscription-form";
 
 
 export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDialog> {
@@ -25,11 +25,11 @@ export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDial
 
     async validateInternal() {
 
-        let form = this.refs.form as AlertForm;
+        let form = this.refs.form as SubscriptionForm;
 
         await form.validate();
 
-        await addAlert(
+        await addSubscription(
             getDbName(this.props),
             form.state.email,
             form.state.captcha,
@@ -58,7 +58,7 @@ export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDial
                 <Header icon='bell' content="S'abonner aux alertes"/>
 
                 <Modal.Content>
-                    <AlertForm ref="form" {...this.props} filters={filters} email={""} />
+                    <SubscriptionForm ref="form" {...this.props} filters={filters} email={""} />
                 </Modal.Content>
 
                 <Modal.Actions>

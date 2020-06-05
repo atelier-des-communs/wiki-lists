@@ -6,6 +6,8 @@
 import * as React from "react";
 import {GlobalContextProps} from "../context/global-context";
 import {isPromise} from "../../utils";
+import {HttpError} from "../../../server/exceptions";
+import {IMessages} from "../../i18n/messages";
 
 /** Asynchronous component handling correctly promises for SSR. */
 export abstract class AsyncDataComponent<T extends GlobalContextProps, AsyncDataType> extends React.Component<T> {
@@ -13,6 +15,8 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps, AsyncData
     className : string;
 
     loading:boolean;
+
+    error : string = null;
 
     _isMounted : boolean = false;
 
@@ -45,7 +49,7 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps, AsyncData
     doFetch(props:T, state:{}): void {
 
         // Don't fetch data twice
-        if (this.loading) {
+        if (this.loading || (this.error !== null)) {
             return;
         }
 
@@ -71,10 +75,13 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps, AsyncData
                     }
                 }).catch((e) => {
                     this.loading = false;
-                    // Trigger update
-                    if (this._isMounted) {
-                        this.setState({});
+
+                    if (e instanceof HttpError) {
+                        this.error = e.message;
+                    } else {
+                        this.error = e;
                     }
+
                     this.setState({});
             }));
         } else {
@@ -93,7 +100,15 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps, AsyncData
     abstract renderLoaded() : React.ReactNode;
 
     render() {
-        return <div style={{position:'relative'}} >
+
+        let _ : IMessages = this.props.messages;
+
+        return (this.error !== null) ? <>
+            <h4>{_.error_occured}</h4>
+            <p>
+                {this.error}
+            </p>
+        </> : <div style={{position:'relative'}} >
             {this.loading && <div style={{position:'absolute', width:"100%", height:5, top:0}} className="animatedStripes" />}
             {this.asyncData ? this.renderLoaded() : null}
         </div>
