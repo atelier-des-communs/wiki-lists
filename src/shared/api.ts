@@ -1,4 +1,3 @@
-
 import {IState} from "./redux/index";
 import {Record} from "./model/instances";
 import {DbDefinition} from "./model/db-def";
@@ -13,7 +12,7 @@ import {Subscription} from "./model/notifications";
 // HTML
 export const CREATE_DB_PATH = "/create-db";
 export const RECORDS_PATH = (config : SharedConfig) =>  config.singleDb ? "" : "/db/:db_name";
-export const SUBSCRIPTION_PATH = (config : SharedConfig) => RECORDS_PATH(config) + "/subscription/:email/:secret";
+export const SUBSCRIPTION_PATH = (config : SharedConfig) => RECORDS_PATH(config) + "/subscription/:email";
 export const RECORDS_ADMIN_PATH = (config : SharedConfig) => RECORDS_PATH(config) + "@:db_pass" ;
 export const SINGLE_RECORD_PATH = (config : SharedConfig) => RECORDS_PATH(config) + "/:id";
 export const LOGIN_PAGE_PATH = "/login";
@@ -47,7 +46,8 @@ export const COUNT_ITEMS_URL = "/api/:db_name/count";
 export const AUTOCOMPLETE_URL = "/api/:db_name/autocomplete/:attr";
 export const GET_DB_DEFINITION_URL = "/api/:db_name/definition";
 
-export const ADD_ALERT_URL = "/api/:db_name/add_alert";
+export const ADD_SUBSCRIPTION_URL = "/api/:db_name/add_subscription";
+export const UPDATE_SUBSCRIPTION_URL = "/api/:db_name/update_subscription";
 export const GET_SUBSCRIPTION = "/api/subscription";
 
 // Auth
@@ -101,12 +101,14 @@ export interface DataFetcher {
     // Get records location, potentially grouped by clusters
     getRecordsGeo(dbName: string, zoom:number, filters?: Map<Filter>, search?:string, extraFields?:string[]) : Promise<Marker[]>;
 
-    getSubscription(email:string) : Promise<Subscription>;
+    getSubscription(email:string, secret:string) : Promise<Subscription>;
 
     countRecords(dbName: string, filters?: Map<Filter>, search?:string) : Promise<number>;
     getDbDefinition(dbName:string) : Promise<DbDefinition>;
 
 
     autocomplete(dbName:string, attrName:string, query:string, geo?:boolean) : Promise<Autocomplete[]>;
+
+    updateSubscription(dbName:string, subscription:Subscription, secret:string) : Promise<boolean>;
 
 }

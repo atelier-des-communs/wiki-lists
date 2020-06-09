@@ -5,23 +5,21 @@ import {createStore} from "redux";
 import {App} from "../shared/app";
 import "../shared/favicon.png";
 import {IState, reducers} from "../shared/redux";
-import {DbDataFetcher} from "./db/db";
+import {SSRDataFetcher} from "./db/db";
 import {toImmutable} from "../shared/utils";
 import {Express} from "express";
 import {ContentWithStatus, dbNameSSR, returnPromiseWithCode} from "./utils";
 import {Request, Response} from "express-serve-static-core"
-import {COOKIE_DURATION, IMarshalledContext, RECORDS_ADMIN_PATH, SECRET_COOKIE, SharedConfig} from "../shared/api";
+import {COOKIE_DURATION, IMarshalledContext, RECORDS_ADMIN_PATH, SECRET_COOKIE} from "../shared/api";
 import {GlobalContextProps, HeadSetter, ICookies} from "../shared/jsx/context/global-context";
-import {selectLanguage, LANGUAGES} from "./i18n/messages";
+import {LANGUAGES, selectLanguage} from "./i18n/messages";
 import * as escapeHtml from "escape-html";
 import {toAnnotatedJson} from "../shared/serializer";
-import {cloneDeep} from "lodash";
-import {IUser} from "../shared/model/user";
-import {cache, getCache} from "./cache";
+import {cloneDeep, endsWith} from "lodash";
+import {getCache} from "./cache";
 import * as md5 from "md5";
 import stringify from "json-stringify-deterministic";
 import * as fs from 'fs';
-import {endsWith} from 'lodash';
 import {config, sharedConfig} from "./config";
 import socialPreview from "../shared/img/social-preview.jpg"
 
@@ -59,10 +57,13 @@ let cdnPaths : string[] = [];
 const MANIFEST_FILE = process.cwd() + '/dist/client/manifest.json';
 if (fs.existsSync(MANIFEST_FILE)) {
     const manifest = JSON.parse(fs.readFileSync('./dist/client/manifest.json', 'utf8'));
+
     console.debug("manifest :", manifest);
+
     for (let key in manifest) {
         let url = manifest[key];
         if (endsWith(key, '.js') && url.indexOf("https") > -1) {
+            // FIXME : /static/ is prepended to paths : don't know why
             cdnPaths.push(url.replace("/static/", ""));
         }
     }
@@ -170,7 +171,7 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
         do {
             let globalContext: GlobalContextProps = {
                 store,
-                dataFetcher: new DbDataFetcher(req), // Direct access to DB
+                dataFetcher: new SSRDataFetcher(req), // Direct access to DB
                 lang:lang.key,
                 messages:lang.messages,
                 cookies:serverCookies,

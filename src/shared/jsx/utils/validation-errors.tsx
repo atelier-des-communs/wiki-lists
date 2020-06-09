@@ -1,4 +1,3 @@
-
 /**
  *  This file provides helpers for dealing with validation errors.
  *  replaceErrors() will transform the VDOM by replacing ValidationError with error contents.

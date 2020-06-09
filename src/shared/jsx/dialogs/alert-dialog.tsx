@@ -1,25 +1,14 @@
 import * as React from "react";
 import {CloseableDialog, ValidatingDialog} from "./common-dialog";
 import {Button, Header, Icon, Modal} from "semantic-ui-react";
-import {ErrorsContext} from "../utils/validation-errors";
 import {DbPageProps} from "../pages/db/db-page-switch";
-import {EnumFilter, extractFilters, NumberFilter, serializeFilters, TextFilter} from "../../views/filters";
-import {
-    debug,
-    filterSingle,
-    getDbName,
-    Map,
-    mapValues,
-    parseParams
-} from "../../utils";
-import {Attribute} from "../../model/types";
+import {extractFilters, serializeFilters} from "../../views/filters";
+import {debug, getDbName, mapValues, parseParams} from "../../utils";
 
-import {addAlert} from "../../../client/rest/client-db";
-import { toast } from 'react-semantic-toasts';
+import {addSubscription} from "../../../client/rest/client-db";
+import {toast} from 'react-semantic-toasts';
 
-import {AlertForm, AREA_ATTR, CITY_ATTR, TYPE_ATTR} from "../components/alert-form";
-import {ValidatingForm} from "../components/validating-form";
-
+import {SubscriptionForm} from "../components/subscription-form";
 
 
 export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDialog> {
@@ -36,11 +25,11 @@ export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDial
 
     async validateInternal() {
 
-        let form = this.refs.form as AlertForm;
+        let form = this.refs.form as SubscriptionForm;
 
         await form.validate();
 
-        await addAlert(
+        await addSubscription(
             getDbName(this.props),
             form.state.email,
             form.state.captcha,
@@ -69,7 +58,7 @@ export class AddAlertDialog extends ValidatingDialog<DbPageProps & CloseableDial
                 <Header icon='bell' content="S'abonner aux alertes"/>
 
                 <Modal.Content>
-                    <AlertForm ref="form" {...this.props} filters={filters} email={""} />
+                    <SubscriptionForm ref="form" {...this.props} filters={filters} email={""} />
                 </Modal.Content>
 
                 <Modal.Actions>

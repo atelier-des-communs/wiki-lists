@@ -6,13 +6,14 @@ import {AsyncDataComponent} from "../../async/async-data-component";
 import {ApproxCluster, Cluster, ICoord} from "../../../model/geo";
 import {Record} from "../../../model/instances";
 import {CircleMarker, Map as MapEl, TileLayer, Tooltip, Viewport} from "react-leaflet";
-import {LatLng, LatLngBounds} from "leaflet";
+import {CRS, LatLng, LatLngBounds, Point} from "leaflet";
 import {
     arrayToMap,
     closeTo,
     getDbName,
     goTo,
     goToResettingPage,
+    humanReadableCount,
     Map,
     parseBool,
     parseParams
@@ -25,12 +26,10 @@ import {
     serializeSortAndFilters
 } from "../../../views/filters";
 import {Attribute, EnumType, EnumValue, Types} from "../../../model/types";
-import {DispatchProp} from "react-redux";
 import {createUpdateMarkersAction} from "../../../redux";
 import {cloneDeep, isEqual} from "lodash";
 import Control from 'react-leaflet-control';
 import {Button, Label} from 'semantic-ui-react';
-import {CRS, Point} from "leaflet";
 import {Marker} from "../../../api";
 import stringify from "json-stringify-deterministic";
 import {RecordPopup} from "../../components/record-popup";
@@ -408,7 +407,7 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
                     fillOpacity={0.8}
                     onClick={() => this.zoomOn(cluster)} >
                     <Tooltip permanent direction="center" className="count-tooltip" >
-                        {cluster.count}
+                        {humanReadableCount(cluster.count)}
                     </Tooltip>
                 </CircleMarker>
             }

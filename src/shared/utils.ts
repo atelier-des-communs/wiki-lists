@@ -3,10 +3,8 @@ import "es6-promise";
 import * as QueryString from "querystring";
 import {RouteComponentProps} from "react-router";
 import slugify from "slugify";
-import {cloneDeep} from "lodash";
 import {GlobalContextProps} from "./jsx/context/global-context";
 import {DbPathParams} from "./jsx/common-props";
-import {SharedConfig} from "./api";
 
 
 /** Helper for mapping key => values to f(key, record)*/
@@ -287,4 +285,12 @@ export function debug(...args: any[]) {
 
 export function closeTo(a:number, b:number, epsilon:number=0.0000001) {
     return Math.abs(a - b) < epsilon;
+}
+
+export function humanReadableCount(count:number) : string {
+    if (count < 1000) {
+        return intToStr(count);
+    } else {
+        return intToStr(Math.round(count / 1000)) + " k";
+    }
 }

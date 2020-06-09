@@ -7,7 +7,6 @@ import {Label, Popup} from "semantic-ui-react";
 import {parseParams} from "../../utils";
 import {Record} from "../../model/instances";
 import {IMessages} from "../../i18n/messages";
-import {FiltersPopup} from "../type-handlers/filters";
 
 export function ellipsis(text:string, maxWidth:number= 15) {
     if (text.length > maxWidth) {

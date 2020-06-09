@@ -1,6 +1,5 @@
 import * as React from "react";
 import {ValidationErrors} from "../../validators/validators";
-import {CloseableDialog} from "../dialogs/common-dialog";
 
 /** Generic dialog calling POST method upon validation with potential validation error as results */
 export abstract class ValidatingForm<T> extends React.Component<T> {

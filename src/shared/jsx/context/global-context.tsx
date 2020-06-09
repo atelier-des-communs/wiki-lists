@@ -3,7 +3,6 @@ import {Store} from "react-redux";
 import {IState} from "../../redux";
 import {DataFetcher, SharedConfig} from "../../api";
 import {IMessages, Language} from "../../i18n/messages";
-import {UpdateActions} from "../common-props";
 
 
 // Generic definition of hanlder to set title and metas

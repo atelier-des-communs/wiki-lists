@@ -1,5 +1,4 @@
 import {Attribute, DatetimeType, NumberType, StructType, TextType} from "./types";
-import {IMessages} from "../i18n/messages";
 import {classTag} from "../serializer";
 import {cloneDeep} from "lodash";
 

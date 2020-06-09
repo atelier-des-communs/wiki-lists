@@ -1,17 +1,18 @@
 /* Main page displaying a single collection, with sorting, filtering, grouping */
 import * as React from 'react';
-import {Button, Dropdown, Header, Responsive, Pagination, Grid, Message, Container} from 'semantic-ui-react'
+import {Button, Container, Dropdown, Header, Message, Pagination, Responsive} from 'semantic-ui-react'
 import {EditDialog} from "../../dialogs/edit-dialog";
 import {attributesMap, Types} from "../../../model/types";
-import {getDbName, goTo, goToUrl, intToStr, mapMap, mapValues, parseBool, parseParams, strToInt} from "../../../utils";
+import {getDbName, goTo, goToUrl, humanReadableCount, intToStr, parseBool, parseParams, strToInt} from "../../../utils";
 import {ButtonWrapper, SafeClickWrapper, SafePopup} from "../../utils/ssr-safe";
 import {Record} from "../../../model/instances";
-import {FilterSidebar, FiltersPopup, getFiltersComp, SearchComponent} from "../../type-handlers/filters";
+import {FilterSidebar, FiltersPopup, getFiltersComp} from "../../type-handlers/filters";
 import {
     clearFiltersOrSearch,
     extractFilters,
     extractSearch,
-    hasFiltersOrSearch, serializeSortAndFilters
+    hasFiltersOrSearch,
+    serializeSortAndFilters
 } from "../../../views/filters";
 import {DbPathParams, DbProps, PageProps, RecordsProps, UpdateActions} from "../../common-props";
 import {TableComponent} from "../../components/table";
@@ -25,14 +26,10 @@ import {extractViewType, serializeViewType, ViewType} from "../../../views/view-
 import {CardsComponent} from "../../components/cards";
 import {ValueHandler} from "../../type-handlers/editors";
 import {AttributeDisplayComponent} from "../../components/attribute-display";
-import {GlobalContextProps, withGlobalContext} from "../../context/global-context";
+import {withGlobalContext} from "../../context/global-context";
 import {AccessRight, hasRight} from "../../../access";
 import {attrLabel} from "../../utils/utils";
-import {
-    createAddItemsAction,
-    createUpdateCountAction,
-    createUpdatePageAction
-} from "../../../redux";
+import {createAddItemsAction, createUpdateCountAction, createUpdatePageAction} from "../../../redux";
 import {ResponsiveButton} from "../../components/responsive";
 import {extractSort} from "../../../views/sort";
 import {RecordsMap} from "./map";
@@ -261,7 +258,7 @@ export class AsyncPaging extends AsyncDataComponent<RecordsPageProps, CountProps
                         onPageChange={(e, {activePage}) => {this.goToPage(activePage)}} />
 
                 <span style={{color:"gray"}}>
-                    &nbsp;{this.asyncData.count} {_.elements}
+                    &nbsp;{humanReadableCount(this.asyncData.count)} {_.elements}
                 </span>
             </div>;
 
@@ -417,7 +414,7 @@ class _RecordsPage extends React.Component<RecordsPageProps> {
                     title={`${_.view_type} : ${_.table_view}`}
                     active={viewType == ViewType.TABLE}
                     onClick={() => setViewType(ViewType.TABLE)} />
-            <Button icon="grid layout"
+            <Button icon="th large"
                     title={`${_.view_type} : ${_.card_view}`}
                     active={viewType == ViewType.CARDS}
                     onClick={() => setViewType(ViewType.CARDS)}/>

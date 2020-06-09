@@ -3,7 +3,8 @@ import {Map} from "../utils";
 
 export interface Subscription {
     email: string,
-    filters: Map<string>
+    filters: Map<string>,
+    disabled?:boolean
 }
 
 

@@ -1,7 +1,5 @@
-
-import {Record} from "../../shared/model/instances";
 import {Rule, RuleEngine} from "./rules/rule-engine";
-import {addNotificationDb, getSubscriptionsDb, getDbDef} from "../db/db";
+import {addNotificationDb, getDbDef, getActiveSubscriptionsDb} from "../db/db";
 import {config} from "../config";
 import {extractFilters} from "../../shared/views/filters";
 import {DataEvent} from "./events";
@@ -12,7 +10,7 @@ export const DATA_EVENT_JOB_NAME = "dataEvent";
 // Fetch alerts definition from DB
 async function buildAlertRuleEngine() : Promise<RuleEngine> {
     let dbDef = await getDbDef(config.SINGLE_BASE);
-    let subscriptions = await getSubscriptionsDb();
+    let subscriptions = await getActiveSubscriptionsDb();
 
     let rules = subscriptions.map(alert => {
         // Filters are stored as query params

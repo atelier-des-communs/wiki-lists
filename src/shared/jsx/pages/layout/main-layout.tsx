@@ -2,7 +2,7 @@ import * as React from "react";
 import logoWikilist from "../../../../shared/img/wikilist-logo.png";
 import {Header} from "./header";
 import {GlobalContextProps} from "../../context/global-context";
-import {Segment, Grid, Icon} from "semantic-ui-react";
+import {Grid, Icon, Segment} from "semantic-ui-react";
 
 export const WIKILIST_URL = "https://github.com/atelier-des-communs/wiki-lists";
 

@@ -6,7 +6,7 @@ import {slug} from "../../../utils";
 import * as React from "react";
 import {Button, Form, Grid, Header, Label} from "semantic-ui-react";
 import {SafePopup} from "../../utils/ssr-safe";
-import {default as SketchPicker, SketchPickerProps} from "react-color/lib/components/sketch/Sketch";
+import {default as SketchPicker} from "react-color/lib/components/sketch/Sketch";
 import {EditableText} from "../../components/editable-text";
 import {IMessages} from "../../../i18n/messages";
 import {ErrorPlaceholder} from "../../utils/validation-errors";

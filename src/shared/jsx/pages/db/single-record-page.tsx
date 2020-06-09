@@ -1,13 +1,8 @@
 import * as React from "react";
 import {RouteComponentProps} from "react-router";
 import {Link} from "react-router-dom";
-import {
-    DbProps,
-    UpdateActions,
-    SingleRecordPathParams,
-} from "../../common-props";
+import {DbProps, SingleRecordPathParams, UpdateActions,} from "../../common-props";
 import {SingleRecordComponent} from "../../components/single-record-component";
-import {DispatchProp} from "react-redux";
 import {Container, Header, Segment} from "semantic-ui-react";
 import {recordName, recordNameStr} from "../../utils/utils";
 import {EditButtons} from "../../components/edit-button";

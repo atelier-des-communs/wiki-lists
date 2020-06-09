@@ -1,7 +1,6 @@
 /*
 * Some common props for components
 */
-import * as React from "react";
 import {StructType} from "../model/types";
 import {Record} from "../model/instances";
 import {GlobalContextProps} from "./context/global-context";

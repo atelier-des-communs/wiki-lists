@@ -1,6 +1,6 @@
 import {Attribute, EnumType, StructType, TextType, Types} from "../../shared/model/types";
 import {config} from "../config"
-import {Logger, MongoClient, Collection, ObjectId} from "mongodb";
+import {Collection, Logger, MongoClient} from "mongodb";
 import {Record, withSystemAttributes} from "../../shared/model/instances";
 import {validateSchemaAttributes} from "../../shared/validators/schema-validators";
 import {dieIfErrors} from "../../shared/validators/validators";
@@ -25,15 +25,17 @@ import * as shortid from "shortid";
 import {DbDefinition} from "../../shared/model/db-def";
 import {Filter, LocationFilter} from "../../shared/views/filters";
 import {ISort} from "../../shared/views/sort";
-import {registerClass, toTypedObjects} from "../../shared/serializer";
+import {toTypedObjects} from "../../shared/serializer";
 import {BadRequestException, HttpError} from "../exceptions";
 import {cache} from "../cache";
-import {assign, cloneDeep, flatMap, includes, isEmpty, has} from "lodash";
+import {assign, cloneDeep, flatMap, has, includes, isEmpty} from "lodash";
 import * as tilebelt from "tilebelt";
 import {ApproxCluster} from "../../shared/model/geo";
 import {Subscription} from "../../shared/model/notifications";
 import {sendDataEvent} from "../notifications/alerts";
 import {DataEventType} from "../notifications/events";
+import * as HttpStatus from "http-status-codes";
+import * as crypto from "crypto";
 
 
 const SCHEMAS_COLLECTION = "schemas";
@@ -271,12 +273,19 @@ export async function deleteRecordDb(dbName: string, id : string) : Promise<bool
 }
 
 // Add or update definition of an alert
-export async function addAlertDb(dbName: string, email:string, filters:Map<string>) : Promise<boolean> {
+export async function updateSubscriptionDb(dbName: string, subscription:Subscription, secret:string) : Promise<boolean> {
+    if (secret !== computeSecret(subscription.email)) {
+        throw new HttpError(HttpStatus.UNAUTHORIZED, "wrong secret code");
+    }
+    return setSubscriptionDb(dbName, subscription);
+}
+
+export async function setSubscriptionDb(dbName: string, subscription:Subscription) : Promise<boolean> {
     let db = await Connection.getDb();
+
     let alertsCol = db.collection(SUBSCRIPTIONS_COLLECTION);
-    let alert : Subscription = {email, filters};
-    await alertsCol.findOneAndUpdate({email},
-        {$set : alert},
+    await alertsCol.findOneAndUpdate({email:subscription.email},
+        {$set : subscription},
         {upsert:true});
     return true;
 }
@@ -294,11 +303,11 @@ export async function addNotificationDb(email:string, item:any) : Promise<boolea
     return true;
 }
 
-export async function getSubscriptionsDb() : Promise<Subscription[]> {
+export async function getActiveSubscriptionsDb() : Promise<Subscription[]> {
     let db = await Connection.getDb();
     let subscriptionsDb = db.collection(SUBSCRIPTIONS_COLLECTION);
     // Find all
-    return await subscriptionsDb.find<Subscription>().toArray();
+    return await subscriptionsDb.find<Subscription>({disabled:{$ne:true}}).toArray();
 }
 
 export async function checkAvailability(dbName:string) : Promise<boolean> {
@@ -354,7 +363,7 @@ function projectFields(schema: StructType, attributes: string[] = null) {
 }
 
 // DataFetcher for SSR : direct access to DB
-export class DbDataFetcher implements DataFetcher {
+export class SSRDataFetcher implements DataFetcher {
 
     request : Request;
 
@@ -582,7 +591,14 @@ export class DbDataFetcher implements DataFetcher {
     }
 
 
-    async getSubscription(email: string): Promise<Subscription> {
+    @cache
+    async getSubscription(email: string, secret:string): Promise<Subscription> {
+
+        if (secret !== computeSecret(email)) {
+            console.log("Bad secret", secret, computeSecret(email));
+            throw new HttpError(HttpStatus.UNAUTHORIZED, "wrong secret code");
+        }
+
         let col : Collection<Subscription> = await Connection.getCollection(SUBSCRIPTIONS_COLLECTION);
         let res = await col.findOne({email:email});
         delete (res as any)._id;
@@ -664,5 +680,14 @@ export class DbDataFetcher implements DataFetcher {
             return res;
         });
     }
+
+    updateSubscription(dbName: string, subscription: Subscription, secret: string): Promise<boolean> {
+        return updateSubscriptionDb(dbName, subscription, secret);
+    }
+}
+
+
+function computeSecret(email:string) {
+    return crypto.createHash('sha256').update(JSON.stringify(email + "#" + config.SECRET)).digest('hex')
 }
 

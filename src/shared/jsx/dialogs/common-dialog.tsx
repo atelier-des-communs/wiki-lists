@@ -1,6 +1,5 @@
 import * as React from "react";
 import {ValidationErrors} from "../../validators/validators";
-import {Label} from "semantic-ui-react";
 
 export interface CloseableDialog {
     close?: () => void;

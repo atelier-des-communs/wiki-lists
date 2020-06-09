@@ -7,9 +7,8 @@ import * as session from "express-session";
 import {setUp as setUpRest} from "./rest/db";
 import {setUp as setUpHtml} from "./html";
 import {setUp as setUpExport} from "./export";
-import {setUp as setUpAuth} from "./rest/auth";
 import {LANGUAGES} from "./i18n/messages";
-import {LANG_COOKIE, COOKIE_DURATION} from "../shared/api";
+import {LANG_COOKIE} from "../shared/api";
 import '../shared/model';
 import {config} from "./config";
 import {parseBool} from "../shared/utils";
@@ -51,7 +50,6 @@ export default function initServer(dist_paths:string[]) : express.Express {
         }
     }
 
-    setUpAuth(server);
     setUpRest(server);
     setUpExport(server);
 

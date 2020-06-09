@@ -3,7 +3,6 @@ import *  as dotenv from "dotenv";
 import * as request from "supertest";
 import {messages as _} from "../../../server/i18n/en-GB";
 dotenv.config({path:"test.env"});
-
 import {ChildProcess, exec} from "child_process";
 import {config} from "../../../server/config";
 import * as path from "path";
@@ -23,8 +22,6 @@ let redisProcess : ChildProcess = null;
 let smtpProcess : ChildProcess = null;
 
 const SERVER_PORT = 8083;
-
-
 
 beforeAll(done => {
 
@@ -56,7 +53,6 @@ beforeAll(done => {
     });
 
     smtpProcess = exec("fake-smtp-server --port", function (error, stdout, stderr) {
-
         //console.log('stdout: ' + stdout);
         //console.log('stderr: ' + stderr);
         if (error !== null) {

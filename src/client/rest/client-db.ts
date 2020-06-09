@@ -1,28 +1,30 @@
-import Axios, {AxiosPromise} from "axios";
 import {Record} from "../../shared/model/instances";
 import {
-    ADD_ALERT_URL,
-    ADD_ITEM_URL, Autocomplete, AUTOCOMPLETE_URL,
-    CHECK_DB_NAME, COUNT_ITEMS_URL,
+    ADD_SUBSCRIPTION_URL,
+    ADD_ITEM_URL,
+    Autocomplete,
+    AUTOCOMPLETE_URL,
+    CHECK_DB_NAME,
+    COUNT_ITEMS_URL,
     CREATE_DB_URL,
     DataFetcher,
     DELETE_ITEM_URL,
     GET_DB_DEFINITION_URL,
-    GET_ITEM_URL, GET_ITEMS_GEO_URL,
-    GET_ITEMS_URL, GET_SUBSCRIPTION, Marker,
+    GET_ITEM_URL,
+    GET_ITEMS_GEO_URL,
+    GET_ITEMS_URL,
+    GET_SUBSCRIPTION,
+    Marker,
     UPDATE_ITEM_URL,
-    UPDATE_SCHEMA_URL,
-    VALIDATION_ERROR_STATUS_CODE
+    UPDATE_SCHEMA_URL, UPDATE_SUBSCRIPTION_URL
 } from "../../shared/api";
 import {StructType} from "../../shared/model/types";
-import {ValidationErrors} from "../../shared/validators/validators";
 import {DbDefinition} from "../../shared/model/db-def";
 import {empty, Map, mapValues} from "../../shared/utils";
-import {post, get, del} from "./common";
+import {del, get, post} from "./common";
 import {Filter, serializeFilters, serializeSearch, serializeSortAndFilters} from "../../shared/views/filters";
 import {ISort} from "../../shared/views/sort";
 import * as QueryString from "querystring";
-import {Cluster} from "../../shared/model/geo";
 import {Subscription} from "../../shared/model/notifications";
 
 /** Return the full item with new _id */
@@ -46,11 +48,18 @@ export async function updateSchema(dbName: string, schema:StructType) : Promise<
         schema);
 }
 
-export async function addAlert(dbName:string, email:string, captcha:string, filters: Map<string>) : Promise<boolean> {
+export async function addSubscription(dbName:string, email:string, captcha:string, filters: Map<string>) : Promise<boolean> {
     return await post<boolean>(
-        ADD_ALERT_URL.replace(":db_name", dbName),
+        ADD_SUBSCRIPTION_URL.replace(":db_name", dbName),
         {email, captcha, filters});
 }
+
+export async function updateSubscription(dbName:string, subscription:Subscription, secret:string) : Promise<Subscription> {
+    return await post<Subscription>(
+        UPDATE_SUBSCRIPTION_URL.replace(":db_name", dbName) + "?" + QueryString.stringify({secret}),
+        subscription);
+}
+
 
 /** Return the image of the update item, as saved in DB */
 export async function createDb(dbDef:DbDefinition) : Promise<boolean> {
@@ -137,8 +146,14 @@ export let restDataFetcher : DataFetcher = {
         return await get<Autocomplete[]>(url)
     },
 
-    async getSubscription(email: string) {
-        return await get<Subscription>(GET_SUBSCRIPTION + "?" + QueryString.stringify({email}))
+    async getSubscription(email: string, secret?: string) {
+        return await get<Subscription>(GET_SUBSCRIPTION + "?" + QueryString.stringify({email, secret}))
+    },
+
+    async updateSubscription(dbName: string, subscription,secret:string) {
+        return await post<boolean>(
+            UPDATE_SUBSCRIPTION_URL.replace(":db_name", dbName) + "?" + QueryString.stringify({secret}),
+            subscription);
     }
 };
 

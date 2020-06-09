@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Provider} from 'react-redux';
 import {Route, Switch} from 'react-router';
-import {CREATE_DB_PATH, LOGIN_PAGE_PATH, RECORDS_PATH, SUBSCRIPTION_PATH} from "./api";
+import {CREATE_DB_PATH, LOGIN_PAGE_PATH, RECORDS_PATH} from "./api";
 import {GlobalContextProps, GlobalContextProvider} from "./jsx/context/global-context";
 import {NotFoundPage} from "./jsx/pages/not-found";
 import {HomePage} from "./jsx/pages/home";

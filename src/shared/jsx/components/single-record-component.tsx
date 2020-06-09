@@ -1,5 +1,5 @@
 import * as React from "react";
-import {DbProps, SingleRecordProps} from "../common-props";
+import {SingleRecordProps} from "../common-props";
 import {RouteComponentProps} from "react-router"
 import {attrLabel, ellipsis, filterAttribute} from "../utils/utils";
 import {ValueHandler} from "../type-handlers/editors";
@@ -38,8 +38,6 @@ export class SingleRecordComponent extends  React.Component<SingleRecordComponen
                             ellipsis(attrLabel(attr, _), NAME_ELLIPSIS)} </b>
 
                     &nbsp;
-
-                    {props.large && <br/>}
 
                     <ValueHandler
                         {...props}

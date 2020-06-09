@@ -3,7 +3,6 @@ import {FlagNameValues} from "semantic-ui-react/dist/commonjs/elements/Flag/Flag
 export interface IMessages {
 
 
-
     auth: {
         password: string;
         login: string;
@@ -145,6 +144,11 @@ export interface IMessages {
     update_list_from_map: string;
     no_results: string;
 
+    error_occured: string;
+
+    you_are_unuscribed_long: string;
+    you_are_unuscribed: string;
+    subscribe_again: string;
 }
 
 export interface MessagesProps {

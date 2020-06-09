@@ -2,15 +2,14 @@ import {DOWNLOAD_JSON_URL, DOWNLOAD_XLS_URL} from "../shared/api";
 import {Express} from "express";
 import {extractDisplays} from "../shared/views/display";
 import {Record} from "../shared/model/instances";
-import {applySearchAndFilters, extractFilters, extractSearch} from "../shared/views/filters";
-import {DbDataFetcher} from "./db/db";
-import {Map, sortBy} from "../shared/utils";
+import {extractFilters, extractSearch} from "../shared/views/filters";
+import {SSRDataFetcher} from "./db/db";
+import {Map} from "../shared/utils";
 import {Workbook} from "exceljs";
 import {Request, Response} from "express-serve-static-core"
 import {attrLabel} from "../shared/jsx/utils/utils";
 import {extractSort} from "../shared/views/sort";
 import {cloneDeep} from "lodash";
-import {AttributeDisplay} from "../shared/model/types";
 import {dbNameSSR} from "./utils";
 
 enum ExportType {
@@ -27,7 +26,7 @@ const EXTENSION = {
 
 
 async function getAllWithFilters(req:Request, db_name:string, query:Map<string>) : Promise<Record[]> {
-    let dbDataFetcher = new DbDataFetcher(req);
+    let dbDataFetcher = new SSRDataFetcher(req);
     let schema = (await dbDataFetcher.getDbDefinition(db_name)).schema;
 
     let sort = extractSort(query);
@@ -51,7 +50,7 @@ function filterObj(obj : Map<any>, displays : Map<boolean>) {
 
 async function exportAs(db_name:string, req:Request, res:Response, exportType: ExportType) {
 
-    let dbDef = await new DbDataFetcher(req).getDbDefinition(db_name);
+    let dbDef = await new SSRDataFetcher(req).getDbDefinition(db_name);
     let displays = extractDisplays(dbDef.schema, req.query, "summary");
     let records = await getAllWithFilters(req, db_name, req.query);
     records = records.map(record => filterObj(record, displays));

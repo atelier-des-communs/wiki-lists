@@ -6,7 +6,6 @@ import {Record} from "../model/instances";
 import {DbDefinition} from "../model/db-def";
 import {Map} from "../utils";
 import {toAnnotatedJson} from "../serializer";
-import {IUser} from "../model/user";
 import {Cluster} from "../model/geo";
 import {Marker} from "../api";
 import {Subscription} from "../model/notifications";

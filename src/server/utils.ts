@@ -1,11 +1,11 @@
 import * as Express from "express";
-import {SECRET_COOKIE, SharedConfig, VALIDATION_ERROR_STATUS_CODE} from "../shared/api";
+import {SECRET_COOKIE, VALIDATION_ERROR_STATUS_CODE} from "../shared/api";
 import {AccessRight} from "../shared/access";
 import {getDbDef} from "./db/db";
 import {isIn} from "../shared/utils";
 import {Request} from "express-serve-static-core"
 import {ValidationException} from "../shared/validators/validators";
-import {BadRequestException, HttpError} from "./exceptions";
+import {HttpError} from "./exceptions";
 import {config} from "./config";
 
 export interface ContentWithStatus {
@@ -95,3 +95,4 @@ export function dbNameSSR(req:Request) {
         return req.params.db_name;
     }
 }
+

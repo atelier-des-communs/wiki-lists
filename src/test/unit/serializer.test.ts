@@ -1,4 +1,4 @@
-import {clearRegistry, registerClass, classTag, toAnnotatedJson, toTypedObjects} from "../../shared/serializer";
+import {classTag, clearRegistry, registerClass, toAnnotatedJson, toTypedObjects} from "../../shared/serializer";
 
 
 class A {

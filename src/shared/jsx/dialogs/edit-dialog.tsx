@@ -1,13 +1,13 @@
 import * as React from "react";
 import {StructType} from "../../model/types";
-import {Button, Form, Grid, Header, Icon, Label, Message, Modal} from "semantic-ui-react";
+import {Button, Form, Grid, Header, Icon, Label, Modal} from "semantic-ui-react";
 import {ValueHandler} from "../type-handlers/editors";
-import {Record, nonSystemAttributes} from "../../model/instances";
+import {nonSystemAttributes, Record} from "../../model/instances";
 import {attrLabel, typeIsWide} from "../utils/utils";
 import {CloseableDialog, ValidatingDialog} from "./common-dialog";
 import {ValidationErrors} from "../../validators/validators";
 import {MessagesProps} from "../../i18n/messages";
-import {ErrorPlaceholder, RemainingErrorsPlaceholder, ErrorsContext} from "../utils/validation-errors";
+import {ErrorPlaceholder, ErrorsContext, RemainingErrorsPlaceholder} from "../utils/validation-errors";
 
 
 interface EditDialogProps extends CloseableDialog, MessagesProps{

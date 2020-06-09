@@ -1,20 +1,17 @@
 /* Display several records with Type : table */
 import {extractSort, ISort, serializeSort} from "../../views/sort";
-import {getDbName, goTo, goToResettingPage, parseParams} from "../../utils";
-import {Link} from 'react-router-dom'
+import {getDbName, goToResettingPage, parseParams} from "../../utils";
 import {RouteComponentProps, withRouter} from "react-router"
 import {DbPathParams, DbProps, RecordsProps, UpdateActions} from "../common-props";
 import * as React from "react";
 import {Button, Table} from 'semantic-ui-react'
 import {SafePopup} from "../utils/ssr-safe";
 import {ValueHandler} from "../type-handlers/editors";
-import {extractFilters} from "../../views/filters";
 import {AttributeDisplayComponent} from "./attribute-display";
 import {attrLabel, ellipsis, filterAttribute} from "../utils/utils";
 import {EditButtons} from "./edit-button";
 import {singleRecordLink} from "../../api";
 import {GlobalContextProps, withGlobalContext} from "../context/global-context";
-import {AccessRight, hasRight} from "../../access";
 
 type TableProps = RecordsProps & DbProps & UpdateActions & RouteComponentProps<DbPathParams> & GlobalContextProps;
 

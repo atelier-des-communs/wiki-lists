@@ -1,6 +1,7 @@
 import {
     empty,
-    eqSet, floatToStr,
+    eqSet,
+    floatToStr,
     goTo,
     intToStr,
     isIn,

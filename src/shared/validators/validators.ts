@@ -1,5 +1,5 @@
 // Single error message of validation
-import {empty, emptyMap, itToArray, Map, oneToArray} from "../utils";
+import {empty, emptyMap, Map, oneToArray} from "../utils";
 import {IMessages} from "../i18n/messages";
 
 // Type alias to Map of error(s) per field

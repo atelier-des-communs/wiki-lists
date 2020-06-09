@@ -1,4 +1,4 @@
-import {Responsive, Button, ButtonProps} from "semantic-ui-react";
+import {Button, ButtonProps, Responsive} from "semantic-ui-react";
 
 import * as React from "react";
 
