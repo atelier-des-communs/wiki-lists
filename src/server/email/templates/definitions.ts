@@ -7,4 +7,5 @@ export interface Email {
 
 export interface EmailTemplates {
     loginEmail(link:string) : Email;
+    inviteEmail(link:string, dbName:string) : Email;
 }

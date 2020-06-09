@@ -2,6 +2,7 @@ import Axios, {AxiosPromise} from "axios";
 import {toAnnotatedJson, toTypedObjects} from "../../shared/serializer";
 import {VALIDATION_ERROR_STATUS_CODE} from "../../shared/api";
 import {ValidationErrors, ValidationException} from "../../shared/validators/validators";
+import {HttpError} from "../../shared/errors";
 
 const axios = Axios.create();
 
@@ -13,16 +14,22 @@ export function unwrapAxiosResponse<T>(promise : AxiosPromise<T>) : Promise<T> {
         return toTypedObjects(response.data);
 
     }).catch(error => {
-        console.info("Server error happened", error);
+        console.error("Server error happened", error);
 
         // In case of validation error, wrap the errors into proper ValidationException
-        if (error.response && error.response.status == VALIDATION_ERROR_STATUS_CODE) {
+        if (error.response) {
 
-            console.info("Transformed to validation exception", error.response.data);
-            throw new ValidationException(error.response.data);
+            if (error.response.status == VALIDATION_ERROR_STATUS_CODE) {
+                console.info("Transformed to validation exception", error.response.data);
+                throw new ValidationException(error.response.data);
+            } else {
+
+                // Generic HTTP error
+                throw new HttpError(error.response.status, error.response.data);
+            }
 
         } else {
-
+            // Unkown error (connection maybe ?)
             alert("A network error happened : " + error);
             throw error;
         }

@@ -1,6 +1,7 @@
 import {IMessages} from "../../shared/i18n/messages";
 
 export let messages : IMessages = {
+
     email: "Email",
 
     site_title : "Données structurées, pour des humains.",
@@ -24,7 +25,7 @@ export let messages : IMessages = {
     type_datetime : "Date & heure",
 
     // Boolean filter
-    all :  "tout",
+    all : "tout",
     yes : "oui",
     no: "non",
 
@@ -157,9 +158,14 @@ export let messages : IMessages = {
         "collaborative" : "Les utilisateurs connectés peuvent ajouter du contenu et éditer leurs propres ajouts",
         "wiki" : "Tout le monde peut consulter ajouter et éditer tout contenu",
         "read_only" : "Seuls les administrateurs peuvent ajouter et éditer du contenu"
-    }
+    },
 
-
+    private_db : "Vous n'avez pas accès à cette resource. Vous devez être un membre connecté.",
+    error: "Une erreur est survenue",
+    multi_enum : "Choix multiple",
+    member_list : "Liste des membres",
+    admin_panel : "Admin",
+    add_emails : "Ajouter des emails"
 };
 
 // Make messages globally available (this file is imported directly)

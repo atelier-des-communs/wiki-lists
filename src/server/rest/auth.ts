@@ -6,9 +6,13 @@ import Config from "../config";
 import {sendMail} from "../email/email";
 import {Token, User} from "../db/mongoose";
 import {emailTemplates} from "../email/templates";
+import {IToken} from "../../shared/model/user";
 
-// Expiration of link in minutes
-const LINK_EXPIRATION = 30
+
+export function connectLink(token:IToken) {
+    let base_url = Config.BASE_URL.replace(/\/$/, "")
+    return `${base_url}${LOGIN_URL.replace(":token", token._id)}`;
+}
 
 export function setUp(app:Express) {
 
@@ -39,7 +43,7 @@ export function setUp(app:Express) {
 
         // Save user to session
         req.session.user = user;
-        res.redirect("/");
+        res.redirect(token.redirect ? token.redirect : "/");
 
     });
 
@@ -58,13 +62,8 @@ export function setUp(app:Express) {
     app.post(SEND_CONNECT_LINK, async function (req, res, next) {
 
         let email = req.query.email;
-
         let token = await Token.create({email});
-
-        let base_url = Config.BASE_URL.replace(/\/$/, "")
-        let link = `${base_url}${LOGIN_URL.replace(":token", token._id)}`;
-
-        let emailContent = emailTemplates[req.language].loginEmail(link);
+        let emailContent = emailTemplates[req.language].loginEmail(connectLink(token));
 
         sendMail(email, emailContent).then(() => {
             res.send("OK");

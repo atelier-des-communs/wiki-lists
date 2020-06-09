@@ -1,10 +1,10 @@
 import {isIn, Map} from "./utils";
 import {DbProps} from "./jsx/common-props";
-import {User} from "../server/db/mongoose";
 import {DbDefinition} from "./model/db-def";
 import {UpdateUserAction} from "./redux";
 import {IUser} from "./model/user";
 import {Record} from "./model/instances";
+import {clone} from "lodash";
 
 export enum AccessRight {
     VIEW="view", ADD="add", EDIT="edit", DELETE="delete", ADMIN="admin"
@@ -15,6 +15,7 @@ export enum AccessGroup {
     CONNECTED="connected",
     AUTHOR="author",
     ADMIN="admin",
+    MEMBERS="members"
 }
 
 export type AccessRights = Map<AccessGroup[]>;
@@ -25,7 +26,7 @@ export enum AccessRightsKind {
 
 export let ACCESS_RIGHTS : Map<AccessRights> = {
     [AccessRightsKind.READ_ONLY] : {
-        [AccessRight.VIEW]: [AccessGroup.ADMIN],
+        [AccessRight.VIEW]: [AccessGroup.ANY],
         [AccessRight.ADD] : [AccessGroup.ADMIN],
         [AccessRight.EDIT] : [AccessGroup.ADMIN],
         [AccessRight.DELETE] : [AccessGroup.ADMIN],
@@ -44,49 +45,44 @@ export let ACCESS_RIGHTS : Map<AccessRights> = {
     }
 }
 
-export function hasDbRight(dbDef: DbDefinition, user: IUser, right:AccessRight) {
-    if (user && dbDef.admins && isIn(dbDef.admins, user._id)) {
-        return true
-    }
-    let kind = dbDef.accessRights || AccessRightsKind.WIKI;
-    let accessRights : AccessRights = ACCESS_RIGHTS[kind];
-    let authorizedGroups = accessRights[right];
-    if (!authorizedGroups) {
-        return false;
-    }
-    let groups = [AccessGroup.ANY];
-    if (user) {
-        groups.push(AccessGroup.CONNECTED);
-    }
-    return groups.some(group => isIn(authorizedGroups, group))
-}
 
-export function hasRecordRight(dbDef: DbDefinition, user:IUser, record:Record, right:AccessRight) {
+
+export function hasRecordRight(dbDef: DbDefinition, user:IUser, record:Record, right:AccessRight) : boolean {
     if (user && dbDef.admins && isIn(dbDef.admins, user._id)) {
         return true
     }
     let kind = dbDef.accessRights || AccessRightsKind.WIKI;
     let accessRights : AccessRights = ACCESS_RIGHTS[kind];
-    let authorizedGroups = accessRights[right];
+    let authorizedGroups = clone(accessRights[right]);
     if (!authorizedGroups) {
         return false;
+    }
+
+    // Private ? Downgrade ANY and CONNECTED to MEMBERS
+    if (dbDef.private) {
+        authorizedGroups = authorizedGroups.map((group)=>
+            (group == AccessGroup.ANY || group == AccessGroup.CONNECTED)
+                ? AccessGroup.MEMBERS : group);
     }
 
     let actualGroups = [AccessGroup.ANY]
     if (user) {
         actualGroups.push(AccessGroup.CONNECTED);
-        if (user._id == record._user) {
+        if (dbDef.member_emails && isIn(dbDef.member_emails, user.email)) {
+            actualGroups.push(AccessGroup.MEMBERS);
+        }
+        if (record && user._id == record._user) {
             actualGroups.push(AccessGroup.AUTHOR);
         }
     }
 
-    for (let group of actualGroups) {
-        if (isIn(authorizedGroups, group)) {
-            return true;
-        }
-    }
+    console.log(right, actualGroups, authorizedGroups);
 
-    return false;
+    return actualGroups.some(group => isIn(authorizedGroups, group))
+}
+
+export function hasDbRight(dbDef: DbDefinition, user: IUser, right:AccessRight) : boolean {
+    return hasRecordRight(dbDef, user, null, right);
 }
 
 

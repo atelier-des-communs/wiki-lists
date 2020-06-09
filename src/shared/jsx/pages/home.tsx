@@ -81,7 +81,7 @@ function fetchData(props:GlobalContextProps & RouteComponentProps<{}>) : Promise
     let state = props.store.getState();
     if (!state.dbDefinitions) {
         return props.dataFetcher
-            .listDbDefinitions()
+            .listDbDefinitions(props.user)
             .then((dbDefs) => {
                 // Dispatch to Redux
                 props.store.dispatch(createUpdateDbsAction(dbDefs));

@@ -2,7 +2,7 @@
 import * as React from 'react';
 import {Button, Dropdown, Header, Responsive} from 'semantic-ui-react'
 import {EditDialog} from "../../dialogs/edit-dialog";
-import {attributesMap, Types} from "../../../model/types";
+import {attributesMap, EnumType, Types} from "../../../model/types";
 import {goTo, mapMap, mapValues, parseParams} from "../../../utils";
 import {SafeClickWrapper, SafePopup} from "../../utils/ssr-safe";
 import {DispatchProp} from "react-redux";
@@ -25,7 +25,7 @@ import {ValueHandler} from "../../type-handlers/editors";
 import {AttributeDisplayComponent} from "../../components/attribute-display";
 import {GlobalContextProps} from "../../context/global-context";
 import {AccessRight, hasDbRight} from "../../../access";
-import {attrLabel} from "../../utils/utils";
+import {admin_color, attrLabel} from "../../utils/utils";
 import {createAddItemAction, IState} from "../../../redux";
 import {connectComponent} from "../../context/redux-helpers";
 import {ResponsiveButton} from "../../components/responsive";
@@ -156,7 +156,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
         let groupOptions = db.schema.attributes
 
         // FIXME find declarative way to handle types that can support grouping
-            .filter(attr => attr.type.tag == Types.ENUM  || attr.type.tag ==  Types.BOOLEAN)
+            .filter(attr => (attr.type.tag == Types.ENUM && !((attr.type as EnumType).multi)) || attr.type.tag ==  Types.BOOLEAN)
             .map(attr => (
                 {value:attr.name,
                     text:attrLabel(attr)} as DropdownItemProps));
@@ -206,7 +206,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
         let updateSchemaButton = hasDbRight(props.db, props.user, AccessRight.ADMIN) &&
             <SafeClickWrapper trigger={
             <ResponsiveButton icon="configure"
-                    color="teal"
+                    color={admin_color}
                     content={_.edit_attributes} />} >
                 <SchemaDialog
                     {...props}
@@ -330,7 +330,7 @@ function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>)
     let state = props.store.getState();
     if (state.items == null) {
         return props.dataFetcher
-            .getRecords(props.match.params.db_name)
+            .getRecords(props.match.params.db_name, props.user, props.messages)
             .then((records) => {
                 // FIXME "items" is not updated to {} when nothing is fetched
                 for (let record of records) {

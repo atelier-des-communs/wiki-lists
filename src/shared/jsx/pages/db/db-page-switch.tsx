@@ -9,15 +9,17 @@ import {createUpdateDbAction, IState} from "../../../redux";
 import {withSystemAttributes} from "../../../model/instances";
 import {connectComponent} from "../../context/redux-helpers";
 import {DispatchProp} from "react-redux";
-import {COOKIE_PREFIX, RECORDS_ADMIN_PATH, RECORDS_PATH, recordsLink, SINGLE_RECORD_PATH} from "../../../api";
+import {ADMIN_PATH, RECORDS_PATH, recordsLink, SINGLE_RECORD_PATH} from "../../../api";
 import {RecordsPage} from "./records-page";
 import {SingleRecordPage} from "./single-record-page";
 import {Header} from "../layout/header";
 import {Link} from 'react-router-dom';
 import "../../../img/logo.png";
-import {Button, Message} from "semantic-ui-react";
 import {AccessRight, hasDbRight} from "../../../access";
 import {toTypedObjects} from "../../../serializer";
+import {admin_color, restrictedMessage} from "../../utils/utils";
+import {DbAdmin} from "./admin";
+import {Button} from "semantic-ui-react";
 
 type DbPageProps =
     PageProps<DbPathParams> &
@@ -25,36 +27,32 @@ type DbPageProps =
     ReduxEventsProps &
     DispatchProp<any>;
 
-const HIDE_LINKS_COOKIE = (db_name:string) => {return `${COOKIE_PREFIX}${db_name}_hide_links`};
-
 export class DbPageSwitchInternal extends React.Component<DbPageProps>{
 
-    hideLinks() {
-        this.props.cookies.set(HIDE_LINKS_COOKIE(this.props.db.name), "true");
-        // force redraw
-        this.setState({});
-    }
 
     render() {
         let props = this.props;
         let _ = props.messages;
         let db = props.db
 
+        if (db == null) {
+            return restrictedMessage(_);
+        }
+
         // Pass down schema and rights to sub components
         let singleRecordPage = (otherProps: any) => <SingleRecordPage {...props} {...otherProps} />
         let recordsPage = (otherProps: any) => <RecordsPage {...props} {...otherProps} />
 
-
-        let base_url = location.protocol + '//' + location.host;
-
-        let public_link = base_url +
-            RECORDS_PATH.
-                replace(":db_name", props.match.params.db_name);
-
-        let hideLinks = props.cookies.get(HIDE_LINKS_COOKIE(this.props.db.name));
-
         return <>
             <Header {...props} >
+                {hasDbRight(props.db, props.user, AccessRight.ADMIN) ?
+                    <Button floated="right" color={admin_color}
+                            icon="cog" compact
+                            size="small"
+                            content={_.admin_panel}
+                            as={Link} to={ADMIN_PATH.replace(":db_name", props.db.name)} />
+                    :
+                    null}
                 <h1>
                     <Link to={recordsLink(db.name)}>
                         {db.label}
@@ -74,27 +72,8 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
             </Header>
             <div style={{margin: "1em"}}>
 
-
-                {hasDbRight(props.db, props.user, AccessRight.ADMIN) && !hideLinks &&
-                <Message info>
-                    <Button
-                        basic compact size="small"
-                        icon="close" floated="right" title={_.hide}
-                        onClick={() => this.hideLinks() }/>
-                    <Message.Header>
-                        {_.db_created}
-                    </Message.Header>
-
-                    <Message positive>
-                        <Message.Header>
-                            {_.public_link}
-                        </Message.Header>
-                        <a href={public_link}>{public_link}</a>
-                    </Message>
-
-                </Message>}
-
                 <Switch>
+                    <Route path={ADMIN_PATH} component={() => <DbAdmin {...props} />}/>
                     <Route path={SINGLE_RECORD_PATH} component={singleRecordPage}/>
                     <Route path={RECORDS_PATH} component={recordsPage}/>
                 </Switch>
@@ -106,6 +85,10 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
 
 // Filter data from Redux store and map it to props
 const mapStateToProps = (state : IState, props?: RouteComponentProps<{}> & GlobalContextProps) : DbProps => {
+
+    if (!state.dbDefinition) {
+        return {db:null};
+    }
 
     // Transform immutable object into "live" one.
     let db = toTypedObjects(state.dbDefinition);
@@ -120,7 +103,7 @@ function fetchData(props:GlobalContextProps & RouteComponentProps<DbPathParams>)
     let state = props.store.getState();
     if (!state.dbDefinition) {
         return props.dataFetcher
-            .getDbDefinition(props.match.params.db_name)
+            .getDbDefinition(props.match.params.db_name, props.user, props.messages)
             .then((dbDef) => {
                 // Dispatch to Redux
                 props.store.dispatch(createUpdateDbAction(dbDef));

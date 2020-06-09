@@ -2,7 +2,10 @@ import {FlagNameValues} from "semantic-ui-react/dist/commonjs/elements/Flag/Flag
 import {AccessRightsKind} from "../access";
 
 export interface IMessages {
+    add_emails: string;
 
+    member_list: string;
+    multi_enum: string;
     auth: {
         logout: string;
         profile: string;
@@ -14,7 +17,6 @@ export interface IMessages {
         wrongPassword : string;
         bad_login_url: string;
         expired: string;
-        
     };
 
     selection: string;
@@ -153,8 +155,11 @@ export interface IMessages {
 
     accessTypeExplanation : {
         [K in AccessRightsKind] : string;
-    }
+    },
 
+    private_db: string;
+    error: string;
+    admin_panel: string;
 }
 
 export interface MessagesProps {

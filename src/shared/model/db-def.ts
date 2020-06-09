@@ -20,11 +20,14 @@ export class DbDefinition implements DbSettings {
     name: string;
     schema: StructType;
     accessRights ?: AccessRightsKind;
+    private ?: boolean;
 
     // Admin ids
     admins?: string[];
+    member_emails?: string[];
 
     constructor(init: DbDefinition) {
         extend(this, init);
     }
 }
+

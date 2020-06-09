@@ -1,9 +1,10 @@
-import {empty, eqSet, goTo, intToStr, isIn, Map, parseParams, sortBy, strToInt} from "../utils";
+import {empty, eqSet, goTo, intToStr, isIn, Map, oneToArray, parseParams, sortBy, strToInt} from "../utils";
 import {Attribute, attributesMap, EnumType, StructType, Types} from "../model/types";
 import {Record} from "../model/instances";
 // import normalize from "normalize-text";
 import {extractSort} from "./sort";
-import {RouteComponentProps} from "react-router"
+import {RouteComponentProps} from "react-router";
+import {intersection} from "lodash";
 
 function queryParamName(attrName: string) {
     return `${attrName}.f`;
@@ -162,7 +163,12 @@ export class EnumFilter implements IFilter<string> {
         if (typeof(value) == "undefined" || value == null) {
             return this.showEmpty;
         } else {
-            return isIn(this.showValues, value);
+            if ((this.attr.type as EnumType).multi) {
+                let values = oneToArray(value);
+                return intersection(values, this.showValues).length > 0;
+            } else {
+                return isIn(this.showValues, value)
+            }
         }
     }
 }

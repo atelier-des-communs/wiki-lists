@@ -3,9 +3,10 @@ import {extractGroupBy} from "../../views/group";
 import {Attribute, EnumValue, StructType, TextType, Type, Types} from "../../model/types";
 import {AttributeDisplay, extractDisplays} from "../../views/display";
 import {RouteComponentProps} from "react-router"
-import {Label, Popup} from "semantic-ui-react";
+import {Label, Message, Popup} from "semantic-ui-react";
 import {parseParams} from "../../utils";
 import {Record} from "../../model/instances";
+import {IMessages} from "../../i18n/messages";
 
 export function ellipsis(text:string, maxWidth:number= 15) {
     if (text.length > maxWidth) {
@@ -18,6 +19,12 @@ export function ellipsis(text:string, maxWidth:number= 15) {
     }
 }
 
+export function restrictedMessage(_:IMessages) {
+    return <Message>
+        <Message.Header>{_.error}</Message.Header>
+        <Message.Content>{_.private_db}</Message.Content>
+    </Message>
+}
 
 
 // Return a function filtering visible attributes for all kind of views
@@ -112,3 +119,5 @@ export function applyRec<T>(children:React.ReactChild, fn: (children: React.Reac
         return fn(child, index);
     });
 }
+
+export const admin_color = "teal";

@@ -8,11 +8,12 @@ import {validateRecord} from "../../shared/validators/record-validator";
 import {DataFetcher} from "../../shared/api";
 import {isIn} from "../../shared/utils";
 import {IMessages} from "../../shared/i18n/messages";
-import {AccessRight} from "../../shared/access";
-import {HttpError} from "../utils";
+import {AccessRight, hasDbRight} from "../../shared/access";
 import {Request} from "express-serve-static-core"
 import * as shortid from "shortid";
 import {DbDefinition} from "../../shared/model/db-def";
+import {HttpError} from "../../shared/errors";
+import {IUser} from "../../shared/model/user";
 
 const DATABASES_COL = "schemas";
 const DATABASE_COL_TEMPLATE = (name:string) => {return `db.${name}`};
@@ -44,12 +45,17 @@ async function init() : Promise<void> {
         { unique: true });
 }
 
-// Part of Db Settings that can be overriden
-
-
-export async function updateSchemaDb(dbName: string, schema:StructType, _:IMessages) : Promise<StructType> {
+export async function updateDb(dbName:string, update : Partial<DbDefinition>) {
     let db = await Connection.getDb();
     let col = db.collection<DbDefinition>(DATABASES_COL);
+    let result = await col.updateOne({name: dbName}, {$set : update});
+    if (result.matchedCount != 1) {
+        throw new Error(`db not found : ${dbName}`);
+    }
+}
+
+// Part of Db Settings that can be overriden
+export async function updateSchemaDb(dbName: string, schema:StructType, _:IMessages) : Promise<StructType> {
 
     // Validate errors
     dieIfErrors(validateSchemaAttributes(schema.attributes, _));
@@ -63,11 +69,7 @@ export async function updateSchemaDb(dbName: string, schema:StructType, _:IMessa
             (attr.type as EnumType).values.map(enumVal => enumVal.saved = true);
         }
     }
-
-    let result = await col.updateOne({name: dbName}, {$set : {schema:schema}});
-    if (result.matchedCount != 1) {
-        throw new Error(`db not found : ${dbName}`);
-    }
+    updateDb(dbName, {schema});
     return schema;
 }
 
@@ -87,6 +89,8 @@ export async function createDb(def: DbDefinition, _:IMessages) : Promise<DbDefin
     }
     return def;
 }
+
+
 
 
 export async function updateRecordDb(dbName: string, record : Record, _:IMessages) : Promise<Record> {
@@ -164,6 +168,15 @@ export async function getDbDef(dbName: string) : Promise<DbDefinition> {
     return database;
 }
 
+function filterDbDef(dbDef:DbDefinition, user:IUser) {
+
+    // XXX : bad design : filter out other member emails
+    if (dbDef.member_emails && !hasDbRight(dbDef, user, AccessRight.ADMIN)) {
+        dbDef.member_emails = dbDef.member_emails.filter(email => (user != null) && email == user.email);
+    }
+    return dbDef
+}
+
 // DataFetcher for SSR : direct access to DB
 export class DbDataFetcher implements DataFetcher {
 
@@ -173,28 +186,45 @@ export class DbDataFetcher implements DataFetcher {
         this.request = request;
     }
 
-    async getDbDefinition(dbName: string) : Promise<DbDefinition> {
+    async getDbDefinition(dbName: string, user:IUser, messages:IMessages) : Promise<DbDefinition> {
         let dbDef = await getDbDef(dbName);
-        return dbDef;
+
+        //if (!hasDbRight(dbDef, user, AccessRight.VIEW)) {
+        //    throw new HttpError(401, messages.private_db);
+        //}
+
+        return filterDbDef(dbDef, user);
     }
 
-    async listDbDefinitions() : Promise<DbDefinition[]> {
+    async listDbDefinitions(user:IUser) : Promise<DbDefinition[]> {
         let db = await Connection.getDb();
         let col = db.collection<DbDefinition>(DATABASES_COL);
         let res = await col.find({}).toArray();
-        console.log("Found dbDefs", res.length)
-        return res;
+        return res.map(dbdef => filterDbDef(dbdef, user)).filter(dbDef => hasDbRight(dbDef, user, AccessRight.VIEW));
     }
 
-    async getRecord(dbName:string, id:string) : Promise<Record> {
+    async getRecord(dbName:string, id:string, user:IUser, messages:IMessages) : Promise<Record> {
         let col = await Connection.getDbCol(dbName);
+        let dbDef = await getDbDef(dbName);
+
+        if (!hasDbRight(dbDef, user, AccessRight.VIEW)) {
+            throw new HttpError(401, messages.private_db);
+        }
+
         let record = await col.findOne({_id: id});
         if (!record) throw new Error(`Missing db: ${dbName}`);
         return record;
     }
 
-    async getRecords(dbName: string) : Promise<Record[]> {
+    async getRecords(dbName: string, user:IUser, messages:IMessages) : Promise<Record[]> {
+
         let col = await Connection.getDbCol(dbName);
+        let dbDef = await getDbDef(dbName);
+
+        if (!hasDbRight(dbDef, user, AccessRight.VIEW)) {
+            throw new HttpError(401, messages.private_db);
+        }
+
         let cursor = await col.find();
         return await cursor.toArray();
     }

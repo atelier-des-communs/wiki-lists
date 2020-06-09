@@ -151,8 +151,15 @@ export let messages : IMessages = {
         "collaborative" : "Connected users can add content and edit their own content",
         "wiki" : "Anyone can add a edit any content",
         "read_only" : "Only admins can add and edit content"
-    }
+    },
 
+    private_db : "You don't have access to this resource. You should be a connected member to view it",
+    error: "An error happened",
+    multi_enum : "Multiple choice",
+    member_list : "List of members",
+    admin_panel : "Admin panel",
+
+    add_emails : "Add emails"
 
 };
 

@@ -75,7 +75,7 @@ const EnumExtra: TypeExtraComponent<EnumType> = (props) => {
 
 
 
-    return <Grid.Column>
+    return <><Grid.Column>
 
         <Header as="h4" >
             {_.enum_values}
@@ -131,7 +131,19 @@ const EnumExtra: TypeExtraComponent<EnumType> = (props) => {
         {_.add_option}
         </Button>
 
-    </Grid.Column>;
+
+    </Grid.Column>
+    <Grid.Column>
+    <Form.Checkbox
+        label={_.multi_enum}
+        checked={props.type.multi}
+        onChange={(e, val) => {
+            let type = deepClone(props.type);
+            type.multi = val.checked;
+            props.onUpdate(type);
+        }}/>
+    </Grid.Column>
+    </>
 };
 
 

@@ -5,11 +5,15 @@
  */
 import * as React from "react";
 import {GlobalContextProps, withGlobalContext} from "../context/global-context";
-import {Loader} from "semantic-ui-react";
+import {Loader, Message} from "semantic-ui-react";
+import {IMessages} from "../../i18n/messages";
+import {HttpError} from "../../errors";
 
 export abstract class AsyncDataComponent<T extends GlobalContextProps> extends React.Component<T> {
 
     state : {loading:boolean};
+
+    error : string = null;
 
     constructor(props: T) {
         super(props);
@@ -20,6 +24,11 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps> extends R
     abstract fetchData() : null | Promise<{}> |  Promise<{}>[];
 
     componentWillMount() {
+
+        if (this.state.loading || (this.error !== null)) {
+            return;
+        }
+
         let promises  = this.fetchData();
         let singlePromise : Promise<{}>;
         if (promises) {
@@ -40,12 +49,30 @@ export abstract class AsyncDataComponent<T extends GlobalContextProps> extends R
             this.props.promises.push(
                 singlePromise.then(() => {
                     this.setState({loading:false});
-                }));
+                }).catch((e) => {
+
+                    console.log("Error in fetching data : ", e)
+
+                if (e instanceof HttpError) {
+                    this.error = e.message;
+                } else {
+                    this.error = e;
+                }
+
+                this.setState({loading:false});
+
+            }));
         }
     }
 
     render() {
-       if (this.state.loading) {
+        let _ : IMessages = this.props.messages;
+        if (this.error != null) {
+            return <Message error>
+                <Message.Header>{_.error}</Message.Header>
+                <Message.Content>{this.error}</Message.Content>
+            </Message>
+        } else if (this.state.loading) {
            return <Loader active />
        } else {
            return this.renderLoaded();

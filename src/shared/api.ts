@@ -2,7 +2,7 @@
 import {IState} from "./redux/index";
 import {Record} from "./model/instances";
 import {DbDefinition} from "./model/db-def";
-import {Language} from "./i18n/messages";
+import {IMessages, Language} from "./i18n/messages";
 import {IUser} from "./model/user";
 import {get} from "../client/rest/common";
 
@@ -11,6 +11,7 @@ import {get} from "../client/rest/common";
 export const BASE_DB_PATH = "/db/";
 export const CREATE_DB_PATH = "/create-db";
 export const RECORDS_PATH = BASE_DB_PATH + ":db_name";
+export const ADMIN_PATH = RECORDS_PATH + "/admin";
 export const RECORDS_ADMIN_PATH = RECORDS_PATH + "@:db_pass";
 export const SINGLE_RECORD_PATH = BASE_DB_PATH + ":db_name/:id";
 export const LOGIN_PAGE_PATH = "/login";
@@ -51,7 +52,7 @@ export const LOGOUT_URL = "/auth/logout";
 // Rest
 export const CREATE_DB_URL = "/api/create-db/";
 export const CHECK_DB_NAME = "/api/check-db/:db_name";
-export const UPDATE_DB_URL = "/api/update-db/:db_name";
+export const UPDATE_EMAILS_URL = "/api/emails/:db_name";
 export const UPDATE_SCHEMA_URL = "/api/update-schema/:db_name";
 
 
@@ -75,8 +76,8 @@ export interface IMarshalledContext {
 
 // Generic reader interface, implemented directly with DB access for SSR, or as rest client for Browser
 export interface DataFetcher {
-    getRecord(dbName: string, id : string) : Promise<Record>;
-    getRecords(dbName: string) : Promise<Record[]>;
-    getDbDefinition(dbName:string) : Promise<DbDefinition>;
-    listDbDefinitions() : Promise<DbDefinition[]>;
+    getRecord(dbName: string, id : string, user:IUser, messages:IMessages) : Promise<Record>;
+    getRecords(dbName: string, user:IUser, messages:IMessages) : Promise<Record[]>;
+    getDbDefinition(dbName: string, user:IUser, messages:IMessages) : Promise<DbDefinition>;
+    listDbDefinitions(user:IUser) : Promise<DbDefinition[]>;
 }

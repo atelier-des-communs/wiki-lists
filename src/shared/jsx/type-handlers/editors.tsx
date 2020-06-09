@@ -2,13 +2,14 @@ import * as React from "react";
 import {BooleanType, DatetimeType, EnumType, enumValuesMap, NumberType, TextType, Type, Types} from "../../model/types";
 import {Checkbox, FormSelect, Icon, Input, Label} from "semantic-ui-react";
 import {DropdownItemProps} from "semantic-ui-react/dist/commonjs/modules/Dropdown/DropdownItem"
-import {empty, intToStr, strToInt} from "../../utils";
+import {empty, intToStr, oneToArray, strToInt} from "../../utils";
 import {AttributeDisplay} from "../../views/display";
 import {enumLabel} from "../utils/utils";
 import {MessagesProps} from "../../i18n/messages";
 import {format, parse} from "date-fns";
 import ReactQuill from "react-quill";
 import 'react-quill/dist/quill.snow.css';
+import {instanceOf} from "prop-types";
 
 
 const DATE_FORMAT="D MMM YYYY HH:mm";
@@ -162,14 +163,15 @@ class NumberHandler extends ControlledValueHandler<number, NumberType> {
 }
 
 class EnumHandler extends ControlledValueHandler<string, EnumType> {
-    renderView() {
 
+    renderSingleValue(value:string) {
         let {type, size, ...otherProps} = this.props;
         let _ = this.props.messages;
 
         let enumMap = enumValuesMap(type);
-        let enumValue = enumMap[this.state.innerValue];
-        let text = enumValue && enumValue.label ? enumValue.label : this.state.innerValue;
+        let enumValue = enumMap[value];
+
+        let text = enumValue && enumValue.label ? enumValue.label : value;
 
         let style = otherProps.style ? otherProps.style : {};
         if (enumValue && enumValue.color) {
@@ -180,17 +182,32 @@ class EnumHandler extends ControlledValueHandler<string, EnumType> {
                 {...otherProps}
                 style={style} >
                 {text}
-            </Label>
-            :
-            <Label ><i>{_.empty}</i></Label>;
+            </Label> : <Label ><i>{_.empty}</i></Label>
+    }
+
+    renderView() {
+
+        let {type, size, ...otherProps} = this.props;
+        let _ = this.props.messages;
+
+        let enumMap = enumValuesMap(type);
+
+        // Multiple values
+        if (type.multi) {
+            return <>{oneToArray(this.state.innerValue).map(val => this.renderSingleValue(val))}</>;
+        } else {
+            return this.renderSingleValue(this.state.innerValue);
+        }
     }
     renderEdit() {
         let valuesWithEmpty = [ {value:null}, ...this.props.type.values];
+        let {type, size, ...otherProps} = this.props;
         let options = valuesWithEmpty.map(enumVal => ({
             text:enumLabel(enumVal),
             value:enumVal.value} as DropdownItemProps));
 
         return <FormSelect
+            multiple={type.multi}
             style={{zIndex:9999}}
             value={this.state.innerValue}
             options={options}

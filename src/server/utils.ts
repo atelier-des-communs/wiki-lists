@@ -2,9 +2,9 @@ import * as Express from "express";
 import {VALIDATION_ERROR_STATUS_CODE} from "../shared/api";
 import {AccessRight, hasDbRight, hasRecordRight} from "../shared/access";
 import {DbDataFetcher, getDbDef} from "./db/db";
-import {isIn} from "../shared/utils";
 import {Request} from "express-serve-static-core"
-import {toAnnotatedJson} from "../shared/serializer";
+import {HttpError} from "../shared/errors";
+import {Record} from "../shared/model/instances";
 
 export interface ContentWithStatus {
     statusCode:number,
@@ -39,20 +39,9 @@ export function returnPromiseWithCode(res: Express.Response, promise: Promise<Co
         });
 }
 
-export class HttpError {
-    code : number;
-    message: string;
-
-    constructor(code:number, message:string) {
-        this.code = code;
-        this.message = message;
-    }
-}
-
-export async function requiresRecordRight(req:Request, id: string, right : AccessRight) {
+export async function requiresRecordRight(req:Request, record: Record, right : AccessRight) {
     let dbDef = await getDbDef(req.params.db_name);
     let dbDataFetcher = new DbDataFetcher(req);
-    let record = await dbDataFetcher.getRecord(req.params.db_name, id);
     if (hasRecordRight(dbDef, req.session.user, record, right)) {
         return true;
     } else {

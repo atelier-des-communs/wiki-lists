@@ -14,5 +14,17 @@ export let emailsFr : EmailTemplates =
                 <a href={link}>{link}</a>
             </p>
         }
+    },
+
+    inviteEmail(link: string, dbName:string) {
+        return {
+            subject: `Vous avez été invité à participer à ${dbName}`,
+            html: <p>
+                Bonjour,<br/>
+                <br/>
+                Vous avez été invité par un adminsitrateur à participer à la base de données {dbName}<br/>.
+                Merci de cliquer sur <a href={link}>ce lien</a> pour vous connecter.
+            </p>
+        }
     }
 }

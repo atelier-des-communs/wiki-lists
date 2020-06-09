@@ -11,7 +11,7 @@ import {
     GET_ITEMS_URL,
     UPDATE_ITEM_URL,
     UPDATE_SCHEMA_URL,
-    SEND_CONNECT_LINK, LIST_DEFINITIONS_URL
+    SEND_CONNECT_LINK, LIST_DEFINITIONS_URL, UPDATE_EMAILS_URL
 } from "../../shared/api";
 import * as QueryString from "querystring";
 import {StructType} from "../../shared/model/types";
@@ -36,6 +36,12 @@ export async function updateItem(dbName: string, item : Record) : Promise<Record
     return await post(
         UPDATE_ITEM_URL.replace(":db_name", dbName),
         item);
+}
+
+export async function updateEmails(dbName: string, emails : string []) : Promise<Record> {
+    return await post(
+        UPDATE_EMAILS_URL.replace(":db_name", dbName),
+        emails);
 }
 
 /** Return the image of the update item, as saved in DB */

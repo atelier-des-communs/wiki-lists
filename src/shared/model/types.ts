@@ -59,6 +59,7 @@ export class EnumValue {
 export class EnumType implements Type<string> {
     tag = Types.ENUM;
     values : EnumValue[] = [];
+    multi: boolean = false;
 }
 registerClass(EnumType, Types.ENUM);
 

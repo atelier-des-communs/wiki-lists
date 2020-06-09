@@ -8,6 +8,8 @@ import {deepClone, Map} from "../shared/utils";
 import {Workbook} from "exceljs";
 import {Request, Response} from "express-serve-static-core"
 import {attrLabel} from "../shared/jsx/utils/utils";
+import {selectLanguage} from "./i18n/messages";
+import {mergeErrors} from "../shared/validators/validators";
 
 enum ExportType {
     JSON = "json",
@@ -23,8 +25,9 @@ const EXTENSION = {
 
 async function getAllWithFilters(req:Request, db_name:string, query:Map<string>) : Promise<Record[]> {
     let dbDataFetcher = new DbDataFetcher(req);
-    let schema = (await dbDataFetcher.getDbDefinition(db_name)).schema;
-    let records = await dbDataFetcher.getRecords(db_name);
+    let messages = selectLanguage(req).messages;
+    let schema = (await dbDataFetcher.getDbDefinition(db_name, req.session.user, messages)).schema;
+    let records = await dbDataFetcher.getRecords(db_name, req.session.user, messages);
     return applySearchAndFilters(records, query, schema);
 }
 
@@ -41,8 +44,8 @@ function filterObj(obj : Map<any>, displays : Map<AttributeDisplay>) {
 
 
 async function exportAs(db_name:string, req:Request, res:Response, exportType: ExportType) {
-
-    let dbDef = await new DbDataFetcher(req).getDbDefinition(db_name);
+    let messages = selectLanguage(req).messages;
+    let dbDef = await new DbDataFetcher(req).getDbDefinition(db_name, req.session.user, messages);
     let displays = extractDisplays(dbDef.schema, req.query);
     let records = await getAllWithFilters(req, db_name, req.query);
     records = records.map(record => filterObj(record, displays));

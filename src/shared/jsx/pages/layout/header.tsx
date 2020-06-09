@@ -4,6 +4,7 @@ import {Button, Flag} from "semantic-ui-react";
 import {LANG_COOKIE, LOGIN_PAGE_PATH, PROFILE_PAGE_PATH} from "../../../api";
 import {GlobalContextProps} from "../../context/global-context";
 import {Link} from "react-router-dom";
+import {hasDbRight} from "../../../access";
 
 /** Common header : showing language switch and login */
 export const Header : React.SFC<GlobalContextProps> = (props) => {

@@ -20,7 +20,7 @@ const UserSchema: mongoose.Schema = new mongoose.Schema({
 export let User = mongoose.model<IUser & mongoose.Document>("User", UserSchema);
 
 function token() {
-    let res = crypto.randomBytes(48).toString("base64");
+    let res = crypto.randomBytes(36).toString("base64");
 
     // Base 64 URL
     return res
@@ -29,10 +29,15 @@ function token() {
         .replace(/=+$/g, '')
 }
 
-const TokenSchema: mongoose.Schema = new mongoose.Schema({
+export function expireDate(expireMinutes:number) {
+    return new Date(Date.now()+ 1000 * expireMinutes);
+}
+
+const TokenSchema: mongoose.Schema = new mongoose.Schema<IToken>({
     _id: {type: String, default: token},
     email: {type: String},
-    createdAt : {type: Date, expires: TOKEN_EXPIRES, default:Date.now}
+    redirect : {type:String},
+    expires : {type: Date, expires: 0, default:()=> {return expireDate(TOKEN_EXPIRES)}}
 });
 
 export let Token = mongoose.model<IToken & mongoose.Document>("Token", TokenSchema);

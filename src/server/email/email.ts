@@ -24,6 +24,8 @@ export function sendMail(email:string, content:Email) {
     let html = renderToString(content.html);
     let text = HtmlToText.fromString(html);
 
+    console.log("sending mail", email, html)
+
     return transport.sendMail({
         from: Config.SMTP_FROM,
         to : email,

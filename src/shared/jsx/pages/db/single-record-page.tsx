@@ -56,7 +56,7 @@ function fetchData(props:GlobalContextProps & RouteComponentProps<SingleRecordPa
 
     if (!state.items || !state.items[params.id]) {
         return props.dataFetcher
-            .getRecord(params.db_name, params.id)
+            .getRecord(params.db_name, params.id, props.user, props.messages)
             .then((record) => {
                 props.store.dispatch(createAddItemAction(record));
             });

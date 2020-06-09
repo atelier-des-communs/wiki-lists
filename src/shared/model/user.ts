@@ -8,4 +8,5 @@ export interface IToken {
     _id:string;
     email:string;
     createdAt: Date;
+    redirect?:string;
 }
