@@ -11,7 +11,7 @@ services:
   wikilist:
     build: .
     restart: always
-    env_file: configuration.example
+    env_file: .env
     environment:
       PORT: 8000
       DB_HOST: mongo
