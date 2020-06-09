@@ -1,0 +1,9 @@
+SECRET=thisisveryscret-donottellanybody
+BASE_URL=https://host/
+SMTP_HOST=smtp.example.com
+SMTP_PORT=465
+SMTP_LOGIN=noreply@example.com
+SMTP_PASS=abcd1234
+SMTP_FROM=noreply@example.com
+SMTP_SECURE=true
+SMTP_REJECT_UNAUTHORIZED=false
