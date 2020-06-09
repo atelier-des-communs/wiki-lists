@@ -2,7 +2,7 @@ import {Button, ButtonProps, Popup, PopupProps} from "semantic-ui-react";
 import * as React from "react";
 
 type NoSSRProps = {
-    onSSR: React.ReactNode,
+    onSSR?: React.ReactNode,
     children: React.ReactNode
 }
 
@@ -25,7 +25,10 @@ export class SsrSafe extends React.Component<NoSSRProps> {
     }
 
     public render() {
-        const { children, onSSR } = this.props;
+        let { children, onSSR} = this.props;
+        if (!onSSR) {
+            onSSR = null;
+        }
         return (this.state.canRender ? children : onSSR) as JSX.Element;
     }
 }

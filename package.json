@@ -7,6 +7,7 @@
     "clean": "node ./bin/clean.js",
     "server": "node ./bin/server",
     "build": "NODE_ENV=production && npm run clean && node ./bin/bundler/prod.js --json",
+    "build-cli": "node ./bin/bundler/cli.js --json",
     "deploy": "npm run build && npm run server",
     "watch": "better-npm-run watch"
   },
@@ -125,6 +126,7 @@
     "webpack-stats-plugin": "^0.2.1"
   },
   "dependencies": {
+    "@babel/preset-react": "^7.10.1",
     "@mapbox/tilebelt": "^1.0.1",
     "@types/html-to-text": "^1.4.31",
     "@types/http-status-codes": "^1.2.0",

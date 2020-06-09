@@ -110,5 +110,4 @@ export interface DataFetcher {
     autocomplete(dbName:string, attrName:string, query:string, geo?:boolean) : Promise<Autocomplete[]>;
 
     updateSubscription(dbName:string, subscription:Subscription, secret:string) : Promise<boolean>;
-
 }

@@ -11,6 +11,7 @@ import {DbProps} from "../common-props";
 import {RouteComponentProps} from "react-router";
 import {Link} from 'react-router-dom';
 import {Modal} from 'semantic-ui-react';
+import {SsrSafe} from "../utils/ssr-safe";
 
 type RecordPopupProps = GlobalContextProps & MessagesProps & RouteComponentProps<{}> & DbProps & {
     recordId:string,
@@ -37,7 +38,7 @@ export class RecordPopup extends AsyncDataComponent<RecordPopupProps, Record> {
     }
 
     renderLoaded() {
-        return <Modal open={true} onClose={this.props.onClose} closeIcon >
+        return <SsrSafe><Modal open={true} onClose={this.props.onClose} closeIcon >
             <Modal.Header>
                 {(this.asyncData) ?
                     <Link to={singleRecordLink(this.props.config, this.props.db.name, this.asyncData._id)}>
@@ -53,6 +54,6 @@ export class RecordPopup extends AsyncDataComponent<RecordPopupProps, Record> {
                     /> : null}
             </Modal.Content>
 
-        </Modal>
+        </Modal></SsrSafe>
     }
 }

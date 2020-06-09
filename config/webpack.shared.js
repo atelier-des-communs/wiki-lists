@@ -3,9 +3,9 @@ var MiniCssExtractPlugin = require('mini-css-extract-plugin');
 var nodeExternals = require('webpack-node-externals');
 const { StatsWriterPlugin } = require("webpack-stats-plugin");
 
-
-exports.CLIENT_BUILD_DIR = path.resolve(__dirname, "..", "dist", "client");
-exports.SERVER_BUILD_DIR = path.resolve(__dirname, "..", "dist", "server");
+exports.DIST_DIR = path.resolve(__dirname, "..", "dist")
+exports.CLIENT_BUILD_DIR = path.resolve(exports.DIST_DIR, "client");
+exports.SERVER_BUILD_DIR = path.resolve(exports.DIST_DIR, "server");
 exports.APP_DIR = path.resolve(__dirname, "..", "src");
 
 var common_loaders = {
@@ -15,7 +15,7 @@ var common_loaders = {
         use: {
             "loader" : 'babel-loader',
             "options" :{
-                "presets" : ["env", "react"]
+                "presets" : ["@babel/preset-env", "react"]
             }
         },
     },
