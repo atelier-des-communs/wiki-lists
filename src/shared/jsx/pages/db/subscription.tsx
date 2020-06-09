@@ -4,11 +4,13 @@ import {AsyncDataComponent} from "../../async/async-data-component";
 import {Subscription} from "../../../model/notifications";
 import {createUpdateSubscriptionAction} from "../../../redux";
 import {SubscriptionForm} from "../../components/subscription-form";
-import {extractFilters} from "../../../views/filters";
+import {extractFilters, serializeFilters} from "../../../views/filters";
 import {Container, Message, Button} from "semantic-ui-react";
-import {getDbName, parseParams} from "../../../utils";
+import {debug, getDbName, mapValues, parseParams} from "../../../utils";
 import {IMessages} from "../../../i18n/messages";
 import * as Immutable from "seamless-immutable";
+import {addSubscription} from "../../../../client/rest/client-db";
+import {toast} from 'react-semantic-toasts';
 
 interface SubscriptionAsyncData {
     subscription : Subscription
@@ -76,6 +78,29 @@ export class SubscriptionComponent extends AsyncDataComponent<PageProps<DbPathPa
                 this.setState({})});
     }
 
+    async updateSubscription() {
+
+        let form = this.refs.form as SubscriptionForm;
+
+        await form.validate();
+
+        let subscription : Subscription=  {
+            email: form.state.email,
+            filters: serializeFilters(mapValues(form.state.filters))};
+
+        await this.props.dataFetcher.updateSubscription(
+            getDbName(this.props),
+            subscription,
+            this.secret);
+
+        toast({
+            type: "info",
+            title: 'Alerte modifiée',
+            time: 2000,
+            description : "Votre abonnement aux alertes a été modifié"
+        });
+    }
+
     renderLoaded() {
 
         let _ : IMessages = this.props.messages;
@@ -103,7 +128,14 @@ export class SubscriptionComponent extends AsyncDataComponent<PageProps<DbPathPa
                         <Button positive content={_.subscribe_again} onClick={() => this.subscribeAgain() }/>
                     </>
                     :
-                    <SubscriptionForm {...childProps} filters={filters as any} email={subscription.email} update={true} />
+                    <>
+                        <h1>Configuration des notifications</h1>
+                        <SubscriptionForm
+                            ref="form"
+                            {...childProps}
+                            filters={filters as any} email={subscription.email} update={true} />
+                        <Button positive content="Mettre à jour" onClick={() => this.updateSubscription() }/>
+                     </>
             }
             </Container>
     }

@@ -17,7 +17,7 @@ import {
     INIT_INDEXES_URL,
     SECRET_COOKIE,
     UPDATE_ITEM_URL,
-    UPDATE_SCHEMA_URL, VALIDATION_ERROR_STATUS_CODE, UPDATE_SUBSCRIPTION_URL
+    UPDATE_SCHEMA_URL, VALIDATION_ERROR_STATUS_CODE, UPDATE_SUBSCRIPTION_URL, SUBSCRIPTION_PATH
 } from "../../shared/api";
 import {
     setSubscriptionDb,
@@ -28,7 +28,7 @@ import {
     deleteRecordDb,
     getDbDef,
     setUpIndexesDb,
-    updateSchemaDb, updateSubscriptionDb
+    updateSchemaDb, updateSubscriptionDb, computeSecret
 } from "../db/db";
 import {Record} from "../../shared/model/instances";
 import {dbNameSSR, requiresRight, returnPromise, traverse} from "../utils";
@@ -44,15 +44,17 @@ import * as mung from "express-mung";
 import {extractSort} from "../../shared/views/sort";
 import {empty, Map, oneToArray, parseBool, strToInt} from "../../shared/utils";
 import {extractFilters, extractSearch, TextFilter} from "../../shared/views/filters";
-import {config} from "../config";
+import {config, sharedConfig} from "../config";
 import {BadRequestException, ForbiddenException, HttpError} from "../exceptions";
 import * as request from "request-promise";
 import {clearCache} from "../cache";
-import {sendNewAlertEmail} from "../notifications/templates/new-alert-template";
 import * as crypto from "crypto";
 import {Subscription} from "../../shared/model/notifications";
 import * as HttpStatus from "http-status-codes";
 import {updateSubscription} from "../../client/rest/client-db";
+import * as qs from "query-string";
+import {sendMail} from "../email/email";
+import {emailTemplates} from "../email/templates";
 
 
 
@@ -165,8 +167,21 @@ async function addSubscriptionAsync(req:Request) : Promise<boolean> {
 
     let city = filtersObjs['commune'] as TextFilter
 
+
+    // Manage URL
+    let manageURL =
+        config.ROOT_URL
+        + SUBSCRIPTION_PATH(sharedConfig).replace(":email", email)
+        + "?"
+        + qs.stringify({secret:computeSecret(email)})
+
     // Send email : don't wait for it
-    sendNewAlertEmail(email, city.search)
+    sendMail(
+        email,
+        emailTemplates[req.language].newSubscription(
+            email,
+            city.search,
+            manageURL));
 
     return true;
 }
@@ -265,7 +280,7 @@ export function setUp(server:Express) {
     server.get(GET_ITEMS_URL, async function (req: Request, res: Response) {
 
         let fetcher = new SSRDataFetcher(req);
-        let schema = await fetcher.getDbDefinition(dbNameSSR(req));
+        let schema = await getDbDef(dbNameSSR(req));
 
         // Extract filters
         let sort = extractSort(req.query);
@@ -286,7 +301,7 @@ export function setUp(server:Express) {
     server.get(GET_ITEMS_GEO_URL, async function (req: Request, res: Response) {
 
         let fetcher = new SSRDataFetcher(req);
-        let schema = await fetcher.getDbDefinition(dbNameSSR(req));
+        let schema = await getDbDef(dbNameSSR(req));
 
         // Extract filters
         let search = extractSearch(req.query);
@@ -306,7 +321,7 @@ export function setUp(server:Express) {
     server.get(COUNT_ITEMS_URL, async function (req: Request, res: Response) {
 
         let fetcher = new SSRDataFetcher(req);
-        let schema = await fetcher.getDbDefinition(dbNameSSR(req));
+        let schema = await getDbDef(dbNameSSR(req));
 
         // Search & filter
         let search = extractSearch(req.query);

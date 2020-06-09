@@ -117,8 +117,13 @@ export class RecordsMap extends AsyncDataComponent<MapProps, Marker[]> {
 
     constructor(props: MapProps) {
         super(props);
+
+        // Open directly from URL
+        let params = parseParams(this.props.location.search);
+
+
         this.state = {
-            popupRecordId:null,
+            popupRecordId: params.popup || null,
             viewport:queryToViewport(parseParams(props.location.search))};
 
         // Get the location attribute

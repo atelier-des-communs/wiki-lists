@@ -16,6 +16,12 @@ interface SchemaDialogProps extends CloseableDialog {
     close?: () => void;
 }
 
+type func<T> = {
+    [K in keyof T] : () => T[K]
+}
+
+
+
 export class SchemaDialog extends ValidatingDialog<SchemaDialogProps> {
 
     state : {

@@ -141,7 +141,7 @@ async function renderApp(req:Request) : Promise<ContentWithStatus> {
         });
 
         let initialState : IState= {
-            items: null, // Will be fetched asynchronously
+            items: {}, // Will be fetched asynchronously
             pages : {},
             counts : {},
             geoMarkers : {},

@@ -97,7 +97,7 @@ class _DbPageSwitch extends AsyncDataComponent<PageProps<DbPathParams> & UpdateA
 
 
             <div style={{position:"absolute", right:"1em"}}>
-            <SemanticToastContainer position="top-right" animation="fade" />
+            <SemanticToastContainer position="top-left" animation="fade" />
             </div>
 
             <div style={{margin: "1em"}}>

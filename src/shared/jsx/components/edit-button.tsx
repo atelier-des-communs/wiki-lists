@@ -16,7 +16,7 @@ interface EditButtonsProps extends PageProps<DbPathParams>, SingleRecordProps, U
     hideViewButton?:boolean;
 }
 
-const RECORD_ZOOM = 18;
+export const RECORD_ZOOM = 18;
 
 export const EditButtons: React.SFC<EditButtonsProps> = (props) => {
 

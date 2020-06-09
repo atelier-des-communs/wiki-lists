@@ -24,9 +24,6 @@ async function buildAlertRuleEngine() : Promise<RuleEngine> {
     return new RuleEngine(rules);
 }
 
-
-
-
 // Send data update asynchronously to kue
 export function sendDataEvent(event: DataEvent) {
     sendJob(DATA_EVENT_JOB_NAME, event);

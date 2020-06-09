@@ -43,7 +43,7 @@ const DB_COLLECTION_TEMPLATE = (name:string) => {return `db.${name}`};
 
 // TODO rename to "subscriptions"
 const SUBSCRIPTIONS_COLLECTION = "alerts";
-const NOTIFICATIONS_COLLECTION = "notifications";
+export const NOTIFICATIONS_COLLECTION = "notifications";
 
 const MARKERS_PER_CLUSTER = 50;
 const AUTOCOMPLETE_NUM = 10;
@@ -52,7 +52,7 @@ const AUTOCOMPLETE_NUM = 10;
 const MIN_ZOOM_APPROX = 12
 
 /* Singleton instance */
-class  Connection {
+export class  Connection {
     static client : MongoClient;
     static async getDb() {
         if (!this.client) {
@@ -362,6 +362,19 @@ function projectFields(schema: StructType, attributes: string[] = null) {
     return mapFromKeys(cols, col => true);
 }
 
+export async function getRecordsByIds(dbName:string, ids:string[]) : Promise<Record[]>{
+
+    let col = await Connection.getDbCollection(dbName);
+    let dbDef = await getDbDef(dbName);
+    let project = projectFields(dbDef.schema);
+
+    let records = await col.find<Record>({_id: {$in : ids}}, {projection:project}).toArray();
+
+    let attrMap = arrayToMap(dbDef.schema.attributes, attr => attr.name);
+
+    return records.map(record => fromMongo(record, attrMap));
+}
+
 // DataFetcher for SSR : direct access to DB
 export class SSRDataFetcher implements DataFetcher {
 
@@ -376,6 +389,7 @@ export class SSRDataFetcher implements DataFetcher {
         let dbDef = await getDbDef(dbName);
 
         // Decorate Db with user rights
+        // XXX Should not be done here
         let pass = this.request.cookies[SECRET_COOKIE(dbName)];
         dbDef.userRights = await getAccessRights(dbName, pass);
 
@@ -390,17 +404,11 @@ export class SSRDataFetcher implements DataFetcher {
 
     @cache
     async getRecord(dbName:string, id:string) : Promise<Record> {
-        let col = await Connection.getDbCollection(dbName);
-        let dbDef = await getDbDef(dbName);
-        let project = projectFields(dbDef.schema);
-
-        let record = await col.findOne({_id: id}, {projection:project});
-
-        if (!record) return null;
-
-        let attrMap = arrayToMap(dbDef.schema.attributes, attr => attr.name);
-
-        return fromMongo(record, attrMap);
+        let res = await getRecordsByIds(dbName, [id]);
+        if (res.length == 0) {
+            return null;
+        }
+        return res[0];
     }
 
 
@@ -438,7 +446,7 @@ export class SSRDataFetcher implements DataFetcher {
         limit:number=null) : Promise<Record[]>
     {
         let col = await Connection.getDbCollection(dbName);
-        let dbDef = await this.getDbDefinition(dbName);
+        let dbDef = await getDbDef(dbName);
         let query = this.baseQuery(dbName, filters, search);
 
         let project = projectFields(dbDef.schema);
@@ -472,7 +480,7 @@ export class SSRDataFetcher implements DataFetcher {
                         extraFields:string[]=[]) : Promise<Marker[]>
     {
         let col = await Connection.getDbCollection(dbName);
-        let dbDef = await this.getDbDefinition(dbName);
+        let dbDef = await getDbDef(dbName);
         let query = this.baseQuery(dbName, filters, search);
 
         let attrMap = arrayToMap(dbDef.schema.attributes, attr => attr.name);
@@ -608,7 +616,7 @@ export class SSRDataFetcher implements DataFetcher {
     @cache
     async autocomplete(dbName: string, attrName: string, query: string, geo:boolean=false): Promise<Autocomplete[]> {
         let col = await Connection.getDbCollection(dbName);
-        let dbDef = await this.getDbDefinition(dbName);
+        let dbDef = await getDbDef(dbName);
 
         if (!query || query.length < 3) {
             throw new BadRequestException('Query too small : 3 chars min');
@@ -638,7 +646,7 @@ export class SSRDataFetcher implements DataFetcher {
 
             console.debug("Cache collection not found : creating it")
 
-            // Cache collection not found => create it
+            // Group result : count them
             let groupInstruction: Map<any> = {
                 _id: "$" + attrName,
                 "count": {$sum: 1},
@@ -687,7 +695,7 @@ export class SSRDataFetcher implements DataFetcher {
 }
 
 
-function computeSecret(email:string) {
+export function computeSecret(email:string) {
     return crypto.createHash('sha256').update(JSON.stringify(email + "#" + config.SECRET)).digest('hex')
 }
 
