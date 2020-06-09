@@ -32,6 +32,7 @@ The following environnement variable can be set on command line or via a **.env*
 * **SMTP_PASS** SMTP password
 * **SMTP_FROM** Email in 'from'
 * **SMTP_SECURE** Use TLS : false by default
+* **SMTP_REJECT_UNAUTHORIZED** ignore errors on certficate check (may help with self-signed or some email provider certificates)
 
 
 ## Deploy on prod

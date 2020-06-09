@@ -12,6 +12,9 @@ let emailConfig = {
     auth : {
         user: Config.SMTP_LOGIN,
         pass: Config.SMTP_PASS,
+    },
+    tls: { 
+    	 rejectUnauthorized: Config.SMTP_REJECT_UNAUTHORIZED
     }
 };
 
