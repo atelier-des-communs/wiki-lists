@@ -10,12 +10,13 @@ export const config = {
     LANGS : getEnv("LANGS", ""),
     SERVE_STATIC : getEnv("SERVE_STATIC", 1),
     SINGLE_BASE : getEnv("SINGLE_BASE", ""),
-    CAPTCHA_KEY : getEnv("CAPTCHA_KEY"),
-    CAPTCHA_SECRET : getEnv("CAPTCHA_SECRET"),
+    CAPTCHA_KEY : getEnv("CAPTCHA_KEY", ""),
+    CAPTCHA_SECRET : getEnv("CAPTCHA_SECRET", ""),
     NB_CACHE_ITEMS : parseInt(getEnv("NB_CACHE_ITEMS", 100000)),
-    MAILGUN_API : getEnv("MAILGUN_API"),
-    MAIL_DOMAIN : getEnv("MAIL_DOMAIN"),
-    MAIL_FROM : getEnv("MAIL_FROM")
+    MAILGUN_API : getEnv("MAILGUN_API", ""),
+    MAIL_DOMAIN : getEnv("MAIL_DOMAIN", ""),
+    MAIL_FROM : getEnv("MAIL_FROM"),
+    REDIS_PORT: parseInt(getEnv("REDIS_PORT"), 6379)
 };
 
 

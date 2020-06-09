@@ -6,8 +6,9 @@ import {config} from "./config";
 import {isPromise, parseBool} from "../shared/utils";
 import stringify from 'json-stringify-deterministic';
 
+
 const NB_CACHE_ITEMS = config.NB_CACHE_ITEMS;
-const client = redis.createClient();
+const client = redis.createClient({port:config.REDIS_PORT});
 const lruCache = lru(client, NB_CACHE_ITEMS);
 
 const MAX_AGE = 1000 * 3600 * 24;

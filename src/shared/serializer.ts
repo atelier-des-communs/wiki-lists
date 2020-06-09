@@ -58,7 +58,7 @@ export function toAnnotatedJson<T>(obj:T, path:string="") : T {
 
         // Walk the tree
         let res : any = {};
-        for (let key of Object.keys(obj)) {
+        for (let key of Object.keys(obj as any)) {
             res[key] = toAnnotatedJson((obj as any)[key], `${path}.${key}` );
         }
 
@@ -102,7 +102,7 @@ export function toTypedObjects<T>(json:T, classProp:string = CLASS_PROP, removeT
 
         // Walk the tree
         let res : any = {};
-        for (let key of Object.keys(json)) {
+        for (let key of Object.keys(json as any)) {
             res[key] = toTypedObjects((json as any)[key], classProp, removeTag);
         }
 

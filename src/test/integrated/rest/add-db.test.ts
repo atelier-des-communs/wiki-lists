@@ -4,31 +4,34 @@ import * as request from "supertest";
 import {messages as _} from "../../../server/i18n/en-GB";
 dotenv.config({path:"test.env"});
 
-import config from "../../../server/config";
+import {ChildProcess, exec} from "child_process";
+import {config} from "../../../server/config";
 import * as path from "path";
 import * as core from "express-serve-static-core";
 import * as morgan from "morgan";
 import * as fs from "fs";
 import * as serverModule from "../../../../dist/server/server.bundle";
 import {LOGIN_URL, VALIDATION_ERROR_STATUS_CODE} from "../../../shared/api";
-
-const DB_PORT = 4444;
-const SERVER_PORT = 8083;
-
+import {SIGINT} from "constants";
 
 let client_path = path.resolve(__dirname, "..", "..", "..", "..", "dist", "client");
 let server_path = path.resolve(__dirname, "..", "..", "..", "..", "dist", "server");
 
-let mongod = null;
+let mongod : MongoMemoryServer = null;
 let server : core.Express = null;
+let redisProcess : ChildProcess = null;
+let smtpProcess : ChildProcess = null;
+
+const SERVER_PORT = 8083;
+
+
 
 beforeAll(done => {
 
     let initServer = serverModule.default;
 
     // Create in memory DB
-    mongod = new MongoMemoryServer({instance:{port: DB_PORT}});
-    config.DB_PORT = DB_PORT;
+    mongod = new MongoMemoryServer({instance:{port: config.DB_PORT}});
 
     server = initServer([client_path, server_path]);
 
@@ -40,6 +43,25 @@ beforeAll(done => {
             // console.log("Server started on port : ", SERVER_PORT);
             done();
         });
+    });
+
+    // Start REDIS
+    redisProcess = exec("redis-server --port " + config.REDIS_PORT, function (error, stdout, stderr) {
+
+        //console.log('stdout: ' + stdout);
+        //console.log('stderr: ' + stderr);
+        if (error !== null) {
+            console.log('exec error: ' + error);
+        }
+    });
+
+    smtpProcess = exec("fake-smtp-server --port", function (error, stdout, stderr) {
+
+        //console.log('stdout: ' + stdout);
+        //console.log('stderr: ' + stderr);
+        if (error !== null) {
+            console.log('exec error: ' + error);
+        }
     });
 
 });
@@ -57,4 +79,9 @@ test("Should login", done => {
                    email: _.auth.userNotFound})
         });
 });
+
+afterAll(() => {
+    mongod.stop();
+    redisProcess.kill("SIGINT");
+})
 

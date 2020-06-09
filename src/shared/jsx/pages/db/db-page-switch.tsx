@@ -87,8 +87,6 @@ class _DbPageSwitch extends AsyncDataComponent<PageProps<DbPathParams> & UpdateA
             RECORDS_PATH(props.config).
                 replace(":db_name", getDbName(props));
 
-        let hideLinks = localStorage(HIDE_LINKS_LS_KEY(props.db.name));
-
         let AsyncAboutPage = withAsyncImport(
             () => import("../about").then(
                 (module) => module.AboutPage))
@@ -111,33 +109,6 @@ class _DbPageSwitch extends AsyncDataComponent<PageProps<DbPathParams> & UpdateA
             </div>
 
             <div style={{margin: "1em"}}>
-
-
-                {hasRight(props, AccessRight.ADMIN) && !hideLinks &&
-                <Message info>
-                    <Button
-                        basic compact size="small"
-                        icon="close" floated="right" title={_.hide}
-                        onClick={() => this.hideLinks() }/>
-                    <Message.Header>
-                        {_.db_created}
-                    </Message.Header>
-
-                    <Message error>
-                        <Message.Header>
-                            {_.private_link}
-                        </Message.Header>
-                        <a href={private_link}>{private_link}</a>
-                    </Message>
-
-                    <Message positive>
-                        <Message.Header>
-                            {_.public_link}
-                        </Message.Header>
-                        <a href={public_link}>{public_link}</a>
-                    </Message>
-
-                </Message>}
 
                 <Switch>
                     <Route path="/about" render={(props:RouteComponentProps<DbPathParams>) => <AsyncAboutPage />} />
