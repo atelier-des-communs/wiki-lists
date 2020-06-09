@@ -129,7 +129,7 @@ export class AttributeList extends React.Component<AttributeListProps> {
             {value: Types.BOOLEAN, text:_.type_boolean, icon: "check square outline"},
             {value: Types.NUMBER, text:_.type_number, icon:"number"},
             {value: Types.ENUM, text:_.type_enum, icon:"list"},
-            {value: Types.DATETIME, text:_.type_datetime, icon:"clock outline"},
+            // {value: Types.DATETIME, text:_.type_datetime, icon:"clock outline"},
             {value: Types.TEXT, text:_.type_text, icon:"font"}];
 
 

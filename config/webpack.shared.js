@@ -23,6 +23,10 @@ var common_loaders = {
         test: /\.tsx?$/,
         use: ["ts-loader"],
     },
+    /**scss:  {
+        test: /\.scss$/,
+        exclude: /node_modules/,
+        use: [MiniCssExtractPlugin.loader, "css-loader", "sass-loader"]},**/
     css:  {
         test: /\.css$/,
         exclude: /node_modules/,

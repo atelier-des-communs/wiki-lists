@@ -12,7 +12,7 @@
   },
   "betterScripts": {
     "watch": {
-      "command": "npm run clean && node ./bin/bundler/dev.js  && concurrent \"node ./bin/server/hotReload.js \" \"nodemon ./bin/server --watch dist -e js,jsx,ts,tsx\" --kill-others",
+      "command": "npm run clean && node ./bin/bundler/dev.js  && concurrent \"node ./bin/server/hotReload.js \" \"nodemon ./bin/server --watch dist -e js,jsx,ts,tsx,css\" --kill-others",
       "env": {
         "NODE_ENV": "development"
       }

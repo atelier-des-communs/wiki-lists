@@ -22,14 +22,6 @@ body {
     visibility: visible !important;
 }
 
-@media print
-{
-    .no-print, .no-print *
-    {
-        display: none !important;
-    }
-}
-
 .editable {
     cursor: pointer;
 }
@@ -116,3 +108,37 @@ body {
     font-weight: bold;
     padding-right: 1em;
 }
+
+.enum-filter {
+    max-height: 10rem;
+    overflow-y: scroll;
+    scrollbar-width : thin;
+    scrollbar-color : lightgray white;
+}
+
+.wl-margin {
+    margin:0.5rem !important;
+}
+
+.wl-short {
+    white-space: nowrap;
+    display: inline-block;
+    overflow-x: hidden;
+}
+
+.wl-sidebar {
+    padding-top: 1em;
+    padding-right: 1em;
+    max-width:250px;
+}
+
+.wl-filter {
+    max-width:250px;
+}
+
+th, .header {
+    overflow-x: hidden;
+}
+
+
+

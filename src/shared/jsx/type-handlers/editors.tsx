@@ -207,7 +207,7 @@ class EnumHandler extends ControlledValueHandler<string, EnumType> {
             value:enumVal.value} as DropdownItemProps));
 
         return <FormSelect
-            multiple={type.multi}
+            multiple={type.multi} search
             style={{zIndex:9999}}
             value={this.state.innerValue}
             options={options}

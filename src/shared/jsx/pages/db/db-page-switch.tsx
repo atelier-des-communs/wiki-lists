@@ -43,16 +43,15 @@ export class DbPageSwitchInternal extends React.Component<DbPageProps>{
         let singleRecordPage = (otherProps: any) => <SingleRecordPage {...props} {...otherProps} />
         let recordsPage = (otherProps: any) => <RecordsPage {...props} {...otherProps} />
 
+        let adminButton = hasDbRight(props.db, props.user, AccessRight.ADMIN) ?
+            <Button color={admin_color}
+                    icon="cog" size="small"
+                    content={_.admin_panel}
+                    as={Link} to={ADMIN_PATH.replace(":db_name", props.db.name)} />
+            : null;
+
         return <>
-            <Header {...props} >
-                {hasDbRight(props.db, props.user, AccessRight.ADMIN) ?
-                    <Button floated="right" color={admin_color}
-                            icon="cog" compact
-                            size="small"
-                            content={_.admin_panel}
-                            as={Link} to={ADMIN_PATH.replace(":db_name", props.db.name)} />
-                    :
-                    null}
+            <Header {...props} extraButtons={adminButton} >
                 <h1>
                     <Link to={recordsLink(db.name)}>
                         {db.label}

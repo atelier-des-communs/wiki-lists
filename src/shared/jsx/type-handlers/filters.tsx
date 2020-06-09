@@ -176,7 +176,7 @@ class EnumFilterComponent extends AbstractSingleFilter<EnumFilter> {
                 style={{cursor:"pointer"}} />
         </div>));
 
-        return <div>
+        return <div className="enum-filter" >
             <Checkbox
                 key="empty"
                 label={_.empty}
@@ -235,7 +235,7 @@ export function singleFilter(props : RouteComponentProps<{}> & MessagesProps, at
             return null;
     }
 
-    return <>
+    return <div className="wl-filter">
         {filter &&
          <Button
             circular size="mini" compact  floated="right"
@@ -244,7 +244,7 @@ export function singleFilter(props : RouteComponentProps<{}> & MessagesProps, at
             onClick={stopPropag(clearFilter)} />
         }
         {filterComp}
-    </>
+    </div>
 }
 
 /** Return an array of filter components, for the ones that have filters */
@@ -267,7 +267,7 @@ export const FilterSidebar : React.SFC<IFiltersComponentProps & RouteComponentPr
     {getFilters(props).map( item =>
         <Segment>
             <Header as="h4">
-                {ellipsis(attrLabel(item.attr))}
+                { ellipsis(attrLabel(item.attr)) }
             </Header>
             <Divider/>
             <div key={item.attr.name} >
@@ -303,7 +303,7 @@ export const FiltersPopup : React.SFC<IFiltersComponentProps & RouteComponentPro
             <Header as={"h3"}>{_.filters}</Header>
         <Grid columns={12}>
             {getFilters(props).map( item =>
-                <Grid.Column mobile={12} tablet={6} computer={4}>
+                <Grid.Column mobile={12} tablet={6} computer={4} >
                     <Header as="h4">
                         {ellipsis(attrLabel(item.attr))}
                     </Header>

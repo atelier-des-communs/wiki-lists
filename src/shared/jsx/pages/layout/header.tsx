@@ -6,8 +6,12 @@ import {GlobalContextProps} from "../../context/global-context";
 import {Link} from "react-router-dom";
 import {hasDbRight} from "../../../access";
 
+type ExtraButtonsType = {
+    extraButtons ?: React.ReactNode
+}
+
 /** Common header : showing language switch and login */
-export const Header : React.SFC<GlobalContextProps> = (props) => {
+export const Header : React.SFC<GlobalContextProps & ExtraButtonsType> = (props) => {
 
     let _ = props.messages;
 
@@ -16,12 +20,11 @@ export const Header : React.SFC<GlobalContextProps> = (props) => {
         window.location.reload();
     }
 
-    let langSelector = <Button.Group compact size="mini" floated="right" style={{margin:"5px"}}>
+    let langSelector = <Button.Group compact size="mini" floated="right" className="wl-margin">
 
         {props.supportedLanguages.map(lang =>
             <Button
                 key={lang.key}
-                compact size="small"
                 active={props.lang == lang.key}
                 onClick={() => changeLang(lang.key)}>
 
@@ -32,27 +35,22 @@ export const Header : React.SFC<GlobalContextProps> = (props) => {
     </Button.Group >;
 
     let ConnectOrPprfileButton = () => { return props.user ?
-        <Button as={Link}
-                to={PROFILE_PAGE_PATH}
-                icon="user"
-                floated="right" style={{margin:"5px"}}
-                key="user"
-                compact primary size="small"
-                content={_.auth.profile} />
+        <Button as={Link} to={PROFILE_PAGE_PATH}
+                icon="user" key="user" primary content={_.auth.profile} />
 
-        : <Button as={Link}
-                  to={LOGIN_PAGE_PATH}
-                  floated="right" style={{margin:"5px"}}
-                  key="user"
-                  compact primary size="small"
-                  content={_.auth.login} />
+        : <Button as={Link} to={LOGIN_PAGE_PATH}
+                  key="user" primary content={_.auth.login} />
     }
 
     return <>
 
-        <ConnectOrPprfileButton />
+        <Button.Group size="mini" compact floated="right" className="wl-margin" >
+            <ConnectOrPprfileButton />
+            {props.extraButtons}
+        </Button.Group>
 
         {langSelector}
+
 
         <div style={{
             padding:"3em",
@@ -62,7 +60,5 @@ export const Header : React.SFC<GlobalContextProps> = (props) => {
         }}>
             {props.children}
         </div>
-
-
     </>
 };

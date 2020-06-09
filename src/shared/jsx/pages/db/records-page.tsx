@@ -285,10 +285,7 @@ class RecordsPageInternal extends React.Component<RecordsPageProps> {
 
             <div style={{display:"flex"}}>
                 {this.state.filtersSidebar &&
-                <div className="no-print large-screen-only"
-                     style={{
-                         paddingTop: "1em",
-                         paddingRight: "1em"}}>
+                <div className="wl-sidebar large-screen-only" >
                     {sideBarButton("right")}
                     <FilterSidebar {...props} schema={db.schema} />
                 </div>
