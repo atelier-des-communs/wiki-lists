@@ -1,0 +1,21 @@
+version: '3.1'
+
+services:
+
+  mongo:
+    image: mongo
+    restart: always
+    volumes:
+      - ./data:/data/db
+
+  wikilist:
+    build: .
+    restart: always
+    env_file: configuration.example
+    environment:
+      PORT: 8000
+      DB_HOST: mongo
+      DB_PORT: 27017
+      DB_NAME: wikilist
+    ports:
+      - 8000:8000

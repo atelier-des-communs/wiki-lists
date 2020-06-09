@@ -11,6 +11,7 @@ export default {
     SMTP_LOGIN : getEnv("SMTP_LOGIN"),
     SMTP_PASS : getEnv("SMTP_PASS"),
     SMTP_FROM : getEnv("SMTP_FROM"),
+    SMTP_REJECT_UNAUTHORIZED : parseBool(getEnv("SMTP_REJECT_UNAUTHORIZED", "true")),
 
     DB_HOST : getEnv("DB_HOST", "localhost"),
     DB_NAME : getEnv("DB_NAME", "wikilist"),
