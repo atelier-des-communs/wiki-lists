@@ -63,6 +63,6 @@ export function cache(
     return propertyDesciptor;
 }
 
-export function clearCache() {
+export function clearRedisCache() {
     lruCache.reset();
 }

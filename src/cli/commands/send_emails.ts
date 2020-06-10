@@ -2,7 +2,7 @@ import {
     Connection,
     getDbDef,
     getRecordsByIds,
-    NOTIFICATIONS_COLLECTION,
+    NOTIFICATIONS_COLLECTION, SSRDataFetcher,
     SUBSCRIPTIONS_COLLECTION
 } from "../../server/db/db";
 import {Record} from "../../shared/model/instances";
@@ -20,27 +20,58 @@ import {RECORDS_PATH} from "../../shared/api";
 import {DbDefinition} from "../../shared/model/db-def";
 import {manageURL} from "../../server/rest/db";
 import {sendMail} from "../../server/email/email";
+import {CITY_ZOOM} from "../../shared/jsx/type-handlers/filters";
 
 
 let RECORDS_URL = config.ROOT_URL + RECORDS_PATH(sharedConfig) + "/";
 
+function positionParams(lat:number, lon:number, zoom:number) {
+    return viewPortToQuery({
+        center: [lat, lon],
+        zoom});
+}
+
 function itemurl(item:Record, filters:Map<Filter>) {
     let point = item["location"] as ICoord;
-
     let query : Map<any> = serializeFilters(mapValues(filters));
     if (point) {
-        query = {...query, ...viewPortToQuery({
-            center: [point.lat, point.lon],
-            zoom: RECORD_ZOOM
-        })};
+        query = {
+            ...query,
+            ...positionParams(point.lat, point.lon, RECORD_ZOOM)
+        }
     }
     query['popup']=item._id;
     return RECORDS_URL + "?" + QueryString.stringify(query);
 }
 
-function allUrl(dbDef:DbDefinition, filters:Map<Filter>) {
-    let params = QueryString.stringify(serializeFilters(mapValues(filters)));
-    return RECORDS_URL + "?" + params;
+async function allUrl(dbDef:DbDefinition, filters:Map<Filter>, communeSearch:string) {
+
+    // XXX request not required here : smell of bad design
+    let dataFetcher = new SSRDataFetcher(null);
+    let params = serializeFilters(mapValues(filters));
+
+    // Use autocomplete for getting bounding box of results ... nasty
+    let auto = await dataFetcher.autocomplete(
+        config.SINGLE_BASE,
+        "commune",
+        communeSearch,
+        true, true);
+
+    if (auto.length > 0) {
+        let auto0 = auto[0];
+        let minlon : number = auto0.minlon;
+        let minlat : number = auto0.minlat;
+        let maxlon : number = auto0.maxlon;
+        let maxlat : number = auto0.maxlat;
+        let postParams = positionParams((minlat+maxlat)/2, (minlon+maxlon)/2, CITY_ZOOM);
+        params = {
+            ...params,
+            ...postParams};
+    } else {
+        console.log("No boundaries found for : " + communeSearch)
+    }
+
+    return RECORDS_URL + "?" + QueryString.stringify(params);
 }
 
 function toSimpleRecord(record:Record, filters:Map<Filter>) : SimpleRecord{
@@ -53,11 +84,13 @@ function toSimpleRecord(record:Record, filters:Map<Filter>) : SimpleRecord{
     }
 }
 
-export async function send_emails(db_name:string) {
+export async function send_emails() {
+    let dbName = config.SINGLE_BASE;
 
     let notifsCol = await Connection.getCollection<Notification>(NOTIFICATIONS_COLLECTION);
     let subsCol = await Connection.getCollection<Subscription>(SUBSCRIPTIONS_COLLECTION);
-    let dbDef = await getDbDef(db_name);
+
+    let dbDef = await getDbDef(dbName);
 
     let cursor = notifsCol.find({sent:{$ne:true}});
 
@@ -69,13 +102,13 @@ export async function send_emails(db_name:string) {
         try {
 
             let subscription = await subsCol.findOne({email})
-            let records = await getRecordsByIds(db_name, notif.items);
+            let records = await getRecordsByIds(dbName, notif.items);
 
             let filters = extractFilters(dbDef.schema, subscription.filters);
 
             let simpleRecords = records.map(record => toSimpleRecord(record, filters));
-            let linkToall = allUrl(dbDef, filters);
             let commune = (filters["commune"] as TextFilter).search;
+            let linkToall = await allUrl(dbDef, filters, commune);
 
             let manageLink = manageURL(email);
 

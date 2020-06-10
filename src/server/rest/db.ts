@@ -47,7 +47,7 @@ import {extractFilters, extractSearch, TextFilter} from "../../shared/views/filt
 import {config, sharedConfig} from "../config";
 import {BadRequestException, ForbiddenException, HttpError} from "../exceptions";
 import * as request from "request-promise";
-import {clearCache} from "../cache";
+import {clearRedisCache} from "../cache";
 import * as crypto from "crypto";
 import {Subscription} from "../../shared/model/notifications";
 import * as HttpStatus from "http-status-codes";
@@ -93,7 +93,7 @@ async function setupIndexes(req:Request) : Promise<boolean> {
 
 async function resetCache(req:Request) : Promise<boolean> {
     await requiresRight(req, AccessRight.ADMIN);
-    clearCache();
+    clearRedisCache();
     return true;
 }
 

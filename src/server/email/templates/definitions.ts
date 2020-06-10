@@ -15,7 +15,7 @@ export interface Email {
 export interface SimpleRecord {
     name:string,
     link:string,
-    surface:string,
+    surface:number,
     type:string,
     addresse:string,
 }

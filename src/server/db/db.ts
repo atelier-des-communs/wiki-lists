@@ -39,7 +39,8 @@ import * as crypto from "crypto";
 
 
 const SCHEMAS_COLLECTION = "schemas";
-const DB_COLLECTION_TEMPLATE = (name:string) => {return `db.${name}`};
+const DB_COLLECTION_TEMPLATE = (name:string) => `db.${name}`;
+const DB_CACHE_COLLECTION_TEMPLATE = (name:string, attr_name:string) => DB_COLLECTION_TEMPLATE(name) + "." + attr_name;
 
 // TODO rename to "subscriptions"
 export const SUBSCRIPTIONS_COLLECTION = "alerts";
@@ -614,7 +615,7 @@ export class SSRDataFetcher implements DataFetcher {
     }
 
     @cache
-    async autocomplete(dbName: string, attrName: string, query: string, geo:boolean=false): Promise<Autocomplete[]> {
+    async autocomplete(dbName: string, attrName: string, query: string, geo:boolean=false, exact=false): Promise<Autocomplete[]> {
         let col = await Connection.getDbCollection(dbName);
         let dbDef = await getDbDef(dbName);
 
@@ -628,21 +629,28 @@ export class SSRDataFetcher implements DataFetcher {
         }
 
         // Split and simplify words
-        let searchWords = query.split(" ").map((val) => slug(val));
-        let matchExprs = searchWords.map((word) => ({
-            [attrName + "$"] : {$regex : `^${word}.*`
-        }}));
+        let match:Map<any> = null;
+        if (exact) {
+            match = {_id: query};
+        }else {
+            let searchWords = query.split(" ").map((val) => slug(val));
+            let matchExprs = searchWords.map((word) => ({
+                [attrName + "$"]: {
+                    $regex: `^${word}.*`
+                }
+            }));
 
-        // AND for several words
-        let match = matchExprs.length == 1 ? matchExprs[0] : {$and: matchExprs}
+            // AND for several words
+            match = matchExprs.length == 1 ? matchExprs[0] : {$and: matchExprs}
+        }
 
         console.debug("Match expression", match);
 
         // Cache collection exists for auto complete ?
         let db = await Connection.getDb();
-        let cacheColName = DB_COLLECTION_TEMPLATE(dbName) + '.' + attrName;
-        let cacheCol = await db.listCollections({name: cacheColName}).next();
-        if (cacheCol == null) {
+        let cacheColName = DB_CACHE_COLLECTION_TEMPLATE(dbName, attrName);
+
+        if (!(await hasCollection(cacheColName))) {
 
             console.debug("Cache collection not found : creating it")
 
@@ -693,6 +701,24 @@ export class SSRDataFetcher implements DataFetcher {
         return updateSubscriptionDb(dbName, subscription, secret);
     }
 }
+
+export async function clearCacheCollections(dbName : string) {
+    let dbDef = await getDbDef(dbName);
+    for (let attr of dbDef.schema.attributes) {
+        let collectionName = DB_CACHE_COLLECTION_TEMPLATE(dbName, attr.name);
+        if (await hasCollection(collectionName)) {
+            console.warn(`Removing cache collection : ${collectionName}`)
+            let col = await Connection.getCollection(collectionName);
+            await col.drop();
+        }
+    }
+}
+
+async function hasCollection(collectionName:string) {
+    let db = await Connection.getDb();
+    return (await db.listCollections({name: collectionName}).next()) != null;
+}
+
 
 
 export function computeSecret(email:string) {

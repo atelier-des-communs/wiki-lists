@@ -49,7 +49,7 @@ import {isEqual} from "lodash";
 
 
 const DEBOUNCE_DELAY= 500;
-const CITY_ZOOM = 14;
+export const CITY_ZOOM = 14;
 
 
 

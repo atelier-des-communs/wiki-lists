@@ -4,6 +4,8 @@ import {config} from "../../config";
 import {DbDefinition} from "../../../shared/model/db-def";
 
 
+let NUM_RECORDS=5;
+
 export let emailsFr : EmailTemplates =
 {
     loginEmail(link: string) {
@@ -44,6 +46,10 @@ export let emailsFr : EmailTemplates =
     notification(commune:string, records: SimpleRecord[], manageURl: string, allURL: string): Email {
 
         let n = records.length;
+
+        // sort by surface and show first only
+        let selection = records.sort((a, b) => b.surface - a.surface).slice(0, NUM_RECORDS)
+        
         let unsubscribe_link = manageURl + "&unsubscribe";
         return {
             subject : `[${config.SITE_NAME}] ${records.length} nouveaux permis de contruire à ${commune}`,
@@ -53,12 +59,13 @@ export let emailsFr : EmailTemplates =
                 <p>
                     Nous avons trouvé {n} nouveaux permis de construire correspondant à vos critères d'alerte, sur la commune de {commune}:
                 <ul>
-                    {records.map(record => <li>
+                    {selection.map(record => <li>
                         <a href={record.link}>{record.name}</a> <br/>
                         <b>Type</b> : {record.type} <br/>
                         {record.surface? <><b>Surface</b>  : {record.surface} m2<br/></> : null}
                         <b>Addresse</b> : {record.addresse}<br/>
                     </li>)}
+                    {selection.length < records.length ? <li>...</li> : null}
                 </ul>
                     Cliquez <a href={allURL}>sur ce lien</a> pour une liste de tous les permis correspondant à cette recherche.
                 </p>
