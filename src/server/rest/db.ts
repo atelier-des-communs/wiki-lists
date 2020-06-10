@@ -135,6 +135,11 @@ async function createDbAsync(req:Request, res:Response) : Promise<boolean>{
     return true;
 }
 
+export function manageURL(email:string) {
+    return config.ROOT_URL
+        + SUBSCRIPTION_PATH(sharedConfig).replace(":email", email)
+        + "?" + qs.stringify({secret: computeSecret(email)})
+}
 async function addSubscriptionAsync(req:Request) : Promise<boolean> {
 
     let filters = req.body.filters as Map<string>;
@@ -169,19 +174,14 @@ async function addSubscriptionAsync(req:Request) : Promise<boolean> {
 
 
     // Manage URL
-    let manageURL =
-        config.ROOT_URL
-        + SUBSCRIPTION_PATH(sharedConfig).replace(":email", email)
-        + "?"
-        + qs.stringify({secret:computeSecret(email)})
+
 
     // Send email : don't wait for it
     sendMail(
         email,
         emailTemplates[req.language].newSubscription(
-            email,
             city.search,
-            manageURL));
+            manageURL(email)));
 
     return true;
 }

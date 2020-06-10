@@ -42,7 +42,7 @@ const SCHEMAS_COLLECTION = "schemas";
 const DB_COLLECTION_TEMPLATE = (name:string) => {return `db.${name}`};
 
 // TODO rename to "subscriptions"
-const SUBSCRIPTIONS_COLLECTION = "alerts";
+export const SUBSCRIPTIONS_COLLECTION = "alerts";
 export const NOTIFICATIONS_COLLECTION = "notifications";
 
 const MARKERS_PER_CLUSTER = 50;
@@ -62,9 +62,9 @@ export class  Connection {
         return this.client.db(config.DB_NAME);
     }
 
-    static async getCollection(colName : string) {
+    static async getCollection<T=any>(colName : string) {
         let db = await Connection.getDb();
-        return db.collection(colName);
+        return db.collection<T>(colName);
     }
 
     // Returns mongo collection for the given Db name
@@ -305,9 +305,9 @@ export async function addNotificationDb(email:string, item:any) : Promise<boolea
 
 export async function getActiveSubscriptionsDb() : Promise<Subscription[]> {
     let db = await Connection.getDb();
-    let subscriptionsDb = db.collection(SUBSCRIPTIONS_COLLECTION);
+    let subscriptionsDb = db.collection<Subscription>(SUBSCRIPTIONS_COLLECTION);
     // Find all
-    return await subscriptionsDb.find<Subscription>({disabled:{$ne:true}}).toArray();
+    return await subscriptionsDb.find({disabled:{$ne:true}}).toArray();
 }
 
 export async function checkAvailability(dbName:string) : Promise<boolean> {

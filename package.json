@@ -6,6 +6,7 @@
     "test": "jest",
     "clean": "node ./bin/clean.js",
     "server": "node ./bin/server",
+    "cli": "node ./dist/cli.js",
     "build": "NODE_ENV=production && npm run clean && node ./bin/bundler/prod.js --json",
     "build-cli": "node ./bin/bundler/cli.js --json",
     "deploy": "npm run build && npm run server",

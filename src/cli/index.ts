@@ -14,12 +14,12 @@ switch (command) {
         send_emails(config.SINGLE_BASE)
             .then(() => process.exit())
             .catch(
-                () => {
-                    console.error("Failed ...");
+                (e) => {
+                    console.error("Failed ...", e);
                     process.exit(-1);
             });
         break;
     default:
-        throw Error("Unknown command ")
+        throw Error("Unknown command " + command)
 }
 

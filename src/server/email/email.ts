@@ -21,6 +21,9 @@ let emailConfig = config.MAILGUN_API ?
     auth : {
         user: config.SMTP_LOGIN,
         pass: config.SMTP_PASS,
+    },
+    tls: {
+        rejectUnauthorized: config.SMTP_REJECT_UNAUTHORIZED
     }
 }
 
@@ -46,7 +49,7 @@ export function sendMail(email:string, content:Email) {
             ...data,
             headers:content.headers};
     }
-    console.log("Sending email ", data);
+    console.log(`Sending email to ${email} : ${content.subject}`);
 
     return transport.sendMail(data);
 }

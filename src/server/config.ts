@@ -27,6 +27,7 @@ export const config = {
     SMTP_SECURE : parseBool(getEnv("SMTP_SECURE", "false")),
     SMTP_LOGIN : getEnv("SMTP_LOGIN", ""),
     SMTP_PASS : getEnv("SMTP_PASS", ""),
+    SMTP_REJECT_UNAUTHORIZED : parseBool(getEnv("SMTP_REJECT_UNAUTHORIZED", "true")),
 
     // Or mailgun
     MAILGUN_API : getEnv("MAILGUN_API", ""),

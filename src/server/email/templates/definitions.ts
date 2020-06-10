@@ -1,5 +1,8 @@
 import {ReactElement} from "react";
 import {Map} from "../../../shared/utils";
+import {Record} from "../../../shared/model/instances";
+import {DbDefinition} from "../../../shared/model/db-def";
+import {Filter} from "../../../shared/views/filters";
 
 export const LIST_UNSUBSCRIBE = "List-Unsubscribe";
 
@@ -9,9 +12,18 @@ export interface Email {
     headers ?: Map<string>
 }
 
+export interface SimpleRecord {
+    name:string,
+    link:string,
+    surface:string,
+    type:string,
+    addresse:string,
+}
+
 export interface EmailTemplates {
     loginEmail(link:string) : Email;
-    newSubscription(email:string,commune:string, manageURL:string) : Email;
+    newSubscription(commune:string, manageURL:string) : Email;
+    notification(commune:string, records:SimpleRecord[], manageURl:string, allURL:string) : Email;
 }
 
 
