@@ -29,6 +29,9 @@ export const config = {
     SMTP_PASS : getEnv("SMTP_PASS", ""),
     SMTP_REJECT_UNAUTHORIZED : parseBool(getEnv("SMTP_REJECT_UNAUTHORIZED", "true")),
 
+    // TTL in seconds
+    RULE_ENGINE_TTL : parseInt(getEnv("RULE_ENGINE_TTL", 60*60)),
+
     // Or mailgun
     MAILGUN_API : getEnv("MAILGUN_API", ""),
     MAILGUN_DOMAIN : getEnv("MAILGUN_DOMAIN", ""),

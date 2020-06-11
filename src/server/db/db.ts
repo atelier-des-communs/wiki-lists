@@ -186,8 +186,8 @@ export async function setUpIndexesDb(dbName: string) {
     }
 }
 
-
 export async function createOrUpdateRecordsDb(dbName: string, records : Record[], _:IMessages, createOnly:boolean=false, noNotif:boolean=false) : Promise<Record[]> {
+
     let col = await Connection.getDbCollection(dbName);
     let dbDef = await getDbDef(dbName);
     let attrMap = arrayToMap(dbDef.schema.attributes, attr => attr.name);
@@ -260,6 +260,8 @@ export async function createOrUpdateRecordsDb(dbName: string, records : Record[]
     if (records.length == 1) {
         return records.map(record => fromMongo(record, attrMap));
     } else {
+        // XXX don't return result for multi update ??
+        // XXX should be an option
         return []
     }
 }

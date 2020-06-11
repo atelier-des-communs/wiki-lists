@@ -49,7 +49,7 @@ export let emailsFr : EmailTemplates =
 
         // sort by surface and show first only
         let selection = records.sort((a, b) => b.surface - a.surface).slice(0, NUM_RECORDS)
-        
+
         let unsubscribe_link = manageURl + "&unsubscribe";
         return {
             subject : `[${config.SITE_NAME}] ${records.length} nouveaux permis de contruire à ${commune}`,

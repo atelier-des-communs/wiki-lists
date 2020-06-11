@@ -36,6 +36,7 @@ node_modules
 .idea
 *.iml
 .env
+cli.env
 # Misc
 public
 dist

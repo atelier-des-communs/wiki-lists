@@ -4,7 +4,6 @@ import 'dotenv/config';
 
 
 import {send_emails} from "./commands/send_emails";
-import {config} from "../server/config";
 import {clear_caches} from "./commands/clear_caches";
 
 // Read from .env

@@ -29,16 +29,38 @@ export function sendDataEvent(event: DataEvent) {
     sendJob(DATA_EVENT_JOB_NAME, event);
 }
 
+class RuleEngineBuilder {
+
+    private engineMs: number = null;
+    private engine: RuleEngine = null;
+
+    constructor() {
+        // warmup
+        this.getRuleEngine();
+        console.log("RULE_ENGINE_TTL", config.RULE_ENGINE_TTL)
+    }
+
+    async getRuleEngine() {
+        let now = Date.now();
+        if (!this.engineMs || (now - this.engineMs) > config.RULE_ENGINE_TTL * 1000) {
+            this.engine = await buildAlertRuleEngine();
+            this.engineMs = now;
+            console.info(`Rule engine build with ${this.engine.rules.length} alert definitions`);
+        }
+        return this.engine;
+    }
+}
+
+
 // Job for consuming data events in stream
 export async function setupAlertHandler() {
 
-    // FIXME : Only built once : should be updated regularly
-    let engine = await buildAlertRuleEngine();
-
-    console.info(`Rule engine build with ${engine.rules.length} alert definitions`);
-
+    let ruleEngineBuilder = new RuleEngineBuilder()
     registerJobHandler(DATA_EVENT_JOB_NAME, (data:DataEvent) => {
-        engine.fire(data);
+        ruleEngineBuilder.getRuleEngine().then((engine) => {
+            engine.fire(data);
+        });
+
     });
 }
 
