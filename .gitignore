@@ -48,3 +48,4 @@ src/**/*.jsx.map
 tsd.json
 typings
 *.swp
+data

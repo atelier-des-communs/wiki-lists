@@ -21,7 +21,6 @@ const LOGIN_TIME = 7 * 24 * 3600 * 100; // One week
 
 export default function initServer(dist_paths:string[]) : express.Express {
 
-
     var server = express();
     server.use(compression());
     server.use(bodyParser.json({limit: '100mb'}));

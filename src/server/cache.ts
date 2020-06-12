@@ -1,5 +1,5 @@
 import * as redis from "redis";
-import lru from "redis-lru";
+import {default as lru, Cache} from "redis-lru";
 import {toAnnotatedJson, toTypedObjects} from "../shared/serializer";
 import * as md5 from "md5";
 import {config} from "./config";
@@ -8,8 +8,23 @@ import stringify from 'json-stringify-deterministic';
 
 
 const NB_CACHE_ITEMS = config.NB_CACHE_ITEMS;
-const client = redis.createClient({port:config.REDIS_PORT});
-const lruCache = lru(client, NB_CACHE_ITEMS);
+
+let _redis_client : redis.RedisClient = null;
+function getRedisClient() {
+    if (!_redis_client) {
+        _redis_client = redis.createClient({port:config.REDIS_PORT});
+    }
+    return _redis_client;
+}
+
+let _lruCache : Cache = null;
+function getLRUCache()  {
+    if (!_lruCache) {
+        _lruCache = lru(getRedisClient(), NB_CACHE_ITEMS);
+    }
+    return _lruCache;
+}
+
 
 const MAX_AGE = 1000 * 3600 * 24;
 
@@ -33,7 +48,7 @@ export function getCache<T>(key:string, func:()=>T | Promise<T>) : Promise<T> {
         }
     };
 
-    return lruCache.getOrSet(key, annotatedFunc, MAX_AGE).catch((err)=> {
+    return getLRUCache().getOrSet(key, annotatedFunc, MAX_AGE).catch((err)=> {
         console.error("Error happened while caching", err);
         throw err;
     }).then((res) => toTypedObjects(res));
@@ -65,5 +80,5 @@ export function cache(
 }
 
 export function clearCache() {
-    lruCache.reset();
+    getLRUCache().reset();
 }

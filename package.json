@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "A React.js typescript isomorphic template with Webpack and react-router",
   "scripts": {
-    "test": "jest",
+    "test": "jest --silent=false",
     "clean": "node ./bin/clean.js",
     "server": "node ./bin/server",
     "build": "NODE_ENV=production && npm run clean && node ./bin/bundler/prod.js --json",

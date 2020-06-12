@@ -1,8 +1,10 @@
 import MongoMemoryServer from 'mongodb-memory-server';
-import *  as dotenv from "dotenv";
+import {config as dotenv_config} from "dotenv";
 import * as request from "supertest";
 import {messages as _} from "../../../server/i18n/en-GB";
-dotenv.config({path:"test.env"});
+
+dotenv_config({path:"test.env"});
+
 import {ChildProcess, exec} from "child_process";
 import {config} from "../../../server/config";
 import * as path from "path";
@@ -20,8 +22,6 @@ let server : core.Express = null;
 let redisProcess : ChildProcess = null;
 let smtpProcess : ChildProcess = null;
 
-const SERVER_PORT = 8083;
-
 function execChild(name: string, command:string) : ChildProcess {
     return exec(command, function (error, stdout, stderr) {
         console.log('stdout:' + name + " : " + stdout);
@@ -32,63 +32,66 @@ function execChild(name: string, command:string) : ChildProcess {
     })
 }
 
-function killall() {
+async function killall() {
     console.log("Killing all")
     try {
-        mongod.stop();
-    } finally {
-
+        await mongod.stop();
+    } catch (e) {
+        console.error(e);
     }
     try {
         if (redisProcess !=null) {
-            redisProcess.kill("SIGINT");
+            await redisProcess.kill("SIGINT");
         }
-    } finally {
-
+    } catch (e) {
+        console.error(e);
     }
     try {
         if (smtpProcess != null) {
-            smtpProcess.kill("SIGINT");
+            await smtpProcess.kill("SIGINT");
         }
-    } finally {
-
+    } catch (e) {
+        console.error(e);
     }
 }
 
 afterAll(killall)
 process.on('exit', killall);
 
-beforeAll(done => {
+beforeAll(async () => {
 
     console.log(config)
 
     let initServer = serverModule.default;
 
     // Create in memory DB
-    mongod = new MongoMemoryServer({instance:{port: config.DB_PORT}});
+    mongod = new MongoMemoryServer({
+        // debug:true,
+        binary: {
+            version:"3.6.3"
+        },
+        instance:{
+            ip: "0.0.0.0",
+            port: config.DB_PORT}});
 
-    mongod.getConnectionString().then(() => {
-        console.log("Mongo server started. Starting Node server");
+    console.log("Mongo server created")
 
-        // Start REDIS
-        redisProcess = execChild("redis", "redis-server --port " + config.REDIS_PORT);
+    await mongod.getConnectionString();
 
-        // Fake SMTP server
-        smtpProcess = execChild("smtp",  `fake-smtp-server --smtp-port ${config.SMTP_PORT}`);
+    console.log("Mongo server started.");
 
-        server = initServer([client_path, server_path]);
-        server.use(morgan('dev', {stream: fs.createWriteStream('server.log', {'flags': 'w'})}));
+    // Start REDIS
+    redisProcess = execChild("redis", "redis-server --port " + config.REDIS_PORT);
 
+    // Fake SMTP server
+    smtpProcess = execChild("smtp",  `fake-smtp-server --smtp-port ${config.SMTP_PORT}`);
 
+    server = initServer([client_path, server_path]);
+    server.use(morgan('dev', {stream: fs.createWriteStream('server.log', {'flags': 'w'})}));
 
-        server.listen(SERVER_PORT, () => {
-            done();
-        });
-    });
+    await server.listen(config.PORT);
 
-
-
-});
+}, 30000);
 
 test("Should login", done => {
     return request(server)
@@ -102,7 +105,7 @@ test("Should login", done => {
                .toEqual({
                    email: _.auth.userNotFound})
         });
-});
+}, 15000);
 
 
 

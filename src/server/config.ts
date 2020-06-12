@@ -6,7 +6,8 @@ export const config = {
     SECRET : getEnv("SECRET"),
     CACHE : getEnv("CACHE", "true"),
 
-    ROOT_URL : getEnv("ROOT_URL", "http://localhost").replace(/\/$/, ""),
+    PORT : parseInt(getEnv("PORT", 8082)),
+    ROOT_URL : getEnv("ROOT_URL", "http://localhost:8082/").replace(/\/$/, ""),
 
     DB_HOST : getEnv("DB_HOST", "localhost"),
     DB_NAME : getEnv("DB_NAME", "wikilist"),
