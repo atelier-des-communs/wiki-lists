@@ -21,7 +21,7 @@ export let emailsEn : EmailTemplates =
                 html: <p>
                     Hi,<br/>
                     <br/>
-                    You are invited to participate to {dbName}<br/>.
+                    You are invited to participate to {dbName}.<br/>
                     Please click on <a href={link}>this link</a> to connect.
                 </p>
             }
